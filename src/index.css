@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --breakpoint-xl: 75rem; /* 1200px */
+  --breakpoint-lg: 67.5rem; /* 1080px */
+  --breakpoint-mdlg: 61.9375rem; /* 991px */
+  --breakpoint-md: 48rem; /* 768px */
+  --breakpoint-sm: 36rem; /* 576px */
+  --breakpoint-xs: 30rem; /* 480px */
+  --breakpoint-2xs: 21.25rem; /* 340px */
+}
+
+:root {
+  --bg-header-primary: #ffffff;
+  --bg-header: #caddff;
+  --bg-header-li: #afafaf;
+  --bg-header-leng-hover: #000000;
+  --text-header: #62748e;
+  --text-header-list: #000000;
+  --text-header-leng: #1d293d;
+  --text-header-leng-hover: #ffffff;
+  --text-header-menu: #45556c;
+  --border-header-menu: #45556c;
+  --text-active-menuItem: #059473;
+  --bg-header-wish: #e2e2e2;
+  --wishHeart-active: oklch(72.3% 0.219 149.579);
+  --bg-countCircle: #fb2c36;
+  --text-countCircle: #ffffff;
+
+  /* Sidebar */
+  --bg-sidebar-primary: rgba(0, 0, 0, 0.5);
+  --bg-sidebar-secondary: #ffffff;
+  --bg-sidebar-phone: #f5f5f5;
+  --text-sidebar-phoneNum: #314158;
+  --text-sidebar-mail: #1c1c1c;
+
+  /* Header All Category Line */
+  --bg-btn-allCat: #059473;
+  --text-allCat: #ffffff;
+  --bg-allCat: #dbf3ed;
+  --bg-allCat-bord: #dbf3ed;
+  --text-menu-allCat: #45556c;
+  --bg-search-sep: #afafaf;
+  --border-search: #e5e7eb;
+  --text-search: #62748e;
+
+  /* Carousel - Categories*/
+  --bg-category: #3330305d;
+  --text-category: #ffffff;
+  --border-category: #d6dee6;
+
+  /* Featured Products */
+  --text-title-featured: #45556c;
+  --bg-line-featured: #059473;
+  --text-featured-disc: #ffffff;
+  --bg-featured-disc: #fb2c36;
+  --bg-featured-heart: #ffffff;
+  --bg-featured-heart-hov: #059473;
+  --text-featured-heart-hov: #ffffff;
+  --text-featured-pr_name: #45556c;
+  --text-featured-rating: #edbb0e;
+  --text-featured-rating_sec: #45556c;
+}
+
+.dark {
+  --color-bg: #111827;
+  --color-text: #f3f4f6;
+  --color-primary: #6366f1;
+}
