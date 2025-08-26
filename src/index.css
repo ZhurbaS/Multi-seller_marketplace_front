@@ -60,6 +60,29 @@
   --text-featured-pr_name: #45556c;
   --text-featured-rating: #edbb0e;
   --text-featured-rating_sec: #45556c;
+
+  /* Latest Products */
+  --text-latest: #45556c;
+  --bg-latest-leftArrow: #cad5e2;
+  --border-latest-leftArrow: #e2e8f0;
+
+  /* Footer */
+  --bg-footer: #f3f6fa;
+  --text-footer: #45556c;
+  --bg-subscribe: #ffffff;
+  --border-subscribe: #e2e8f0;
+  --bg-subscribeBtn: #059473;
+  --text-subscribe: #ffffff;
+  --bg-icon-hov: #059473;
+  --bg-icon: #ffffff;
+  --text-icon: #ffffff;
+  --border-copyright: #e2e8f0;
+
+  /* ======== SHOPS PAGE ======== */
+
+  /* Section */
+  --bg-section: #2422228a;
+  --text-section: #ffffff;
 }
 
 .dark {

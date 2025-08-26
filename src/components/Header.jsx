@@ -14,6 +14,7 @@ import { IoHeart } from "react-icons/io5";
 import { AiFillTikTok } from "react-icons/ai";
 import { IoLogoFacebook } from "react-icons/io";
 import { FaSquareInstagram } from "react-icons/fa6";
+import { FaSquareYoutube } from "react-icons/fa6";
 
 const Header = () => {
   const { pathname } = useLocation();
@@ -150,8 +151,9 @@ const Header = () => {
                   </li>
                   <li>
                     <Link
+                      to={"/shops"}
                       className={`p-2 block ${
-                        pathname === "/shop"
+                        pathname === "/shops"
                           ? "text-[var(--text-active-menuItem)]"
                           : "text-[var(--text-header-menu)]"
                       }`}
@@ -291,8 +293,9 @@ const Header = () => {
               </li>
               <li>
                 <Link
+                  to={"/shops"}
                   className={`py-2 block ${
-                    pathname === "/shop"
+                    pathname === "/shops"
                       ? "text-[var(--text-active-menuItem)]"
                       : "text-[var(--text-header-menu)]"
                   }`}
@@ -336,7 +339,7 @@ const Header = () => {
             </ul>
             <div className="flex justify-start items-center gap-4 text-[var(--text-header-list)]">
               <a href="#">
-                <FaYoutubeSquare />
+                <FaSquareYoutube />
               </a>
               <a href="#">
                 <IoLogoFacebook />
