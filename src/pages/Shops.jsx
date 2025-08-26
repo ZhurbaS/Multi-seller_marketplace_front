@@ -10,6 +10,7 @@ import Products from "../components/products/Products";
 import { BsFillGridFill } from "react-icons/bs";
 import { FaThList } from "react-icons/fa";
 import ShopProducts from "../components/products/ShopProducts";
+import Pagination from "../components/Pagination";
 
 const Shops = () => {
   const [filter, setFilter] = useState(true);
@@ -27,6 +28,8 @@ const Shops = () => {
   const [state, setState] = useState({ values: [1, 200000] });
   const [rating, setRating] = useState("");
   const [styles, setStyles] = useState("grid");
+  const [perPage, setPerPage] = useState(1);
+  const [pageNumber, setPageNumber] = useState(1);
 
   return (
     <div>
@@ -291,6 +294,16 @@ const Shops = () => {
 
                 <div className="pb-8">
                   <ShopProducts styles={styles} />
+                </div>
+
+                <div className="">
+                  <Pagination
+                    pageNumber={pageNumber}
+                    setPageNumber={setPageNumber}
+                    totalItem={10}
+                    perPage={perPage}
+                    showItem={Math.floor(10 / 3)}
+                  />
                 </div>
               </div>
             </div>

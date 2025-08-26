@@ -1,4 +1,7 @@
 import React from "react";
+import { FaEye, FaRegHeart } from "react-icons/fa";
+import { RiShoppingCartLine } from "react-icons/ri";
+import Rating from "../Rating";
 
 const ShopProducts = ({ styles }) => {
   return (
@@ -26,9 +29,30 @@ const ShopProducts = ({ styles }) => {
             }
           >
             <img
+              className="h-[240px] rounded-md max-md:h[270px] max-xs:h-[170px] w-full object-cover"
               src={`http://localhost:5173/images/products/${i + 1}.webp`}
               alt=""
             />
+            <ul className="flex transition-all duration-700 -bottom-10 justify-center items-center gap-2 absolute w-full group-hover:bottom-3">
+              <li className="w-[38px] h-[38px] cursor-pointer bg-[var(--bg-featured-heart)] flex justify-center items-center rounded-full hover:bg-[var(--bg-featured-heart-hov)] hover:text-[var(--text-featured-heart-hov)] hover:rotate-[720deg] transition-all">
+                <FaRegHeart />
+              </li>
+              <li className="w-[38px] h-[38px] cursor-pointer bg-[var(--bg-featured-heart)] flex justify-center items-center rounded-full hover:bg-[var(--bg-featured-heart-hov)] hover:text-[var(--text-featured-heart-hov)] hover:rotate-[720deg] transition-all">
+                <FaEye />
+              </li>
+              <li className="w-[38px] h-[38px] cursor-pointer bg-[var(--bg-featured-heart)] flex justify-center items-center rounded-full hover:bg-[var(--bg-featured-heart-hov)] hover:text-[var(--text-featured-heart-hov)] hover:rotate-[720deg] transition-all">
+                <RiShoppingCartLine />
+              </li>
+            </ul>
+          </div>
+          <div className="flex justify-start items-start flex-col gap-1">
+            <h2 className="font-bold">Назва товару</h2>
+            <div className="flex justify-start items-center gap-3">
+              <span className="text-md font-semibold">₴755</span>
+              <div className="flex">
+                <Rating ratings={4.5} />
+              </div>
+            </div>
           </div>
         </div>
       ))}

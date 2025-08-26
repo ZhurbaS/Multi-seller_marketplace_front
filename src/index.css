@@ -101,6 +101,29 @@
 
   /* Products */
   --bg-products: #ffffff;
+
+  /* Pagination */
+  --bg-pagi-hov: #05df72;
+  --bg-pagi: oklch(52.7% 0.154 150.069);
+
+  /* ======== CARD PAGE ======== */
+
+  /*  */
+  --bg-card: #eeeeee;
+  --bg-cardSec: oklch(58.5% 0.233 277.117);
+  --text-card: #ffffff;
+  --bg-cardStock: #ffffff;
+  --text-cardStock: oklch(72.3% 0.219 149.579);
+  --text-card-shopTitle: #45556c;
+  --text-card-price: oklch(70.5% 0.213 47.604);
+  --bg-card-btn: #e2e8f0;
+  --bg-card-delete: #fb2c36;
+  --text-card-outOfStock: oklch(63.7% 0.237 25.331);
+  --bg-card-coupon: #e2e8f0;
+  --border-card-coupon: oklch(72.3% 0.219 149.579);
+  --bg-card-couponApplyBtn: #059473;
+  --text-card-sum: #059473;
+  --bg-card-processBtn: #fb2c36;
 }
 
 .dark {
