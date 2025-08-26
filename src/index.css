@@ -83,6 +83,24 @@
   /* Section */
   --bg-section: #2422228a;
   --text-section: #ffffff;
+
+  /* Filter */
+  --bg-filter: oklch(58.5% 0.233 277.117);
+  --text-filter: #ffffff;
+  --text-filterCat: #45556c;
+  --bg-range: #e2e8f0;
+  --bg-rangeCircle: #059473;
+  --text-range: #1d293d;
+  --text-rating: oklch(70.5% 0.213 47.604);
+
+  /* Upper Menu */
+  --bg-uMenu: #ffffff;
+  --text-uMenu: #45556c;
+  --border-uMenu: #e2e8f0;
+  --bg-uMenu-styles: #cad5e2;
+
+  /* Products */
+  --bg-products: #ffffff;
 }
 
 .dark {
