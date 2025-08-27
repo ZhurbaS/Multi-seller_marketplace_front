@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { MdEmail } from "react-icons/md";
 import {
-  FaYoutubeSquare,
   FaPhoneAlt,
   FaUser,
   FaLock,
@@ -61,7 +60,7 @@ const Header = () => {
               <div className="flex justify-center items-center gap-10">
                 <div className="flex justify-center items-center gap-4 text-[var(--text-header-list)]">
                   <a href="#">
-                    <FaYoutubeSquare />
+                    <FaSquareYoutube />
                   </a>
                   <a href="#">
                     <IoLogoFacebook />

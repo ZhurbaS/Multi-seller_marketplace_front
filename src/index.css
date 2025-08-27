@@ -136,11 +136,41 @@
   --bg-shipTo: oklch(88.2% 0.059 254.128);
   --text-shipTo: #193cb8;
   --text-shipChange: oklch(58.5% 0.233 277.117);
-  --bg-placeOrder-notActive: oklch(80.8% 0.114 19.571); 
+  --bg-placeOrder-notActive: oklch(80.8% 0.114 19.571);
+
+  /* ======== PRODUCT DETAILS PAGE ======== */
+
+  --bg-deatails-road: #f1f5f9;
+  --text-deatails: #45556c;
+  --border-deatails: #e2e8f0;
+  --text-deatailsRaiting: oklch(72.3% 0.219 149.579);
+  --text-deatailsPrice: #fb2c36;
+  --bg-detailsDescr: oklch(92.9% 0.013 255.508); /* slate-200 */
+  --bg-detailsAddBtn: #059473;
+  --text-detailsAddBtn: #ffffff;
+  --bg-detailsHeart: oklch(71.5% 0.143 215.221);
+  --text-detailsAvail: #000000;
+  --text-detailsOnStock: oklch(72.3% 0.219 149.579);
+  --text-detailsOutOfStock: #fb2c36;
+  --bg-fb: oklch(58.5% 0.233 277.117);
+  --bg-tw: #1da1f2; /* Twitter */
+  --bg-li: #0077b5; /* LinkedIn */
+  --bg-in: #c13584; /* Instagram */
+  --bg-tt: #25f4ee; /* TikTok (бірюзовий акцент) */
+  --bg-detailsBuyBtn: #058164;
+  --bg-detailsChatBtn: oklch(63.7% 0.237 25.331);
+  --bg-detailsNonActBtn: #314158;
+  --bg-swipper: #000000;
 }
 
 .dark {
   --color-bg: #111827;
   --color-text: #f3f4f6;
   --color-primary: #6366f1;
+}
+
+.swiper-button-prev::after,
+.swiper-button-next::after {
+  color: #059473; /* колір самих стрілок */
+  font-weight: bold; /* зробити товстіші */
 }
