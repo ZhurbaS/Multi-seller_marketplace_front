@@ -108,7 +108,6 @@
 
   /* ======== CARD PAGE ======== */
 
-  /*  */
   --bg-card: #eeeeee;
   --bg-cardSec: oklch(58.5% 0.233 277.117);
   --text-card: #ffffff;
@@ -124,6 +123,20 @@
   --bg-card-couponApplyBtn: #059473;
   --text-card-sum: #059473;
   --bg-card-processBtn: #fb2c36;
+
+  /* ======== SHIPPING PAGE ======== */
+
+  --bg-ship: #eeeeee;
+  --bg-shipSec: #ffffff;
+  --text-ship: #45556c;
+  --border-ship: #e2e8f0;
+  --border-ship-foc: oklch(72.3% 0.219 149.579);
+  --bg-ship-saveBtn: oklch(72.3% 0.219 149.579);
+  --text-ship-saveBtn: #ffffff;
+  --bg-shipTo: oklch(88.2% 0.059 254.128);
+  --text-shipTo: #193cb8;
+  --text-shipChange: oklch(58.5% 0.233 277.117);
+  --bg-placeOrder-notActive: oklch(80.8% 0.114 19.571); 
 }
 
 .dark {
