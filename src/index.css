@@ -11,6 +11,10 @@
 }
 
 :root {
+  /* ======== TOASTER ======== */
+  --bg-toaster: #283046;
+  --color-toaster: #ffffff;
+
   --bg-header-primary: #ffffff;
   --bg-header: #caddff;
   --bg-header-li: #afafaf;
