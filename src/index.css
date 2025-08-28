@@ -161,6 +161,32 @@
   --bg-detailsChatBtn: oklch(63.7% 0.237 25.331);
   --bg-detailsNonActBtn: #314158;
   --bg-swipper: #000000;
+
+  /* Reviews */
+  --text-reviews: #45556c;
+
+  /* Rating temp */
+  --text-ratingTemp: #edbb0e;
+  --bg-details-rating: oklch(92.9% 0.013 255.508); /* slate-200 */
+  --bg-details-login: #fb2c36; /* red-500 */
+  --text-details-login: #ffffff;
+  --border-details-review: #e2e8f0;
+  --bg-details-submitBtn: oklch(58.5% 0.233 277.117); /* indigo-500 */
+  --text-details-submitBtn: #ffffff;
+
+  /* ======== REGISTER PAGE ======== */
+  --bg-reg: oklch(92.9% 0.013 255.508); /* slate-200 */
+  --bg-regIn: #ffffff;
+  --text-reg: #45556c; /* slate-600 */
+  --border-reg: oklch(92.9% 0.013 255.508); /* slate-200 */
+  --border-regFoc: oklch(72.3% 0.219 149.579); /* green-500 */
+  --bg-regBtn: #059473;
+  --text-regBtn: #ffffff;
+  --bg-regOrLine: oklch(86.9% 0.022 252.894); /* slate-300 */
+  --bg-regFb: oklch(58.5% 0.233 277.117); /* indigo-500 */
+  --text-regFb: #ffffff;
+  --bg-regG: #fb2c36; /* red-500 */
+  --text-regLog: oklch(62.3% 0.214 259.815); /* blue-500 */
 }
 
 .dark {

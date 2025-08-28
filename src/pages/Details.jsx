@@ -333,7 +333,7 @@ const Details = () => {
                 <div className="flex flex-col gap-5 mt-3 border border-[var(--border-deatails)] p-3">
                   {[1, 2, 3].map((p, i) => {
                     return (
-                      <Link className="block">
+                      <Link key={i} className="block">
                         <div className="relative h-[270px]">
                           <img
                             className="w-full h-full"
