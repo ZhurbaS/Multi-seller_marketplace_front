@@ -14,8 +14,11 @@ import { AiFillTikTok } from "react-icons/ai";
 import { IoLogoFacebook } from "react-icons/io";
 import { FaSquareInstagram } from "react-icons/fa6";
 import { FaSquareYoutube } from "react-icons/fa6";
+import { useSelector } from "react-redux";
 
-const Header = ({ categories }) => {
+const Header = () => {
+  const { categories } = useSelector((state) => state.home);
+
   const { pathname } = useLocation();
 
   const [showSidebar, setShowSidebar] = useState(true);
@@ -129,6 +132,7 @@ const Header = ({ categories }) => {
                 <ul className="flex justify-start items-start gap-8 text-sm font-bold uppercase max-mdlg:hidden">
                   <li>
                     <Link
+                      to={"/"}
                       className={`p-2 block ${
                         pathname === "/"
                           ? "text-[var(--text-active-menuItem)]"

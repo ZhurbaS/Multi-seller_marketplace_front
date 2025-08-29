@@ -4,12 +4,7 @@ import { Link } from "react-router-dom";
 import "react-multi-carousel/lib/styles.css";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
-const Products = ({ title }) => {
-  const products = [
-    [1, 2, 3],
-    [4, 5, 6],
-  ];
-
+const Products = ({ title, products }) => {
   const responsive = {
     superLargeDesktop: {
       breakpoint: { max: 4000, min: 3000 },
@@ -71,12 +66,12 @@ const Products = ({ title }) => {
                 <Link className="flex justify-start items-start" to="#" key={j}>
                   <img
                     className="w-[110px] h-[110px]"
-                    src={`http://localhost:5173/images/products/${pl}.webp`}
+                    src={pl.images[0]}
                     alt=""
                   />
                   <div className="px-3 flex justify-start items-start gap-1 flex-col text-[var(--text-latest)]">
-                    <h2>Назва товару</h2>
-                    <span className="text-lg font-bold">₴455</span>
+                    <h2>{pl.name}</h2>
+                    <span className="text-lg font-bold">₴{pl.price}</span>
                   </div>
                 </Link>
               ))}

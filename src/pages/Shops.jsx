@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Link } from "react-router-dom";
@@ -11,21 +11,20 @@ import { BsFillGridFill } from "react-icons/bs";
 import { FaThList } from "react-icons/fa";
 import ShopProducts from "../components/products/ShopProducts";
 import Pagination from "../components/Pagination";
+import { useDispatch, useSelector } from "react-redux";
+import { price_range_product } from "../store/reducers/homeSlice";
 
 const Shops = () => {
-  const [filter, setFilter] = useState(true);
-  const categories = [
-    "Мобільні телефони",
-    "Ноутбуки",
-    "Колонки",
-    "Верхній одяг",
-    "Взуття",
-    "Годинники",
-    "Домашній декор",
-    "Смарт-годинники",
-  ];
+  const dispatch = useDispatch();
+  const { categories } = useSelector((state) => state.home);
 
-  const [state, setState] = useState({ values: [1, 200000] });
+  useEffect(() => {
+    dispatch(price_range_product());
+  }, []);
+
+  const [filter, setFilter] = useState(true);
+
+  const [state, setState] = useState({ values: [0, 200000] });
   const [rating, setRating] = useState("");
   const [styles, setStyles] = useState("grid");
   const [perPage, setPerPage] = useState(1);
@@ -74,13 +73,16 @@ const Shops = () => {
               </h2>
               <div className="py-2">
                 {categories.map((c, i) => (
-                  <div className="flex justify-start items-center gap-2 py-1">
-                    <input type="checkbox" className="" id={c} />
+                  <div
+                    key={i}
+                    className="flex justify-start items-center gap-2 py-1"
+                  >
+                    <input type="checkbox" className="" id={c.name} />
                     <label
                       className="text-[var(--text-filterCat)] block cursor-pointer"
-                      htmlFor={c}
+                      htmlFor={c.name}
                     >
-                      {c}
+                      {c.name}
                     </label>
                   </div>
                 ))}
@@ -93,27 +95,35 @@ const Shops = () => {
 
                 <Range
                   step={5}
-                  min={1}
+                  min={0}
                   max={200000}
                   values={state.values}
                   onChange={(values) => setState({ values })}
-                  renderTrack={({ props, children }) => (
-                    <div
-                      {...props}
-                      className="w-full h-[6px] bg-[var(--bg-range)] rounded-full cursor-pointer"
-                    >
-                      {children}
-                    </div>
-                  )}
-                  renderThumb={({ props }) => (
-                    <div
-                      className="w-[15px] h-[15px] bg-[var(--bg-rangeCircle)] rounded-full transition-all duration-150
+                  renderTrack={({ props, children }) => {
+                    const { key, ...rest } = props; // виділяємо key
+                    return (
+                      <div
+                        key={key}
+                        {...props}
+                        className="w-full h-[6px] bg-[var(--bg-range)] rounded-full cursor-pointer"
+                      >
+                        {children}
+                      </div>
+                    );
+                  }}
+                  renderThumb={({ props }) => {
+                    const { key, ...rest } = props;
+                    return (
+                      <div
+                        key={key}
+                        className="w-[15px] h-[15px] bg-[var(--bg-rangeCircle)] rounded-full transition-all duration-150
                       active:ring-2
                       active:ring-[var(--bg-rangeCircle)]
                       focus:outline-none"
-                      {...props}
-                    />
-                  )}
+                        {...rest}
+                      />
+                    );
+                  }}
                 />
                 <div>
                   <span className="text-[var(--text-range)] font-bold text-lg">
@@ -251,7 +261,7 @@ const Shops = () => {
                 </div>
               </div>
               <div className="py-5 flex flex-col gap-4 max-md:hidden">
-                <Products title="Нові товари" />
+                {/* <Products title="Нові товари" /> */}
               </div>
             </div>
 
