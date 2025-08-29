@@ -3,18 +3,7 @@ import Carousel from "react-multi-carousel";
 import { Link } from "react-router-dom";
 import "react-multi-carousel/lib/styles.css";
 
-const Categories = () => {
-  const categories = [
-    "Мобільні телефони",
-    "Ноутбуки",
-    "Колонки",
-    "Верхній одяг",
-    "Взуття",
-    "Годинники",
-    "Домашній декор",
-    "Смарт-годинники",
-  ];
-
+const Categories = ({ categories }) => {
   const responsive = {
     superLargeDesktop: {
       breakpoint: { max: 4000, min: 3000 },
@@ -69,13 +58,10 @@ const Categories = () => {
             to="#"
           >
             <div className="w-full h-full relative p-3">
-              <img
-                src={`http://localhost:5173/images/products/${i + 1}.webp`}
-                alt=""
-              />
+              <img src={c.image} alt="" />
               <div className="absolute bottom-6 w-full mx-auto font-bold left-0 flex justify-center items-center">
                 <span className="py-[2px] px-6 bg-[var(--bg-category)] text-[var(--text-category)]">
-                  {c}
+                  {c.name}
                 </span>
               </div>
             </div>

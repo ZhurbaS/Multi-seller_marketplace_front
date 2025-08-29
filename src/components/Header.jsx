@@ -15,23 +15,13 @@ import { IoLogoFacebook } from "react-icons/io";
 import { FaSquareInstagram } from "react-icons/fa6";
 import { FaSquareYoutube } from "react-icons/fa6";
 
-const Header = () => {
+const Header = ({ categories }) => {
   const { pathname } = useLocation();
 
   const [showSidebar, setShowSidebar] = useState(true);
   const [categoryShow, setCategoryShow] = useState(true);
   const user = true;
   const wishlist_count = 3;
-  const categories = [
-    "Мобільні телефони",
-    "Ноутбуки",
-    "Колонки",
-    "Верхній одяг",
-    "Взуття",
-    "Годинники",
-    "Домашній декор",
-    "Смарт-годинники",
-  ];
 
   const [searchValue, setSearchValue] = useState("");
   const [category, setCategory] = useState("");
@@ -408,7 +398,12 @@ const Header = () => {
                         key={i}
                         className="flex justify-start items-center gap-2 px-[24px] py-[6px]"
                       >
-                        <Link className="text-sm block">{c}</Link>
+                        <img
+                          src={c.image}
+                          alt=""
+                          className="w-[30px] h-[30px] rounded-full overflow-hidden"
+                        />
+                        <Link className="text-sm block">{c.name}</Link>
                       </li>
                     );
                   })}
@@ -431,7 +426,7 @@ const Header = () => {
                       <option value="">Вибрати категорію</option>
                       {categories.map((c, i) => (
                         <option key={i} value={c}>
-                          {c}
+                          {c.name}
                         </option>
                       ))}
                     </select>
