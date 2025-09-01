@@ -12,23 +12,64 @@ import { FaThList } from "react-icons/fa";
 import ShopProducts from "../components/products/ShopProducts";
 import Pagination from "../components/Pagination";
 import { useDispatch, useSelector } from "react-redux";
-import { price_range_product } from "../store/reducers/homeSlice";
+import {
+  price_range_product,
+  query_products,
+} from "../store/reducers/homeSlice";
 
 const Shops = () => {
   const dispatch = useDispatch();
-  const { categories } = useSelector((state) => state.home);
+  const {
+    products,
+    categories,
+    priceRange,
+    latest_product,
+    totalProduct,
+    perPage,
+  } = useSelector((state) => state.home);
 
   useEffect(() => {
     dispatch(price_range_product());
   }, []);
 
+  useEffect(() => {
+    setState({
+      values: [priceRange.low, priceRange.high],
+    });
+  }, [priceRange]);
+
   const [filter, setFilter] = useState(true);
 
-  const [state, setState] = useState({ values: [0, 200000] });
+  const [state, setState] = useState({
+    values: [priceRange.low, priceRange.high],
+  });
   const [rating, setRating] = useState("");
   const [styles, setStyles] = useState("grid");
-  const [perPage, setPerPage] = useState(1);
+  // const [perPage, setPerPage] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
+
+  const [sortPrice, setSortPrice] = useState("");
+  const [category, setCategory] = useState("");
+  const queryCategory = (e, value) => {
+    if (e.target.checked) {
+      setCategory(value);
+    } else {
+      setCategory("");
+    }
+  };
+
+  useEffect(() => {
+    dispatch(
+      query_products({
+        low: state.values[0],
+        high: state.values[1],
+        category,
+        rating,
+        sortPrice,
+        pageNumber,
+      })
+    );
+  }, [category, rating, sortPrice, pageNumber]);
 
   return (
     <div>
@@ -77,7 +118,13 @@ const Shops = () => {
                     key={i}
                     className="flex justify-start items-center gap-2 py-1"
                   >
-                    <input type="checkbox" className="" id={c.name} />
+                    <input
+                      checked={category === c.name ? true : false}
+                      onChange={(e) => queryCategory(e, c.name)}
+                      type="checkbox"
+                      className=""
+                      id={c.name}
+                    />
                     <label
                       className="text-[var(--text-filterCat)] block cursor-pointer"
                       htmlFor={c.name}
@@ -95,16 +142,29 @@ const Shops = () => {
 
                 <Range
                   step={5}
-                  min={0}
-                  max={200000}
+                  min={priceRange.low}
+                  max={priceRange.high}
                   values={state.values}
                   onChange={(values) => setState({ values })}
+                  onFinalChange={(values) => {
+                    setState({ values }); // оновлює стан після відпускання
+                    dispatch(
+                      query_products({
+                        low: values[0],
+                        high: values[1],
+                        category,
+                        rating,
+                        sortPrice,
+                        pageNumber,
+                      })
+                    );
+                  }}
                   renderTrack={({ props, children }) => {
                     const { key, ...rest } = props; // виділяємо key
                     return (
                       <div
                         key={key}
-                        {...props}
+                        {...rest}
                         className="w-full h-[6px] bg-[var(--bg-range)] rounded-full cursor-pointer"
                       >
                         {children}
@@ -239,7 +299,7 @@ const Shops = () => {
                     </span>
                   </div>
                   <div
-                    onClick={() => setRating(0)}
+                    // onClick={() => setRating(0)}
                     className="text-[var(--text-rating)] flex justify-start items-start gap-2 text-xl cursor-pointer"
                   >
                     <span>
@@ -261,7 +321,7 @@ const Shops = () => {
                 </div>
               </div>
               <div className="py-5 flex flex-col gap-4 max-md:hidden">
-                {/* <Products title="Нові товари" /> */}
+                <Products title="Нові товари" products={latest_product} />
               </div>
             </div>
 
@@ -269,10 +329,11 @@ const Shops = () => {
               <div className="pl=8 max-md:pl-0">
                 <div className="py-4 bg-[var(--bg-uMenu:)] mb-10 px-3 rounded-md flex justify-between items-start border border-[var(--border-uMenu)]">
                   <h2 className="text-lg font-medium text-[var(--text-uMenu)] ">
-                    14 товарів
+                    {totalProduct} товарів
                   </h2>
                   <div className="flex justify-center items-center gap-3">
                     <select
+                      onChange={(e) => setSortPrice(e.target.value)}
                       className="p-1 border border-[var(--border-uMenu)] outline-0 text-[var(--text-uMenu)] font-semibold"
                       name=""
                       id=""
@@ -303,17 +364,19 @@ const Shops = () => {
                 </div>
 
                 <div className="pb-8">
-                  <ShopProducts styles={styles} />
+                  <ShopProducts products={products} styles={styles} />
                 </div>
 
                 <div className="">
-                  <Pagination
-                    pageNumber={pageNumber}
-                    setPageNumber={setPageNumber}
-                    totalItem={10}
-                    perPage={perPage}
-                    showItem={Math.floor(10 / 3)}
-                  />
+                  {totalProduct > perPage && (
+                    <Pagination
+                      pageNumber={pageNumber}
+                      setPageNumber={setPageNumber}
+                      totalItem={totalProduct}
+                      perPage={perPage}
+                      showItem={Math.floor(totalProduct / perPage)}
+                    />
+                  )}
                 </div>
               </div>
             </div>
