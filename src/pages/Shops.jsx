@@ -59,6 +59,7 @@ const Shops = () => {
   };
 
   useEffect(() => {
+    // console.log("Price range values:", state.values);
     dispatch(
       query_products({
         low: state.values[0],
@@ -69,7 +70,21 @@ const Shops = () => {
         pageNumber,
       })
     );
-  }, [category, rating, sortPrice, pageNumber]);
+  }, [state.values, category, rating, sortPrice, pageNumber]);
+
+  const resetRating = () => {
+    setRating("");
+    dispatch(
+      query_products({
+        low: state.values[0],
+        high: state.values[1],
+        category,
+        rating: "",
+        sortPrice,
+        pageNumber,
+      })
+    );
+  };
 
   return (
     <div>
@@ -299,7 +314,7 @@ const Shops = () => {
                     </span>
                   </div>
                   <div
-                    // onClick={() => setRating(0)}
+                    onClick={resetRating}
                     className="text-[var(--text-rating)] flex justify-start items-start gap-2 text-xl cursor-pointer"
                   >
                     <span>
@@ -329,7 +344,7 @@ const Shops = () => {
               <div className="pl=8 max-md:pl-0">
                 <div className="py-4 bg-[var(--bg-uMenu:)] mb-10 px-3 rounded-md flex justify-between items-start border border-[var(--border-uMenu)]">
                   <h2 className="text-lg font-medium text-[var(--text-uMenu)] ">
-                    {totalProduct} товарів
+                    ({totalProduct}) товарів
                   </h2>
                   <div className="flex justify-center items-center gap-3">
                     <select

@@ -55,7 +55,7 @@ export const query_products = createAsyncThunk(
           sortPrice ?? ""
         }&pageNumber=${pageNumber ?? 1}`
       );
-      console.log(data);
+      // console.log(data);
       return fulfillWithValue(data);
     } catch (error) {
       console.error("💥 Error in homeSlice: query_products:", error);
