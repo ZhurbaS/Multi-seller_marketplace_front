@@ -20,6 +20,7 @@ const Header = () => {
   const navigate = useNavigate();
 
   const { categories } = useSelector((state) => state.home);
+  const { userInfo } = useSelector((state) => state.auth);
 
   const { pathname } = useLocation();
 
@@ -83,7 +84,7 @@ const Header = () => {
                   </ul>
                 </div>
 
-                {user ? (
+                {userInfo ? (
                   <Link
                     className="flex cursor-pointer justify-center items-center gap-2 text-sm text-[var(--text-header-list)]"
                     to="/dashboard"
@@ -91,7 +92,7 @@ const Header = () => {
                     <span>
                       <FaUser />
                     </span>
-                    <span>Сергій Журба</span>
+                    <span>{userInfo.name}</span>
                   </Link>
                 ) : (
                   <Link
@@ -254,7 +255,7 @@ const Header = () => {
                 </ul>
               </div>
 
-              {user ? (
+              {userInfo ? (
                 <Link
                   className="flex cursor-pointer justify-center items-center gap-2 text-sm text-[var(--text-header-list)]"
                   to="/dashboard"
@@ -262,13 +263,12 @@ const Header = () => {
                   <span>
                     <FaUser />
                   </span>
-                  <span>Сергій Журба</span>
+                  <span>{userInfo.name}</span>
                 </Link>
               ) : (
                 <Link
                   className="flex cursor-pointer justify-center items-center gap-2 text-sm text-[var(--text-header-list)]"
                   to="/login"
-                  // style={{ color: "var(--text-header-list)" }} // прямий inline стиль
                 >
                   <span>
                     <FaLock />
