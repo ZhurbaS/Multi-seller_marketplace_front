@@ -58,7 +58,7 @@ const Categories = () => {
           <Link
             className="h-[185px] border border-[var(--border-category)] block"
             key={i}
-            to="#"
+            to={`/products?category=${c.name}`}
           >
             <div className="w-full h-full relative p-3">
               <img src={c.image} alt="" />

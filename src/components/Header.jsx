@@ -8,7 +8,7 @@ import {
   FaShoppingCart,
 } from "react-icons/fa";
 import { IoMdArrowDropdown, IoIosArrowDown } from "react-icons/io";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoHeart } from "react-icons/io5";
 import { AiFillTikTok } from "react-icons/ai";
 import { IoLogoFacebook } from "react-icons/io";
@@ -17,17 +17,23 @@ import { FaSquareYoutube } from "react-icons/fa6";
 import { useSelector } from "react-redux";
 
 const Header = () => {
+  const navigate = useNavigate();
+
   const { categories } = useSelector((state) => state.home);
 
   const { pathname } = useLocation();
 
   const [showSidebar, setShowSidebar] = useState(true);
   const [categoryShow, setCategoryShow] = useState(true);
-  const user = true;
+  const user = false;
   const wishlist_count = 3;
 
   const [searchValue, setSearchValue] = useState("");
   const [category, setCategory] = useState("");
+
+  const search = () => {
+    navigate(`/products/search?category=${category}&value=${searchValue}`);
+  };
 
   return (
     <div className="w-full bg-[var(--bg-header-primary)]">
@@ -407,7 +413,12 @@ const Header = () => {
                           alt=""
                           className="w-[30px] h-[30px] rounded-full overflow-hidden"
                         />
-                        <Link className="text-sm block">{c.name}</Link>
+                        <Link
+                          to={`/products?category=${c.name}`}
+                          className="text-sm block"
+                        >
+                          {c.name}
+                        </Link>
                       </li>
                     );
                   })}
@@ -429,7 +440,7 @@ const Header = () => {
                     >
                       <option value="">Вибрати категорію</option>
                       {categories.map((c, i) => (
-                        <option key={i} value={c}>
+                        <option key={i} value={c.name}>
                           {c.name}
                         </option>
                       ))}
@@ -438,12 +449,20 @@ const Header = () => {
                   <input
                     className="w-full relative bg-transparent text-[var(--text-search)] outline-0 px-3 h-full"
                     onChange={(e) => setSearchValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        search();
+                      }
+                    }}
                     type="text"
                     name=""
                     id=""
                     placeholder="Пошук товарів"
                   />
-                  <button className="bg-[var(--bg-btn-allCat)] right-0 absolute px-8 h-full font-semibold uppercase text-[var(--text-allCat)]">
+                  <button
+                    onClick={search}
+                    className="bg-[var(--bg-btn-allCat)] right-0 absolute px-8 h-full font-semibold uppercase text-[var(--text-allCat)]"
+                  >
                     Пошук
                   </button>
                 </div>

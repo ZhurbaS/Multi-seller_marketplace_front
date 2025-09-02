@@ -191,6 +191,7 @@
   --text-regFb: #ffffff;
   --bg-regG: #fb2c36; /* red-500 */
   --text-regLog: oklch(62.3% 0.214 259.815); /* blue-500 */
+  --bg--regLoader: #38303033;
 }
 
 .dark {
