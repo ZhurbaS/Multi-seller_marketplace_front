@@ -9,6 +9,7 @@ import {
   messageClear,
   delete_card_product,
   quantity_inc,
+  quantity_dec,
 } from "../store/reducers/cardSlice";
 import toast from "react-hot-toast";
 
@@ -54,6 +55,13 @@ const Card = () => {
     const temp = quantity + 1;
     if (temp <= stock) {
       dispatch(quantity_inc(card_id));
+    }
+  };
+
+  const dec = (quantity, card_id) => {
+    const temp = quantity - 1;
+    if (temp !== 0) {
+      dispatch(quantity_dec(card_id));
     }
   };
 
@@ -154,7 +162,12 @@ const Card = () => {
                               </div>
                               <div className="flex gap-2 flex-col">
                                 <div className="flex bg-[var(--bg-card-btn)] h-[30px] justify-center items-center text-xl">
-                                  <div className="px-3 cursor-pointer">-</div>
+                                  <div
+                                    onClick={() => dec(pt.quantity, pt._id)}
+                                    className="px-3 cursor-pointer"
+                                  >
+                                    -
+                                  </div>
                                   <div className="px-3">{pt.quantity}</div>
                                   <div
                                     onClick={() =>
@@ -239,22 +252,32 @@ const Card = () => {
                                 </div>
                                 <div className="flex gap-2 flex-col">
                                   <div className="flex bg-[var(--bg-card-btn)] h-[30px] justify-center items-center text-xl">
-                                    <div className="px-3 cursor-pointer">-</div>
+                                    <div
+                                      onClick={() => dec(p.quantity, p._id)}
+                                      className="px-3 cursor-pointer"
+                                    >
+                                      -
+                                    </div>
                                     <div className="px-3">{p.quantity}</div>
                                     <div
-                                      onClick={() =>
-                                        inc(
-                                          p.quantity,
-                                          p.productInfo.stock,
-                                          p._id
-                                        )
-                                      }
+                                      // onClick={() =>
+                                      //   inc(
+                                      //     p.quantity,
+                                      //     p.productInfo.stock,
+                                      //     p._id
+                                      //   )
+                                      // }
                                       className="px-3 cursor-pointer"
                                     >
                                       +
                                     </div>
                                   </div>
-                                  <button className="px-5 py-[3px] bg-[var(--bg-card-delete)] text-[var(--text-card)]">
+                                  <button
+                                    onClick={() =>
+                                      dispatch(delete_card_product(p._id))
+                                    }
+                                    className="px-5 py-[3px] bg-[var(--bg-card-delete)] text-[var(--text-card)]"
+                                  >
                                     Видалити
                                   </button>
                                 </div>
@@ -274,7 +297,14 @@ const Card = () => {
                     <div className="bg-[var(--bg-cardStock)] p-3 text-[var(--text-card-shopTitle)] flex flex-col gap-3">
                       <h2 className="text-xl font-bold">Ваше замовлення</h2>
                       <div className="flex justify-between items-center ">
-                        <span>{buy_product_item} товари</span>
+                        <span>
+                          {buy_product_item}{" "}
+                          {buy_product_item === 1
+                            ? "позиція"
+                            : buy_product_item >= 2 && buy_product_item <= 4
+                            ? "позиції"
+                            : "позицій"}
+                        </span>
                         <span>₴{price}</span>
                       </div>
                       <div className="flex justify-between items-center ">
