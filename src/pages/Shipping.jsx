@@ -1,10 +1,19 @@
 import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoIosArrowForward } from "react-icons/io";
+import { useDispatch, useSelector } from "react-redux";
+import { place_order } from "../store/reducers/orderSlice";
 
 const Shipping = () => {
+  const {
+    state: { products, price, shipping_fee, items },
+  } = useLocation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { userInfo } = useSelector((state) => state.auth);
+
   const [res, setRes] = useState(false);
   const [state, setState] = useState({
     name: "",
@@ -29,6 +38,20 @@ const Shipping = () => {
     if (name && address && phone && post && district && city && area) {
       setRes(true);
     }
+  };
+
+  const placeOrder = () => {
+    dispatch(
+      place_order({
+        price,
+        products,
+        shipping_fee,
+        items,
+        shippingInfo: state,
+        userId: userInfo.id,
+        navigate,
+      })
+    );
   };
 
   return (
@@ -191,50 +214,70 @@ const Shipping = () => {
                   )}
                 </div>
 
-                {[1, 2].map((p, i) => (
-                  <div className="flex bg-[var(--bg-cardStock)] p-4 flex-col gap-2">
+                {products.map((p, i) => (
+                  <div
+                    key={i}
+                    className="flex bg-[var(--bg-cardStock)] p-4 flex-col gap-2"
+                  >
                     <div className="flex justify-start items-center">
                       <h2 className="text-md text-[var(--text-card-shopTitle)] font-bold">
-                        TechScout
+                        {p.shopName}
                       </h2>
                     </div>
-                    {[1, 2].map((p, i) => (
-                      <div className="w-full flex flex-wrap">
+                    {p.products.map((pt, i) => (
+                      <div
+                        key={pt.productInfo._id}
+                        className="w-full flex flex-wrap"
+                      >
                         <div className="flex max-sm:w-full gap-2 w-7/12">
                           <div className="flex gap-2 justify-start items-center">
                             <img
                               className="w-[80px] h-[80px]"
-                              src={`http://localhost:5173/images/products/${
-                                i + 1
-                              }.webp`}
+                              src={pt.productInfo.images[0]}
                               alt=""
                             />
                             <div className="pr-4 text-[var(--text-card-shopTitle)]">
                               <h2 className="text-md font-semibold">
-                                Назва продукту
+                                {pt.productInfo.name}
                               </h2>
-                              <span className="text-sm">Бренд: Dali</span>
+                              <span className="text-sm">
+                                Бренд: {pt.productInfo.brand}
+                              </span>
                             </div>
                           </div>
                         </div>
 
                         <div className="flex justify-between w-5/12 max-sm:w-full max-sm:mt-3">
                           <div className="pl-4 max-sm:pl-0">
-                            <h2 className="text-lg text-[var(--text-card-price)] ">
-                              ₴17320
-                            </h2>
-                            <p className="line-through">₴21300</p>
-                            <p>-15%</p>
+                            {pt.productInfo.discount &&
+                            pt.productInfo.discount > 0 ? (
+                              <>
+                                <h2 className="text-lg text-[var(--text-card-price)] ">
+                                  ₴
+                                  {pt.productInfo.price -
+                                    Math.floor(
+                                      (pt.productInfo.price *
+                                        pt.productInfo.discount) /
+                                        100
+                                    )}
+                                </h2>
+                                <p className="line-through text-[var(--text-card-priceOrdinary)]">
+                                  ₴{pt.productInfo.price}
+                                </p>
+                                <p>-{pt.productInfo.discount}%</p>
+                              </>
+                            ) : (
+                              <h2 className="text-lg text-[var(--text-card-priceOrdinary)] ">
+                                ₴{pt.productInfo.price}
+                              </h2>
+                            )}
                           </div>
                           <div className="flex gap-2 flex-col">
                             <div className="flex bg-[var(--bg-card-btn)] h-[30px] justify-center items-center text-xl">
-                              <div className="px-3 cursor-pointer">-</div>
-                              <div className="px-3">2</div>
-                              <div className="px-3 cursor-pointer">+</div>
+                              <div className="px-3">
+                                Кількість: {pt.quantity}
+                              </div>
                             </div>
-                            <button className="px-5 py-[3px] bg-[var(--bg-card-delete)] text-[var(--text-card)]">
-                              Видалити
-                            </button>
                           </div>
                         </div>
                       </div>
@@ -249,25 +292,26 @@ const Shipping = () => {
                 <div className="bg-[var(--bg-cardStock)] p-3 text-[var(--text-card-shopTitle)] flex flex-col gap-3">
                   <h2 className="text-xl font-bold">Деталі замовлення</h2>
                   <div className="flex justify-between items-center ">
-                    <span>Всього товарів (5) на суму</span>
-                    <span>₴35000</span>
+                    <span>Всього товарів ({items}) на суму</span>
+                    <span>₴{price}</span>
                   </div>
                   <div className="flex justify-between items-center ">
                     <span>Доставка</span>
-                    <span>₴100</span>
+                    <span>₴{shipping_fee}</span>
                   </div>
                   <div className="flex justify-between items-center ">
                     <span>Разом до сплати</span>
-                    <span>₴35100</span>
+                    <span>₴{price + shipping_fee}</span>
                   </div>
 
                   <div className="flex justify-between items-center ">
                     <span>Всього</span>
                     <span className="text-lg text-[var(--text-card-sum)]">
-                      ₴35100
+                      ₴{price + shipping_fee}
                     </span>
                   </div>
                   <button
+                    onClick={placeOrder}
                     disabled={res ? false : true}
                     className={`px-5 py-[6px] rounded-sm hover:shadow-red-500/50 hover:shadow-lg ${
                       res

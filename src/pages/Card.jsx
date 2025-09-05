@@ -35,10 +35,10 @@ const Card = () => {
   const redirect = () => {
     navigate("/shipping", {
       state: {
-        products: [],
-        price: 35100,
-        shipping_fee,
-        items: 2,
+        products: card_products,
+        price: price,
+        shipping_fee: shipping_fee,
+        items: buy_product_item,
       },
     });
   };
@@ -149,7 +149,7 @@ const Card = () => {
                                             100
                                         )}
                                     </h2>
-                                    <p className="line-through">
+                                    <p className="line-through text-[var(--text-card-priceOrdinary)]">
                                       ₴{pt.productInfo.price}
                                     </p>
                                     <p>-{pt.productInfo.discount}%</p>
@@ -300,10 +300,10 @@ const Card = () => {
                         <span>
                           {buy_product_item}{" "}
                           {buy_product_item === 1
-                            ? "позиція"
+                            ? "товар"
                             : buy_product_item >= 2 && buy_product_item <= 4
-                            ? "позиції"
-                            : "позицій"}
+                            ? "товари"
+                            : "товарів"}
                         </span>
                         <span>₴{price}</span>
                       </div>

@@ -193,6 +193,13 @@
   --bg-regG: #fb2c36; /* red-500 */
   --text-regLog: oklch(62.3% 0.214 259.815); /* blue-500 */
   --bg--regLoader: #38303033;
+
+  /* ======== PAYMENT PAGE ======== */
+  --bg-pay: #eeeeee;
+  --text-pay: #45556c;
+  --bg-stripe: #ffffff;
+  --bg-notStripe: #f1f5f9;
+  --border-payStripe: #e2e8f0;
 }
 
 .dark {
