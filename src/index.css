@@ -200,6 +200,29 @@
   --bg-stripe: #ffffff;
   --bg-notStripe: #f1f5f9;
   --border-payStripe: #e2e8f0;
+  --bg-payBtn: #059473;
+  --text-payBtn: #ffffff;
+  --bg-pay-rightSection: #ffffff;
+  --text-payPrice: oklch(62.7% 0.194 149.214); /* green-600 */
+
+  /* ======== USER DASHBOARD PAGE ======== */
+  --bg-dash: #e2e8f0; /* slate-200 */
+  --bg-dashListBtn: #059473;
+  --text-dashListBtn: #ffffff;
+  --bg-dashSec: #ffffff;
+  --text-dash: #45556c;
+
+  /* Index */
+  --bg-index: #ffffff;
+  --bg-indexSec: #dcfce7; /* green-100 */
+  --text-index: #016630; /* green-800 */
+  --text-indexSec: #45556c; /* slate-600 */
+  --text-indexTable: #6a7282; /* gray-500 */
+  --text-indexTableSec: #364153; /* gray-700 */
+  --bg-indexTable: #e5e7eb; /* gray-200 */
+  --bg-indexTableSec: #ffffff;
+  --border-indexTable: #e2e8f0;
+  --bg-indexViewBtn: #b9f8cf; /* green-200 */
 }
 
 .dark {
