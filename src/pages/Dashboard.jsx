@@ -56,7 +56,7 @@ const Dashboard = () => {
                   <span className="text-xl">
                     <IoHeart />
                   </span>
-                  <Link to="/dashboard" className="block">
+                  <Link to="/dashboard/my-wishlist" className="block">
                     Список бажань
                   </Link>
                 </li>
@@ -72,7 +72,7 @@ const Dashboard = () => {
                   <span className="text-xl">
                     <RiLockPasswordFill />
                   </span>
-                  <Link to="/dashboard" className="block">
+                  <Link to="/dashboard/change-password" className="block">
                     Змінити пароль
                   </Link>
                 </li>
@@ -87,7 +87,7 @@ const Dashboard = () => {
               </ul>
             </div>
 
-            <div className="w-[calc(100% - 270px] max-mdlg:w-full)">
+            <div className="w-[calc(100%-270px)] max-mdlg:w-full)">
               <div className="mx-4 max-mdlg:mx-0">
                 <Outlet />
               </div>

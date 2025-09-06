@@ -68,19 +68,19 @@
   /* Latest Products */
   --text-latest: #45556c;
   --bg-latest-leftArrow: #cad5e2;
-  --border-latest-leftArrow: #e2e8f0;
+  --border-latest-leftArrow: #e5e7eb;
 
   /* Footer */
   --bg-footer: #f3f6fa;
   --text-footer: #45556c;
   --bg-subscribe: #ffffff;
-  --border-subscribe: #e2e8f0;
+  --border-subscribe: #e5e7eb;
   --bg-subscribeBtn: #059473;
   --text-subscribe: #ffffff;
   --bg-icon-hov: #059473;
   --bg-icon: #ffffff;
   --text-icon: #ffffff;
-  --border-copyright: #e2e8f0;
+  --border-copyright: #e5e7eb;
 
   /* ======== SHOPS PAGE ======== */
 
@@ -100,7 +100,7 @@
   /* Upper Menu */
   --bg-uMenu: #ffffff;
   --text-uMenu: #45556c;
-  --border-uMenu: #e2e8f0;
+  --border-uMenu: #e5e7eb;
   --bg-uMenu-styles: #cad5e2;
 
   /* Products */
@@ -134,7 +134,7 @@
   --bg-ship: #eeeeee;
   --bg-shipSec: #ffffff;
   --text-ship: #45556c;
-  --border-ship: #e2e8f0;
+  --border-ship: #e5e7eb;
   --border-ship-foc: oklch(72.3% 0.219 149.579);
   --bg-ship-saveBtn: oklch(72.3% 0.219 149.579);
   --text-ship-saveBtn: #ffffff;
@@ -147,7 +147,7 @@
 
   --bg-deatails-road: #f1f5f9;
   --text-deatails: #45556c;
-  --border-deatails: #e2e8f0;
+  --border-deatails: #e5e7eb;
   --text-deatailsRaiting: oklch(72.3% 0.219 149.579);
   --text-deatailsPrice: #fb2c36;
   --bg-detailsDescr: oklch(92.9% 0.013 255.508); /* slate-200 */
@@ -175,7 +175,7 @@
   --bg-details-rating: oklch(92.9% 0.013 255.508); /* slate-200 */
   --bg-details-login: #fb2c36; /* red-500 */
   --text-details-login: #ffffff;
-  --border-details-review: #e2e8f0;
+  --border-details-review: #e5e7eb;
   --bg-details-submitBtn: oklch(58.5% 0.233 277.117); /* indigo-500 */
   --text-details-submitBtn: #ffffff;
 
@@ -199,7 +199,7 @@
   --text-pay: #45556c;
   --bg-stripe: #ffffff;
   --bg-notStripe: #f1f5f9;
-  --border-payStripe: #e2e8f0;
+  --border-payStripe: #e5e7eb;
   --bg-payBtn: #059473;
   --text-payBtn: #ffffff;
   --bg-pay-rightSection: #ffffff;
@@ -221,8 +221,23 @@
   --text-indexTableSec: #364153; /* gray-700 */
   --bg-indexTable: #e5e7eb; /* gray-200 */
   --bg-indexTableSec: #ffffff;
-  --border-indexTable: #e2e8f0;
+  --border-indexTable: #e5e7eb;
   --bg-indexViewBtn: #b9f8cf; /* green-200 */
+
+  /* My Orders */
+  --bg-myOrders: #ffffff;
+  --text-myOrders: #45556c;
+  --border-myOrders: #e5e7eb;
+
+  /* Change Password */
+  --bg-changePas: #ffffff;
+  --text-changePas: #45556c;
+  --border-changePas: #e5e7eb;
+  --bg-changePasBtn: #059473;
+  --text-changePasBtn: #ffffff;
+
+  /* Wishlist */
+  --bg-wish: #ffffff;
 }
 
 .dark {
