@@ -238,6 +238,16 @@
 
   /* Wishlist */
   --bg-wish: #ffffff;
+
+  /* Order Details */
+  --bg-ordDet: #ffffff;
+  --text-ordDet: #45556c;
+  --bg-ordDet-home: #dbeafe; /* blue-100 */
+  --text-ordDet-home: #193cb8; /* blue-800 */
+  --text-ordDet-paid: #016630; /* green-800 */
+  --bg-ordDet-paid: #7bf1a8; /* green-300 */
+  --text-ordDet-NotPaid: #9f0712; /* red-800 */
+  --bg-ordDet-NotPaid: oklch(80.8% 0.114 19.571); /* red-300 */
 }
 
 .dark {
