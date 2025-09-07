@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { IoIosCart } from "react-icons/io";
 import { MdRemoveShoppingCart } from "react-icons/md";
 import { FaCartArrowDown } from "react-icons/fa6";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { get_dashboard_index_data } from "../../store/reducers/dashboardSlice";
 
 const getOrderWord = (count) => {
   const lastDigit = count % 10;
@@ -19,7 +21,30 @@ const getOrderWord = (count) => {
 };
 
 const Index = () => {
-  const orderCount = 45;
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { userInfo } = useSelector((state) => state.auth);
+  const { recentOrders, totalOrders, pendingOrders, cancelledOrders } =
+    useSelector((state) => state.dashboard);
+
+  useEffect(() => {
+    dispatch(get_dashboard_index_data(userInfo.id));
+  }, []);
+
+  const redirect = (customerOrder) => {
+    let items = 0;
+    for (let i = 0; i < customerOrder.products.length; i++) {
+      items = customerOrder.products[i].quantity + items;
+    }
+    navigate("/payment", {
+      state: {
+        price: customerOrder.price,
+        items,
+        orderId: customerOrder._id,
+      },
+    });
+  };
 
   return (
     <div>
@@ -31,8 +56,8 @@ const Index = () => {
             </span>
           </div>
           <div className="flex flex-col justify-start items-start text-[var(--text-indexSec)]">
-            <h2 className="text-3xl font-bold">{orderCount}</h2>
-            <span>{getOrderWord(orderCount)}</span>
+            <h2 className="text-3xl font-bold">{totalOrders}</h2>
+            <span>{getOrderWord(totalOrders)}</span>
           </div>
         </div>
 
@@ -43,7 +68,7 @@ const Index = () => {
             </span>
           </div>
           <div className="flex flex-col justify-start items-start text-[var(--text-indexSec)]">
-            <h2 className="text-3xl font-bold">25</h2>
+            <h2 className="text-3xl font-bold">{pendingOrders}</h2>
             <span>Замовлення в обробці</span>
           </div>
         </div>
@@ -55,7 +80,7 @@ const Index = () => {
             </span>
           </div>
           <div className="flex flex-col justify-start items-start text-[var(--text-indexSec)]">
-            <h2 className="text-3xl font-bold">2</h2>
+            <h2 className="text-3xl font-bold">{cancelledOrders}</h2>
             <span>Скасовані замовлення</span>
           </div>
         </div>
@@ -87,91 +112,56 @@ const Index = () => {
               </thead>
 
               <tbody>
-                <tr className="bg-[var(--bg-indexTableSec)] border-b border-[var(--border-indexTable)]">
-                  <td
-                    scope="row"
-                    className="px-6 py-4 font-medium whitespace-nowrap"
+                {recentOrders.map((o, i) => (
+                  <tr
+                    key={o._id}
+                    className="bg-[var(--bg-indexTableSec)] border-b border-[var(--border-indexTable)]"
                   >
-                    #344
-                  </td>
-                  <td
-                    scope="row"
-                    className="px-6 py-4 font-medium whitespace-nowrap"
-                  >
-                    ₴18990
-                  </td>
-                  <td
-                    scope="row"
-                    className="px-6 py-4 font-medium whitespace-nowrap"
-                  >
-                    в очікуванні
-                  </td>
-                  <td
-                    scope="row"
-                    className="px-6 py-4 font-medium whitespace-nowrap"
-                  >
-                    в очікуванні
-                  </td>
-                  <td
-                    scope="row"
-                    className="px-6 py-4 font-medium whitespace-nowrap"
-                  >
-                    <Link>
-                      <span className="bg-[var(--bg-indexViewBtn)] text-[var(--text-index)] text-md font-semibold mr-2 px-3 py-[2px] rounded">
-                        Переглянути
-                      </span>
-                    </Link>
+                    <td
+                      scope="row"
+                      className="px-6 py-4 font-medium whitespace-nowrap"
+                    >
+                      #{o._id}
+                    </td>
+                    <td
+                      scope="row"
+                      className="px-6 py-4 font-medium whitespace-nowrap"
+                    >
+                      ₴{o.price}
+                    </td>
+                    <td
+                      scope="row"
+                      className="px-6 py-4 font-medium whitespace-nowrap"
+                    >
+                      {o.payment_status}
+                    </td>
+                    <td
+                      scope="row"
+                      className="px-6 py-4 font-medium whitespace-nowrap"
+                    >
+                      {o.delivery_status}
+                    </td>
+                    <td
+                      scope="row"
+                      className="px-6 py-4 font-medium whitespace-nowrap"
+                    >
+                      <Link to={`/dashboard/order/details/${o._id}`}>
+                        <span className="bg-[var(--bg-indexViewBtn)] text-[var(--text-index)] text-md font-semibold mr-2 px-3 py-[2px] rounded">
+                          Переглянути
+                        </span>
+                      </Link>
 
-                    <Link>
-                      <span className="bg-[var(--bg-indexViewBtn)] text-[var(--text-index)] text-md font-semibold mr-2 px-3 py-[2px] rounded">
-                        Оплатити
-                      </span>
-                    </Link>
-                  </td>
-                </tr>
-
-                <tr className="bg-[var(--bg-indexTableSec)] border-b border-[var(--border-indexTable)]">
-                  <td
-                    scope="row"
-                    className="px-6 py-4 font-medium whitespace-nowrap"
-                  >
-                    #344
-                  </td>
-                  <td
-                    scope="row"
-                    className="px-6 py-4 font-medium whitespace-nowrap"
-                  >
-                    ₴18990
-                  </td>
-                  <td
-                    scope="row"
-                    className="px-6 py-4 font-medium whitespace-nowrap"
-                  >
-                    в очікуванні
-                  </td>
-                  <td
-                    scope="row"
-                    className="px-6 py-4 font-medium whitespace-nowrap"
-                  >
-                    в очікуванні
-                  </td>
-                  <td
-                    scope="row"
-                    className="px-6 py-4 font-medium whitespace-nowrap"
-                  >
-                    <Link>
-                      <span className="bg-[var(--bg-indexViewBtn)] text-[var(--text-index)] text-md font-semibold mr-2 px-3 py-[2px] rounded">
-                        Переглянути
-                      </span>
-                    </Link>
-
-                    <Link>
-                      <span className="bg-[var(--bg-indexViewBtn)] text-[var(--text-index)] text-md font-semibold mr-2 px-3 py-[2px] rounded">
-                        Оплатити
-                      </span>
-                    </Link>
-                  </td>
-                </tr>
+                      {o.payment_status !== "paid" && (
+                        <span
+                          onClick={() => redirect(o)}
+                          className="bg-[var(--bg-indexViewBtn)] text-[var(--text-index)] text-md font-semibold mr-2 px-3 py-[2px] rounded cursor-pointer"
+                        >
+                          Оплатити
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
