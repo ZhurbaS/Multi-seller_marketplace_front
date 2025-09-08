@@ -7,8 +7,6 @@ const OrderDetails = () => {
   const { orderId } = useParams();
   const dispatch = useDispatch();
 
-  const navigate = useNavigate();
-
   const { userInfo } = useSelector((state) => state.auth);
   const { myOrder } = useSelector((state) => state.order);
 
@@ -98,10 +96,11 @@ const OrderDetails = () => {
                   {p.discount !== 0 ? (
                     <>
                       <h2 className="text-md text-[var(--text-ordDet-paid)]">
-                        ₴{p.price - Math.floor((p.price * p.discount) / 100)}
+                        {p.price} ₴
+                        {p.price - Math.floor((p.price * p.discount) / 100)}
                       </h2>
                       <p className="line-through">{p.price}</p>
-                      <p>{p.discount}%</p>
+                      <p>-{p.discount}%</p>
                     </>
                   ) : (
                     <>

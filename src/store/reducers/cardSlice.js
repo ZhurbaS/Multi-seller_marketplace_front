@@ -75,6 +75,20 @@ export const quantity_dec = createAsyncThunk(
   }
 );
 
+export const add_to_wishlist = createAsyncThunk(
+  "wishlist/add_to_wishlist",
+  async (userId, { rejectWithValue, fulfillWithValue }) => {
+    try {
+      const { data } = await api.put(`/home/product/quantity-dec/${card_id}`);
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      console.error("💥 Error in cardSlice: add_to_wishlist:", error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 export const cardSlice = createSlice({
   name: "card",
   initialState: {
