@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { get_orders_details } from "../../store/reducers/orderSlice";
@@ -76,43 +76,51 @@ const OrderDetails = () => {
           Замовлені товари
         </h2>
         <div className="flex gap-5 flex-col ">
-          {myOrder.products?.map((p, i) => (
-            <div key={i}>
-              <div className="flex gap-5 justify-start items-center text-[var(--text-ordDet)] ">
-                <div className="flex gap-2">
-                  <img className="w-[55px] h-[55px]" src={p.images[0]} alt="" />
-                  <div className="flex text-sm flex-col justify-start items-start">
-                    <Link>{p.name}</Link>
-                    <p>
-                      <span>Бренд: {p.brand}</span>
-                    </p>
-                    <p>
-                      <span>Кількість: {p.quantity}</span>
-                    </p>
+          {myOrder.products?.map((p, i) => {
+            const memoizedPrice = p.price;
+            return (
+              <div key={i}>
+                <div className="flex gap-5 justify-start items-center text-[var(--text-ordDet)] ">
+                  <div className="flex gap-2">
+                    <img
+                      className="w-[55px] h-[55px]"
+                      src={p.images[0]}
+                      alt=""
+                    />
+                    <div className="flex text-sm flex-col justify-start items-start">
+                      <Link>{p.name}</Link>
+                      <p>
+                        <span>Бренд: {p.brand}</span>
+                      </p>
+                      <p>
+                        <span>Кількість: {p.quantity}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pl-4 flex flex-col">
+                    {p.discount !== 0 ? (
+                      <>
+                        <h2 className="text-md text-[var(--text-ordDet-paid)]">
+                          {memoizedPrice} ₴
+                          {memoizedPrice -
+                            Math.floor((memoizedPrice * p.discount) / 100)}
+                        </h2>
+                        <p className="line-through">{memoizedPrice}</p>
+                        <p>-{p.discount}%</p>
+                      </>
+                    ) : (
+                      <>
+                        <h2 className="text-md text-[var(--text-ordDet-paid)]">
+                          ₴{memoizedPrice}
+                        </h2>
+                      </>
+                    )}
                   </div>
                 </div>
-
-                <div className="pl-4 flex flex-col">
-                  {p.discount !== 0 ? (
-                    <>
-                      <h2 className="text-md text-[var(--text-ordDet-paid)]">
-                        {p.price} ₴
-                        {p.price - Math.floor((p.price * p.discount) / 100)}
-                      </h2>
-                      <p className="line-through">{p.price}</p>
-                      <p>-{p.discount}%</p>
-                    </>
-                  ) : (
-                    <>
-                      <h2 className="text-md text-[var(--text-ordDet-paid)]">
-                        ₴{p.price}
-                      </h2>
-                    </>
-                  )}
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

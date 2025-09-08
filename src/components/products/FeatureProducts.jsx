@@ -4,7 +4,11 @@ import { RiShoppingCartLine } from "react-icons/ri";
 import Rating from "../Rating";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { add_to_card, messageClear } from "../../store/reducers/cardSlice";
+import {
+  add_to_card,
+  add_to_wishlist,
+  messageClear,
+} from "../../store/reducers/cardSlice";
 import toast from "react-hot-toast";
 
 const FeatureProducts = ({ products }) => {
@@ -39,6 +43,23 @@ const FeatureProducts = ({ products }) => {
     }
   }, [successMessage, errorMessage]);
 
+  const add_wishlist = (product) => {
+    // console.log(product);
+    dispatch(
+      add_to_wishlist({
+        userId: userInfo.id,
+        productId: product._id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0],
+        discount: product.discount,
+        rating: product.rating,
+        slug: product.slug,
+        slugBase: product.slugBase,
+      })
+    );
+  };
+
   return (
     <div className="w-[85%] flex flex-wrap mx-auto">
       <div className="w-full ">
@@ -68,7 +89,10 @@ const FeatureProducts = ({ products }) => {
                 alt=""
               />
               <ul className="flex transition-all duration-700 -bottom-10 justify-center items-center gap-2 absolute w-full group-hover:bottom-3">
-                <li className="w-[38px] h-[38px] cursor-pointer bg-[var(--bg-featured-heart)] flex justify-center items-center rounded-full hover:bg-[var(--bg-featured-heart-hov)] hover:text-[var(--text-featured-heart-hov)] hover:rotate-[720deg] transition-all">
+                <li
+                  onClick={() => add_wishlist(p)}
+                  className="w-[38px] h-[38px] cursor-pointer bg-[var(--bg-featured-heart)] flex justify-center items-center rounded-full hover:bg-[var(--bg-featured-heart-hov)] hover:text-[var(--text-featured-heart-hov)] hover:rotate-[720deg] transition-all"
+                >
                   <FaRegHeart />
                 </li>
                 <Link

@@ -13,14 +13,17 @@ const Orders = () => {
     (state) => state.order
   );
   useEffect(() => {
-    dispatch(get_orders({ status: state, customerId: userInfo.id }));
-  }, [state, userInfo.id, dispatch]);
+    if (userInfo?.id) {
+      dispatch(get_orders({ status: state, customerId: userInfo.id }));
+    }
+  }, [state]);
 
   const redirect = (customerOrder) => {
-    let items = 0;
-    for (let i = 0; i < customerOrder.products.length; i++) {
-      items = customerOrder.products[i].quantity + items;
-    }
+    const items = customerOrder.products.reduce(
+      (sum, p) => sum + p.quantity,
+      0
+    );
+
     navigate("/payment", {
       state: {
         price: customerOrder.price,
@@ -30,25 +33,25 @@ const Orders = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="w-screen h-screen flex justify-center items-center fixed left-0 top-0 bg-[var(--bg--regLoader)] z-[999]">
-        <FadeLoader />
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="w-screen h-screen flex justify-center items-center fixed left-0 top-0 bg-[var(--bg--regLoader)] z-[999]">
+  //       <FadeLoader />
+  //     </div>
+  //   );
+  // }
 
-  // Виведення помилки, якщо є
-  if (errorMessage) {
-    return (
-      <div className="bg-[var(--bg-myOrders)] p-4 rounded-md">
-        <h2 className="text-xl font-semibold text-[var(--text-myOrders)]">
-          Помилка
-        </h2>
-        <p>{errorMessage}</p>
-      </div>
-    );
-  }
+  // // Виведення помилки, якщо є
+  // if (errorMessage) {
+  //   return (
+  //     <div className="bg-[var(--bg-myOrders)] p-4 rounded-md">
+  //       <h2 className="text-xl font-semibold text-[var(--text-myOrders)]">
+  //         Помилка
+  //       </h2>
+  //       <p>{errorMessage}</p>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="bg-[var(--bg-myOrders)] p-4 rounded-md">
@@ -80,7 +83,7 @@ const Orders = () => {
         <div className="pt-4">
           <div className="relative overflow-x-auto rounded-md">
             <table className="w-full text-sm text-left text-[var(--text-indexTable)] ">
-              <thead className="text-чі text-[var(--text-indexTableSec)] uppercase bg-[var(--bg-indexTable)] rounded-md">
+              <thead className="text-xs text-[var(--text-indexTableSec)] uppercase bg-[var(--bg-indexTable)] rounded-md">
                 <tr>
                   <th scope="col" className="px-6 py-3">
                     Id замовлення

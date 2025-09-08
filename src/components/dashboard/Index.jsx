@@ -34,7 +34,7 @@ const Index = () => {
 
   const redirect = (customerOrder) => {
     let items = 0;
-    for (let i = 0; i < customerOrder.products.length; i++) {
+    for (let i = 0; i < customerOrder.length; i++) {
       items = customerOrder.products[i].quantity + items;
     }
     navigate("/payment", {

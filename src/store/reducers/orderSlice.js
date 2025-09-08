@@ -90,21 +90,20 @@ export const orderSlice = createSlice({
     builder
       .addCase(get_orders.fulfilled, (state, { payload }) => {
         state.loading = false;
-        state.myOrders = payload.orders || [];
+        state.myOrders = payload.orders;
         state.errorMessage = "";
       })
-      .addCase(get_orders.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(get_orders.rejected, (state, { payload }) => {
-        state.loading = false;
-        payload?.error || payload?.message || "Something went wrong";
-        state.myOrders = [];
-      })
+      // .addCase(get_orders.pending, (state) => {
+      //   state.loading = true;
+      // })
+      // .addCase(get_orders.rejected, (state, { payload }) => {
+      //   state.loading = false;
+      //   payload?.error || payload?.message || "Something went wrong";
+      // })
       .addCase(get_orders_details.fulfilled, (state, { payload }) => {
         // state.loading = false;
-        state.myOrder = payload.order || [];
-        state.errorMessage = "";
+        state.myOrder = payload.order;
+        // state.errorMessage = "";
       });
   },
 });

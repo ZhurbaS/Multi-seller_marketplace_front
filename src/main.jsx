@@ -8,22 +8,22 @@ import { Provider } from "react-redux";
 import store from "./store/index";
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <Provider store={store}>
-      <BrowserRouter>
-        <Suspense fallback={<div>Завантаження...</div>}>
-          <App />
-          <Toaster
-            toastOptions={{
-              position: "bottom-right",
-              style: {
-                background: "var(--bg-toaster)",
-                color: "var(--color-toaster)",
-              },
-            }}
-          />
-        </Suspense>
-      </BrowserRouter>
-    </Provider>
-  </StrictMode>
+  // <StrictMode>
+  <Provider store={store}>
+    <BrowserRouter>
+      <Suspense fallback={<div>Завантаження...</div>}>
+        <App />
+        <Toaster
+          toastOptions={{
+            position: "bottom-right",
+            style: {
+              background: "var(--bg-toaster)",
+              color: "var(--color-toaster)",
+            },
+          }}
+        />
+      </Suspense>
+    </BrowserRouter>
+  </Provider>
+  // </StrictMode>
 );
