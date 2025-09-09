@@ -72,6 +72,20 @@ export const query_products = createAsyncThunk(
   }
 );
 
+export const product_details = createAsyncThunk(
+  "product/product_details",
+  async (slug, { fulfillWithValue }) => {
+    try {
+      const { data } = await api.get(`/home/product-details/${slug}`);
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      console.error("💥 Error in homeSlice: product_details:", error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 export const homeSlice = createSlice({
   name: "home",
   initialState: {
@@ -88,6 +102,10 @@ export const homeSlice = createSlice({
     },
     loading: false,
     error: null,
+    product: {},
+    relatedProducts: [],
+    moreProducts: [],
+    category: "",
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -118,6 +136,12 @@ export const homeSlice = createSlice({
       .addCase(query_products.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Не вдалося знайти товари за фільтром";
+      })
+      .addCase(product_details.fulfilled, (state, { payload }) => {
+        state.product = payload.product;
+        state.relatedProducts = payload.relatedProducts;
+        state.moreProducts = payload.moreProducts;
+        state.category = payload.category;
       });
   },
 });

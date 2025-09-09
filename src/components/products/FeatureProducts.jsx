@@ -96,7 +96,7 @@ const FeatureProducts = ({ products }) => {
                   <FaRegHeart />
                 </li>
                 <Link
-                  to="/product/details/new"
+                  to={`/product/details/${p.slug}`}
                   className="w-[38px] h-[38px] cursor-pointer bg-[var(--bg-featured-heart)] flex justify-center items-center rounded-full hover:bg-[var(--bg-featured-heart-hov)] hover:text-[var(--text-featured-heart-hov)] hover:rotate-[720deg] transition-all"
                 >
                   <FaEye />

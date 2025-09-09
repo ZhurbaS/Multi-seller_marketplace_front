@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { IoIosArrowForward } from "react-icons/io";
 import "react-multi-carousel/lib/styles.css";
 import Carousel from "react-multi-carousel";
@@ -19,8 +19,30 @@ import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import { useDispatch, useSelector } from "react-redux";
+import { product_details } from "../store/reducers/homeSlice";
+import toast from "react-hot-toast";
+import {
+  add_to_card,
+  add_to_wishlist,
+  messageClear,
+} from "../store/reducers/cardSlice";
 
 const Details = () => {
+  const navigate = useNavigate();
+  const { slug } = useParams();
+  const dispatch = useDispatch();
+  const { product, relatedProducts, moreProducts, category } = useSelector(
+    (state) => state.home
+  );
+  const { userInfo } = useSelector((state) => state.auth);
+  const { errorMessage, successMessage } = useSelector((state) => state.card);
+
+  useEffect(() => {
+    setImage("");
+    dispatch(product_details(slug));
+  }, [slug]);
+
   const images = [1, 2, 3, 4, 5, 6];
   const [image, setImage] = useState("");
   const discount = 5;
@@ -58,6 +80,67 @@ const Details = () => {
     },
   };
 
+  const [quantity, setQuantity] = useState(1);
+
+  const inc = () => {
+    if (quantity >= product.stock) {
+      toast.error("Out of stock");
+    } else {
+      setQuantity(quantity + 1);
+    }
+  };
+
+  const dec = () => {
+    if (quantity > 1) {
+      setQuantity(quantity - 1);
+    }
+  };
+
+  const add_card = () => {
+    if (userInfo) {
+      dispatch(
+        add_to_card({
+          userId: userInfo.id,
+          quantity: quantity,
+          productId: product._id,
+        })
+      );
+    } else {
+      navigate("/login");
+    }
+  };
+
+  useEffect(() => {
+    if (successMessage) {
+      toast.success(successMessage);
+      dispatch(messageClear());
+    }
+    if (errorMessage) {
+      toast.error(errorMessage);
+      dispatch(messageClear());
+    }
+  }, [successMessage, errorMessage]);
+
+  const add_wishlist = () => {
+    if (userInfo) {
+      dispatch(
+        add_to_wishlist({
+          userId: userInfo.id,
+          productId: product._id,
+          name: product.name,
+          price: product.price,
+          image: product.images[0],
+          discount: product.discount,
+          rating: product.rating,
+          slug: product.slug,
+          slugBase: product.slugBase,
+        })
+      );
+    } else {
+      navigate("/login");
+    }
+  };
+
   return (
     <div>
       <Header />
@@ -86,33 +169,29 @@ const Details = () => {
               <span className="pt-1 ">
                 <IoIosArrowForward />
               </span>
-              <Link to="/">Категорія</Link>
+              <Link to="/">{category.name}</Link>
               <span className="pt-1 ">
                 <IoIosArrowForward />
               </span>
-              <span>Назва товару</span>
+              <span>{product.name}</span>
             </div>
           </div>
         </div>
       </section>
 
       <section>
-        <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto py-5 mb-5">
+        <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto pb-16">
           <div className="grid grid-cols-2 max-mdlg:grid-cols-1 gap-8">
             <div className="">
               <div className="p-5 border border-[var(--border-deatails)]">
                 <img
                   className="h-[400px] w-full"
-                  src={
-                    image
-                      ? `http://localhost:5173/images/products/${image}.webp`
-                      : `http://localhost:5173/images/products/${images[3]}.webp`
-                  }
+                  src={image ? image : product.images?.[0]}
                   alt=""
                 />
               </div>
               <div className="py-3">
-                {images && (
+                {product.images && (
                   <Carousel
                     autoPlay={true}
                     infinite={true}
@@ -120,12 +199,12 @@ const Details = () => {
                     responsive={responsive}
                     transitionDuration={500}
                   >
-                    {images.map((img, i) => {
+                    {product.images.map((img, i) => {
                       return (
                         <div onClick={() => setImage(img)} className="" key={i}>
                           <img
                             className="h-[120px] cursor-pointer"
-                            src={`http://localhost:5173/images/products/${img}.webp`}
+                            src={img}
                             alt=""
                           />
                         </div>
@@ -138,7 +217,7 @@ const Details = () => {
 
             <div className="flex flex-col gap-5">
               <div className="text-3xl text-[var(--text-deatails)] font-bold">
-                <h3>Назва товару </h3>
+                <h3>{product.name}</h3>
               </div>
               <div className="flex justify-start items-center gap-4">
                 <div className="flex text-xl">
@@ -149,39 +228,46 @@ const Details = () => {
                 </span>
               </div>
               <div className="text-2xl text-[var(--text-deatailsPrice)] font-bold flex gap-3">
-                {discount !== 0 ? (
+                {product.discount !== 0 ? (
                   <>
-                    Ціна: <h2 className="line-through">₴500</h2>
-                    <h2>
-                      ₴{500 - Math.floor((500 * discount) / 100)} (-{discount}%)
+                    Ціна: <h2 className="line-through">₴{product.price}</h2>
+                    <h2 className="text-[var(--text-ordDet-paid)]">
+                      ₴
+                      {product.price -
+                        Math.floor((product.price * discount) / 100)}{" "}
+                      (-{product.discount}%)
                     </h2>
                   </>
                 ) : (
-                  <h2>Ціна: ₴300</h2>
+                  <h2 className="text-[var(--text-ordDet-paid)]">
+                    Ціна: ₴{product.price}
+                  </h2>
                 )}
               </div>
               <div className="text-[var(--text-deatails)] ">
                 <p>
-                  Lorem ipsum dolor sit amet consectetur adipisicing elit. Ipsam
-                  quo maxime repellat maiores, odio facere exercitationem
-                  possimus deserunt quidem illum voluptatum nemo. Molestias
-                  tempore, explicabo labore dolores laboriosam ipsa dicta. Lorem
-                  ipsum dolor sit amet consectetur adipisicing elit. Ipsam quo
-                  maxime repellat maiores, odio facere exercitationem possimus
-                  deserunt quidem illum voluptatum nemo. Molestias tempore,
-                  explicabo labore dolores laboriosam ipsa dicta.
+                  {product.description
+                    ? product.description.substring(0, 230) + "..."
+                    : ""}
                 </p>
               </div>
               <div className="flex gap-3 pb-10 border-b border-[var(--border-deatails)]">
-                {stock ? (
+                {product.stock ? (
                   <>
                     <div className="flex bg-[var(--bg-detailsDescr)] h-[50px] justify-center items-center text-xl">
-                      <div className="px-6 cursor-pointer">-</div>
-                      <div className="px-6">2</div>
-                      <div className="px-6 cursor-pointer">+</div>
+                      <div onClick={dec} className="px-6 cursor-pointer">
+                        -
+                      </div>
+                      <div className="px-6">{quantity}</div>
+                      <div onClick={inc} className="px-6 cursor-pointer">
+                        +
+                      </div>
                     </div>
                     <div className="">
-                      <button className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-green-500/40 bg-[var(--bg-detailsAddBtn)] text-[var(--text-detailsAddBtn)]">
+                      <button
+                        onClick={add_card}
+                        className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-green-500/40 bg-[var(--bg-detailsAddBtn)] text-[var(--text-detailsAddBtn)]"
+                      >
                         Додати до кошика
                       </button>
                     </div>
@@ -190,7 +276,10 @@ const Details = () => {
                   ""
                 )}
                 <div className="">
-                  <div className="h-[50px] w-[50px] flex justify-center items-center cursor-pointer hover:shadow-lg hover:shadow-cyan-500/40 bg-[var(--bg-detailsHeart)] text-[var(--text-detailsAddBtn)]">
+                  <div
+                    onClick={add_wishlist}
+                    className="h-[50px] w-[50px] flex justify-center items-center cursor-pointer hover:shadow-lg hover:shadow-cyan-500/40 bg-[var(--bg-detailsHeart)] text-[var(--text-detailsAddBtn)]"
+                  >
                     <FaHeart />
                   </div>
                 </div>
@@ -204,12 +293,14 @@ const Details = () => {
                 <div className="flex flex-col gap-5">
                   <span
                     className={`${
-                      stock
+                      product.stock
                         ? "text-[var(--text-detailsOnStock)]"
                         : "text-[var(--text-detailsOutOfStock)]"
                     }`}
                   >
-                    {stock ? `Є в наявності ${stock}` : "Передзамовлення"}
+                    {product.stock
+                      ? `Є в наявності ${product.stock}`
+                      : "Передзамовлення"}
                   </span>
 
                   <ul className="flex justify-start items-center gap-3">
@@ -258,7 +349,7 @@ const Details = () => {
               </div>
 
               <div className="flex gap-3">
-                {stock ? (
+                {product.stock ? (
                   <button className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-green-500/40 bg-[var(--bg-detailsBuyBtn)] text-[var(--text-detailsAddBtn)]">
                     Купити
                   </button>
@@ -310,15 +401,7 @@ const Details = () => {
                     <Reviews />
                   ) : (
                     <p className="py-5 text-[var(--text-deatails)]">
-                      Lorem, ipsum dolor sit amet consectetur adipisicing elit.
-                      Ea, repudiandae, porro delectus exercitationem beatae
-                      distinctio obcaecati, vero ut necessitatibus officiis
-                      assumenda autem asperiores fugiat? Ducimus illum
-                      architecto itaque quae velit? Lorem ipsum dolor sit amet
-                      consectetur adipisicing elit. Voluptas eaque esse harum
-                      possimus quisquam cumque laborum sunt quos, fuga quas
-                      placeat earum modi fugiat, quidem tempora vero numquam
-                      molestiae. Repellat?
+                      {product.description}
                     </p>
                   )}
                 </div>
@@ -328,34 +411,34 @@ const Details = () => {
             <div className="w-[28%] max-mdlg:w-full">
               <div className="pl-4 max-mdlg:pl-0">
                 <div className="px-3 py-2 text-[var(--text-deatails)] bg-[var(--bg-detailsDescr)]">
-                  <h2 className="font-bold">Від TeschScout</h2>
+                  <h2 className="font-bold">Від {product.shopName}</h2>
                 </div>
                 <div className="flex flex-col gap-5 mt-3 border border-[var(--border-deatails)] p-3">
-                  {[1, 2, 3].map((p, i) => {
+                  {moreProducts.map((p, i) => {
                     return (
                       <Link key={i} className="block">
                         <div className="relative h-[270px]">
                           <img
                             className="w-full h-full"
-                            src={`http://localhost:5173/images/products/${p}.webp`}
+                            src={p.images[0]}
                             alt=""
                           />
-                          {discount !== 0 && (
+                          {p.discount !== 0 && (
                             <div className="flex justify-center items-center absolute text-[var(--text-featured-disc)] w-[38px] h-[38px] rounded-full bg-[var(--bg-featured-disc)] font-semibold text-xs left-2 top-2">
-                              {discount}%
+                              {p.discount}%
                             </div>
                           )}
                         </div>
 
                         <h2 className="text-[var(--text-deatails)] py-1 font-bold">
-                          Назва товару
+                          {p.name}
                         </h2>
                         <div className="flex gap-2">
                           <h2 className="text-lg font-bold text-[var(--text-deatails)]">
-                            ₴760
+                            ₴{p.price}
                           </h2>
                           <div className="flex items-center gap-2">
-                            <Rating ratings={4.5} />
+                            <Rating ratings={p.rating} />
                           </div>
                         </div>
                       </Link>
@@ -371,7 +454,7 @@ const Details = () => {
       <section>
         <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto">
           <h2 className="text-2xl py-8 text-[var(--text-deatails)]">
-            Товари, які купують разом
+            Вам також може сподобатись
           </h2>
           <div className="relative">
             <Swiper
@@ -397,7 +480,7 @@ const Details = () => {
               modules={[Pagination, Navigation]}
               className="mySwiper"
             >
-              {[1, 2, 3, 4, 5, 6].map((p, i) => {
+              {relatedProducts.map((p, i) => {
                 return (
                   <SwiperSlide key={i}>
                     <Link className="block">
@@ -405,29 +488,29 @@ const Details = () => {
                         <div className="w-full h-full">
                           <img
                             className="w-full h-full"
-                            src={`http://localhost:5173/images/products/${p}.webp`}
+                            src={p.images[0]}
                             alt=""
                           />
                           <div className="absolute h-full w-full top-0 left-0 bg-[var(--bg-swipper)] opacity-25 hover:opacity-50 transition-all duration-500"></div>
                         </div>
 
-                        {discount !== 0 && (
+                        {p.discount !== 0 && (
                           <div className="flex justify-center items-center absolute text-[var(--text-featured-disc)] w-[38px] h-[38px] rounded-full bg-[var(--bg-featured-disc)] font-semibold text-xs left-2 top-2">
-                            {discount}%
+                            {p.discount}%
                           </div>
                         )}
                       </div>
 
                       <div className="p-4 flex flex-col gap-1">
                         <h2 className="text-[var(--text-deatails)] text-lg font-bold">
-                          Назва товару
+                          {p.name}
                         </h2>
                         <div className="flex justify-start items-center gap-3">
                           <h2 className="text-lg font-bold text-[var(--text-deatails)]">
-                            ₴760
+                            ₴{p.price}
                           </h2>
                           <div className="flex">
-                            <Rating ratings={4.5} />
+                            <Rating ratings={p.rating} />
                           </div>
                         </div>
                       </div>

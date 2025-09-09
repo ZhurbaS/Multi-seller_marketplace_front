@@ -102,8 +102,7 @@ const OrderDetails = () => {
                     {p.discount !== 0 ? (
                       <>
                         <h2 className="text-md text-[var(--text-ordDet-paid)]">
-                          {memoizedPrice} ₴
-                          {memoizedPrice -
+                          ₴{memoizedPrice -
                             Math.floor((memoizedPrice * p.discount) / 100)}
                         </h2>
                         <p className="line-through">{memoizedPrice}</p>
