@@ -86,6 +86,36 @@ export const product_details = createAsyncThunk(
   }
 );
 
+export const customer_review = createAsyncThunk(
+  "review/customer_review",
+  async (info, { fulfillWithValue }) => {
+    try {
+      const { data } = await api.post(`/home/customer/submit-review`, info);
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      console.error("💥 Error in homeSlice: customer_review:", error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const get_reviews = createAsyncThunk(
+  "review/get_reviews",
+  async ({ productId, pageNumber }, { fulfillWithValue }) => {
+    try {
+      const { data } = await api.get(
+        `/home/customer/get-reviews/${productId}?pageNo=${pageNumber}`
+      );
+      // console.log(data);
+      return fulfillWithValue(data);
+    } catch (error) {
+      console.error("💥 Error in homeSlice: get_reviews:", error);
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 export const homeSlice = createSlice({
   name: "home",
   initialState: {
@@ -106,8 +136,18 @@ export const homeSlice = createSlice({
     relatedProducts: [],
     moreProducts: [],
     category: "",
+    errorMessage: "",
+    successMessage: "",
+    totalReview: 0,
+    rating_review: [],
+    reviews: [],
   },
-  reducers: {},
+  reducers: {
+    messageClear: (state, _) => {
+      state.errorMessage = "";
+      state.successMessage = "";
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(get_category.fulfilled, (state, { payload }) => {
@@ -142,8 +182,18 @@ export const homeSlice = createSlice({
         state.relatedProducts = payload.relatedProducts;
         state.moreProducts = payload.moreProducts;
         state.category = payload.category;
+      })
+      .addCase(customer_review.fulfilled, (state, { payload }) => {
+        state.successMessage = payload.message;
+      })
+      .addCase(get_reviews.fulfilled, (state, { payload }) => {
+        state.reviews = payload.reviews;
+        state.totalReview = payload.totalReview;
+        state.rating_review = payload.rating_review;
       });
   },
 });
+
+export const { messageClear } = homeSlice.actions;
 
 export default homeSlice.reducer;

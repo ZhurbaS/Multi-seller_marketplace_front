@@ -282,11 +282,15 @@ const Details = () => {
                   </h2>
                 )}
               </div>
+
               <div className="text-[var(--text-deatails)] ">
                 <p>
                   {product.description
                     ? product.description.substring(0, 230) + "..."
                     : ""}
+                </p>
+                <p className="text-[var(--text-deatails)] py-1 font-bold">
+                  Продавець: {product.shopName}
                 </p>
               </div>
               <div className="flex gap-3 pb-10 border-b border-[var(--border-deatails)]">
