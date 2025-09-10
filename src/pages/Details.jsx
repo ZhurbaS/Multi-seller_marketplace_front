@@ -43,10 +43,7 @@ const Details = () => {
     dispatch(product_details(slug));
   }, [slug]);
 
-  const images = [1, 2, 3, 4, 5, 6];
   const [image, setImage] = useState("");
-  const discount = 5;
-  const stock = 3;
   const [state, setState] = useState("reviews");
 
   const responsive = {
@@ -139,6 +136,45 @@ const Details = () => {
     } else {
       navigate("/login");
     }
+  };
+
+  const buynow = () => {
+    let price = 0;
+    if (product.discount !== 0) {
+      price =
+        product.price - Math.floor((product.price * product.discount) / 100);
+    } else {
+      price = product.price;
+    }
+
+    const sellerCommission = parseInt(
+      import.meta.env.VITE_SELLER_COMMISSION || "0"
+    );
+    const shippingFee = parseInt(import.meta.env.VITE_SHIPPING_FEE);
+
+    const obj = [
+      {
+        sellerId: product.sellerId,
+        shopName: product.shopName,
+        price:
+          (price - Math.floor((price * sellerCommission) / 100)) * quantity, // 5 % commission
+        products: [
+          {
+            quantity,
+            productInfo: product,
+          },
+        ],
+      },
+    ];
+
+    navigate("/shipping", {
+      state: {
+        products: obj,
+        price: price * quantity,
+        shipping_fee: shippingFee, // 100 варість доставки
+        items: 1,
+      },
+    });
   };
 
   return (
@@ -234,7 +270,9 @@ const Details = () => {
                     <h2 className="text-[var(--text-ordDet-paid)]">
                       ₴
                       {product.price -
-                        Math.floor((product.price * discount) / 100)}{" "}
+                        Math.floor(
+                          (product.price * product.discount) / 100
+                        )}{" "}
                       (-{product.discount}%)
                     </h2>
                   </>
@@ -350,8 +388,11 @@ const Details = () => {
 
               <div className="flex gap-3">
                 {product.stock ? (
-                  <button className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-green-500/40 bg-[var(--bg-detailsBuyBtn)] text-[var(--text-detailsAddBtn)]">
-                    Купити
+                  <button
+                    onClick={buynow}
+                    className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-green-500/40 bg-[var(--bg-detailsBuyBtn)] text-[var(--text-detailsAddBtn)]"
+                  >
+                    Купити зараз
                   </button>
                 ) : (
                   ""
@@ -398,7 +439,7 @@ const Details = () => {
 
                 <div className="">
                   {state === "reviews" ? (
-                    <Reviews />
+                    <Reviews product={product} />
                   ) : (
                     <p className="py-5 text-[var(--text-deatails)]">
                       {product.description}
@@ -483,7 +524,7 @@ const Details = () => {
               {relatedProducts.map((p, i) => {
                 return (
                   <SwiperSlide key={i}>
-                    <Link className="block">
+                    <Link key={i} className="block">
                       <div className="relative h-[270px]">
                         <div className="w-full h-full">
                           <img

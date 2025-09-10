@@ -6,13 +6,21 @@ import { Link } from "react-router-dom";
 import RatingReact from "react-rating";
 import { CiStar } from "react-icons/ci";
 import { FaStar } from "react-icons/fa6";
+import { useSelector } from "react-redux";
 
-const Reviews = () => {
+const Reviews = ({ product }) => {
   const [perPage, setPerPage] = useState(1);
   const [pageNumber, setPageNumber] = useState(10);
-  const userInfo = {};
-  const [rat, setRat] = useState("");
-  const [re, setRe] = useState("");
+  const {userInfo} = useSelector{state => state.auth};
+  const [rat, setRat] = useState(""); // rating
+  const [re, setRe] = useState(""); // review
+
+  const review_submit = (e)=>{
+    e.preventDefault();
+    const obj = {
+
+    }
+  }
 
   return (
     <div className="mt-8">
@@ -148,8 +156,10 @@ const Reviews = () => {
               />
             </div>
 
-            <form>
+            <form onSubmit={review_submit}>
               <textarea
+                value={re}
+                onChange={(e)=>setRe(e.target.value)}
                 required
                 className="border border-[var(--border-details-review)] outline-0 p-3 w-full"
                 name=""
