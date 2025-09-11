@@ -402,7 +402,7 @@ const Details = () => {
                   ""
                 )}
                 <Link
-                  to="#"
+                  to={`/dashboard/chat/${product.sellerId}`}
                   className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-red-500/40 bg-[var(--bg-detailsChatBtn)] text-[var(--text-detailsAddBtn)]"
                 >
                   Запитати

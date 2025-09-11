@@ -64,7 +64,7 @@ const Dashboard = () => {
                   <span className="text-xl">
                     <IoMdChatbubbles />
                   </span>
-                  <Link to="/dashboard" className="block">
+                  <Link to="/dashboard/chat" className="block">
                     Чат
                   </Link>
                 </li>
