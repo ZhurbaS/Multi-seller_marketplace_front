@@ -16,6 +16,8 @@ const Chat = () => {
     (state) => state.chat
   );
   const [text, setText] = useState("");
+  const [receiverMessage, setReceiverMessage] = useState("");
+  const [activeSeller, setActiveSeller] = useState([]);
 
   useEffect(() => {
     socket.emit("add_user", userInfo.id, userInfo);
@@ -44,6 +46,15 @@ const Chat = () => {
     }
   };
 
+  useEffect(() => {
+    socket.on("seller_message", (msg) => {
+      setReceiverMessage(msg);
+    });
+    socket.on("activeSeller", (sellers) => {
+      setActiveSeller(sellers);
+    });
+  }, []);
+
   return (
     <div>
       <div className="bg-white p-3 rounded-md">
@@ -63,7 +74,9 @@ const Chat = () => {
                   className={`flex gap-2 justify-start items-center pl-2 py-[5px]`}
                 >
                   <div className="w-[30px] h-[30px] rounded-full relative">
-                    <div className="w-[10px] h-[10px] rounded-full bg-green-500 absolute right-0 bottom-0"></div>
+                    {activeSeller.some((c) => c.sellerId === f.fdId) && (
+                      <div className="w-[10px] h-[10px] rounded-full bg-green-500 absolute right-0 bottom-0"></div>
+                    )}
 
                     <img src={f.image} alt="" />
                   </div>
@@ -77,7 +90,11 @@ const Chat = () => {
               <div className="w-full h-full">
                 <div className="flex justify-start gap-3 items-center text-slate-600 text-xl h-[50px]">
                   <div className="w-[30px] h-[30px] rounded-full relative">
-                    <div className="w-[10px] h-[10px] rounded-full bg-green-500 absolute right-0 bottom-0"></div>
+                    {activeSeller.some(
+                      (c) => c.sellerId === currentFd.fdId
+                    ) && (
+                      <div className="w-[10px] h-[10px] rounded-full bg-green-500 absolute right-0 bottom-0"></div>
+                    )}
 
                     <img src={currentFd.image} alt="" />
                   </div>
@@ -94,7 +111,7 @@ const Chat = () => {
                           >
                             <img
                               className="w-[30px] h-[30px] "
-                              src="http://localhost:5173/images/user.png"
+                              src={currentFd.image}
                               alt=""
                             />
                             <div className="p-2 bg-purple-500 text-white rounded-md">
