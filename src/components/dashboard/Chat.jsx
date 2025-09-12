@@ -1,14 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AiOutlineMessage, AiOutlinePlus } from "react-icons/ai";
 import { GrEmoji } from "react-icons/gr";
 import { IoSend } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
+import {
+  add_friend,
+  messageClear,
+  send_message,
+  updateMessage,
+} from "../../store/reducers/chatSlice";
+import toast from "react-hot-toast";
+
 import io from "socket.io-client";
-import { add_friend, send_message } from "../../store/reducers/chatSlice";
 const socket = io("http://localhost:5000"); // must be last
 
 const Chat = () => {
+  const scrollRef = useRef();
+
   const dispatch = useDispatch();
   const { sellerId } = useParams();
   const { userInfo } = useSelector((state) => state.auth);
@@ -54,6 +63,33 @@ const Chat = () => {
       setActiveSeller(sellers);
     });
   }, []);
+
+  useEffect(() => {
+    if (successMessage) {
+      socket.emit("send_customer_message", fd_messages[fd_messages.length - 1]);
+      dispatch(messageClear());
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (receiverMessage) {
+      if (
+        sellerId === receiverMessage.senderId &&
+        userInfo.id === receiverMessage.receiverId
+      ) {
+        dispatch(updateMessage(receiverMessage));
+      } else {
+        toast.success(
+          receiverMessage.senderName + " " + " надіслав повідомлення"
+        );
+        dispatch(messageClear());
+      }
+    }
+  }, [receiverMessage]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [fd_messages]);
 
   return (
     <div>
@@ -106,6 +142,7 @@ const Chat = () => {
                       if (currentFd?.fdId !== m.receiverId) {
                         return (
                           <div
+                            ref={scrollRef}
                             key={i}
                             className="w-full flex gap-2 justify-start items-center text-[14px]"
                           >
@@ -122,6 +159,7 @@ const Chat = () => {
                       } else {
                         return (
                           <div
+                            ref={scrollRef}
                             key={i}
                             className="w-full flex gap-2 justify-end items-center text-[14px]"
                           >
@@ -150,6 +188,12 @@ const Chat = () => {
                     <input
                       value={text}
                       onChange={(e) => setText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          send();
+                        }
+                      }}
                       type="text"
                       placeholder="input message"
                       className="w-full rounded-full h-full outline-none p-3"
