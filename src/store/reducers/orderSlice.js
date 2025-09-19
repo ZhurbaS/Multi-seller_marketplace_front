@@ -13,7 +13,7 @@ export const place_order = createAsyncThunk(
     navigate,
   }) => {
     try {
-      const { data } = await api.post("/home/oders/place-order", {
+      const { data } = await api.post("/home/orders/place-order", {
         price,
         products,
         shipping_fee,

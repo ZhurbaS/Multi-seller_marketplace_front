@@ -25,7 +25,7 @@ const Payment = () => {
                     className={`w-[20%] border-r border-[var(--border-payStripe)] cursor-pointer py-8 px-12 ${
                       paymentMethod === "stripe"
                         ? "bg-[var(--bg-stripe)]"
-                        : "bbg-[var(--bg-notStripe)]"
+                        : "bg-[var(--bg-notStripe)]"
                     }`}
                   >
                     <div className="flex flex-col gap-[3px] justify-center items-center">
@@ -56,7 +56,7 @@ const Payment = () => {
 
                 {paymentMethod === "stripe" && (
                   <div className="">
-                    <Stripe />
+                    <Stripe orderId={orderId} price={price} />
                   </div>
                 )}
 
