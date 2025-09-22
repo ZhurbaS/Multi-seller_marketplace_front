@@ -4,9 +4,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import axios from "axios";
 import CheckoutForm from "./CheckoutForm";
 
-const stripePromise = loadStripe(
-  "pk_test_51S8chEJ805TxhqiGs4DZuMVgLXwEwQ5nPjl74hg0D0MbEkNa0vINOy0kvxbVaeVgQwUDPudSwjnznDjv0IOnqfwV00I9JV02sP"
-);
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const Stripe = ({ orderId, price }) => {
   const [clientSecret, setClientSecret] = useState("");
