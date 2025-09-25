@@ -81,6 +81,11 @@
   --bg-icon: #ffffff;
   --text-icon: #ffffff;
   --border-copyright: #e5e7eb;
+  --bg-footer-sidebar-main: #ffffff;
+  --bg-footer-sidebar: #e2e2e2;
+  --bg-footer-sidebar-ring: #fb2c36; /* red-500 */
+  --text-footer-sidebar: oklch(72.3% 0.219 149.579); /* green-500 */
+  --text-footer-sidebar-ring: #ffffff;
 
   /* ======== SHOPS PAGE ======== */
 

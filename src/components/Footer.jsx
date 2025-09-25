@@ -1,11 +1,21 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AiFillTikTok } from "react-icons/ai";
 import { IoLogoFacebook } from "react-icons/io";
 import { FaSquareInstagram } from "react-icons/fa6";
 import { FaSquareYoutube } from "react-icons/fa6";
+import { useSelector } from "react-redux";
+import { IoHeart } from "react-icons/io5";
+import { FaShoppingCart } from "react-icons/fa";
 
 const Footer = () => {
+  const navigate = useNavigate();
+
+  const { userInfo } = useSelector((state) => state.auth);
+  const { card_product_count, wishlist_count } = useSelector(
+    (state) => state.card
+  );
+
   return (
     <footer className="bg-[var(--bg-footer)]">
       <div className="w-[85%] flex flex-wrap mx-auto border-b border-[var(--border-copyright)] py-16 max-mdlg:pb-10 max-sm:pb-6">
@@ -123,6 +133,40 @@ const Footer = () => {
 
       <div className="w-[90%] flex flex-wrap justify-center items-center text-[var(--text-footer)] mx-auto py-5 text-center">
         <span>© Всі права захищені 2025</span>
+      </div>
+
+      <div className="hidden fixed max-mdlg:block w-[50px] h-[110px] bottom-3 right-2 bg-[var(--bg-footer-sidebar-main)] rounded-full p-2">
+        <div className="w-full h-full flex gap-3 flex-col justify-center items-center">
+          <div
+            onClick={() => navigate(userInfo ? "/card" : "/login")}
+            className="relative flex justify-center items-center cursor-pointer w-[35px] h-[35px] rounded-full bg-[var(--bg-footer-sidebar)] "
+          >
+            <span className="text-xl text-[var(--text-footer-sidebar)]">
+              <FaShoppingCart />
+            </span>
+            {card_product_count !== 0 && (
+              <div className="w-[20px] h-[20px] absolute bg-[var(--bg-footer-sidebar-ring)] rounded-full text-[var(--text-footer-sidebar-ring)] flex justify-center items-center -top-[3px] -right-[5px]">
+                {card_product_count}
+              </div>
+            )}
+          </div>
+
+          <div
+            onClick={() =>
+              navigate(userInfo ? "/dashboard/my-wishlist" : "/login")
+            }
+            className="relative flex justify-center items-center cursor-pointer w-[35px] h-[35px] rounded-full bg-[var(--bg-footer-sidebar)] "
+          >
+            <span className="text-xl text-[var(--text-footer-sidebar)]">
+              <IoHeart />
+            </span>
+            {wishlist_count !== 0 && (
+              <div className="w-[20px] h-[20px] absolute bg-[var(--bg-footer-sidebar-ring)] rounded-full text-[var(--text-footer-sidebar-ring)] flex justify-center items-center -top-[3px] -right-[5px]">
+                {wishlist_count}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </footer>
   );

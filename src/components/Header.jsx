@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MdEmail } from "react-icons/md";
 import {
   FaPhoneAlt,
@@ -14,9 +14,14 @@ import { AiFillTikTok } from "react-icons/ai";
 import { IoLogoFacebook } from "react-icons/io";
 import { FaSquareInstagram } from "react-icons/fa6";
 import { FaSquareYoutube } from "react-icons/fa6";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  get_card_products,
+  get_wishlist_products,
+} from "../store/reducers/cardSlice";
 
 const Header = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const { categories } = useSelector((state) => state.home);
@@ -45,6 +50,13 @@ const Header = () => {
       navigate("/login");
     }
   };
+
+  useEffect(() => {
+    if (userInfo) {
+      dispatch(get_card_products(userInfo.id));
+      dispatch(get_wishlist_products(userInfo.id));
+    }
+  }, [userInfo]);
 
   return (
     <div className="w-full bg-[var(--bg-header-primary)]">
@@ -208,7 +220,12 @@ const Header = () => {
 
                 <div className="flex max-mdlg:hidden justify-center items-center gap-5">
                   <div className="flex justify-center gap-5">
-                    <div className="relative flex justify-center items-center cursor-pointer w-[35px] h-[35px] rounded-full bg-[var(--bg-header-wish)]">
+                    <div
+                      onClick={() =>
+                        navigate(userInfo ? "/dashboard/my-wishlist" : "/login")
+                      }
+                      className="relative flex justify-center items-center cursor-pointer w-[35px] h-[35px] rounded-full bg-[var(--bg-header-wish)]"
+                    >
                       <span className="text-xl text-[var(--wishHeart-active)]">
                         <IoHeart />
                       </span>

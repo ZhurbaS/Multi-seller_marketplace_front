@@ -19,6 +19,10 @@ export const get_card_products = createAsyncThunk(
   "card/get_card_products",
   async (userId, { rejectWithValue, fulfillWithValue }) => {
     try {
+      if (!userId || typeof userId !== "string") {
+        throw new Error("Невірний userId передано до get_card_products...");
+      }
+
       const { data } = await api.get(
         `/home/product/get-card-product/${userId}`
       );
