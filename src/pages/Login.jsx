@@ -147,6 +147,16 @@ const Login = () => {
                   </Link>
                 </p>
               </div>
+              <a target="_blank" href="http://localhost:5001/login">
+                <div className="mt-3 px-8 w-full py-2 bg-[var(--bg-sellerLoginBtn)] shadow hover:shadow-red-500/50 text-[var(--text-regFb)] rounded-md flex justify-center items-center gap-2 mb-3">
+                  Ввійти як продавець
+                </div>
+              </a>
+              <a target="_blank" href="http://localhost:5001/register">
+                <div className="px-8 w-full py-2 bg-[var(--bg-sellerRegisterBtn)] shadow hover:shadow-red-500/50 text-[var(--text-regFb)] rounded-md flex justify-center items-center gap-2 mb-3">
+                  Зареєструватися як продавець
+                </div>
+              </a>
             </div>
 
             <div className="w-full h-full py-4 pr-4">

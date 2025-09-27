@@ -48,7 +48,7 @@ const Dashboard = () => {
         </div>
 
         <div className="h-full mx-auto">
-          <div className="py-5 flex mex-mdlg:w-[90%] mx-auto relative">
+          <div className="py-5 flex max-mdlg:w-[90%] mx-auto relative">
             <div
               className={`rounded-md z-50 max-mdlg:absolute ${
                 filterShow ? "-left-4" : "-left-[360px]"
@@ -107,7 +107,7 @@ const Dashboard = () => {
               </ul>
             </div>
 
-            <div className="w-[calc(100%-270px)] max-mdlg:w-full)">
+            <div className="w-[calc(100%-270px)] max-mdlg:w-full">
               <div className="mx-4 max-mdlg:mx-0">
                 <Outlet />
               </div>
