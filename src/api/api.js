@@ -1,10 +1,19 @@
 import axios from "axios";
 
-const local = "http://localhost:5000";
-const production = "";
+const local = import.meta.env.VITE_LOCAL;
+const production = import.meta.env.VITE_PRODUCTION;
+
+let api_url = import.meta.env.VITE_API_URL;
+let mode = import.meta.env.VITE_MODE;
+
+if (mode === "pro") {
+  api_url = production;
+} else {
+  api_url = local;
+}
 
 const api = axios.create({
-  baseURL: `${local}/api`,
+  baseURL: `${api_url}/api`,
 });
 
 export default api;

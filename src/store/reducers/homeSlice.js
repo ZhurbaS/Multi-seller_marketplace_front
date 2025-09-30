@@ -3,42 +3,45 @@ import api from "../../api/api";
 
 export const get_category = createAsyncThunk(
   "product/get_category",
-  async (_, { fulfillWithValue }) => {
+  async (_, { fulfillWithValue, rejectWithValue }) => {
     try {
       const { data } = await api.get("/home/get-categories");
       // console.log(data);
       return fulfillWithValue(data);
     } catch (error) {
-      console.error("💥 Error in homeSlice: get_category:", error);
-      console.log(error.response);
+      // console.error("💥 Error in homeSlice: get_category:", error);
+      // console.log(error.response);
+      return rejectWithValue(error);
     }
   }
 );
 
 export const get_products = createAsyncThunk(
   "product/get_products",
-  async (_, { fulfillWithValue }) => {
+  async (_, { fulfillWithValue, rejectWithValue }) => {
     try {
       const { data } = await api.get("/home/get-products");
       // console.log(data);
       return fulfillWithValue(data);
     } catch (error) {
-      console.error("💥 Error in homeSlice: get_products:", error);
-      console.log(error.response);
+      // console.error("💥 Error in homeSlice: get_products:", error);
+      // console.log(error.response);
+      return rejectWithValue(error);
     }
   }
 );
 
 export const price_range_product = createAsyncThunk(
   "product/price_range_product",
-  async (_, { fulfillWithValue }) => {
+  async (_, { fulfillWithValue, rejectWithValue }) => {
     try {
       const { data } = await api.get("/home/price-range-latest-product");
       // console.log(data);
       return fulfillWithValue(data);
     } catch (error) {
-      console.error("💥 Error in homeSlice: price_range_product:", error);
-      console.log(error.response);
+      // console.error("💥 Error in homeSlice: price_range_product:", error);
+      // console.log(error.response);
+      return rejectWithValue(error);
     }
   }
 );
@@ -66,7 +69,7 @@ export const query_products = createAsyncThunk(
       // console.log(data);
       return fulfillWithValue(data);
     } catch (error) {
-      console.error("💥 Error in homeSlice: query_products:", error);
+      // console.error("💥 Error in homeSlice: query_products:", error);
       return rejectWithValue(error.response?.data || error.message);
     }
   }
@@ -74,13 +77,13 @@ export const query_products = createAsyncThunk(
 
 export const product_details = createAsyncThunk(
   "product/product_details",
-  async (slug, { fulfillWithValue }) => {
+  async (slug, { fulfillWithValue, rejectWithValue }) => {
     try {
       const { data } = await api.get(`/home/product-details/${slug}`);
       // console.log(data);
       return fulfillWithValue(data);
     } catch (error) {
-      console.error("💥 Error in homeSlice: product_details:", error);
+      // console.error("💥 Error in homeSlice: product_details:", error);
       return rejectWithValue(error.response.data);
     }
   }
@@ -88,13 +91,13 @@ export const product_details = createAsyncThunk(
 
 export const customer_review = createAsyncThunk(
   "review/customer_review",
-  async (info, { fulfillWithValue }) => {
+  async (info, { fulfillWithValue, rejectWithValue }) => {
     try {
       const { data } = await api.post(`/home/customer/submit-review`, info);
       // console.log(data);
       return fulfillWithValue(data);
     } catch (error) {
-      console.error("💥 Error in homeSlice: customer_review:", error);
+      // console.error("💥 Error in homeSlice: customer_review:", error);
       return rejectWithValue(error.response.data);
     }
   }
@@ -102,7 +105,7 @@ export const customer_review = createAsyncThunk(
 
 export const get_reviews = createAsyncThunk(
   "review/get_reviews",
-  async ({ productId, pageNumber }, { fulfillWithValue }) => {
+  async ({ productId, pageNumber }, { fulfillWithValue, rejectWithValue }) => {
     try {
       const { data } = await api.get(
         `/home/customer/get-reviews/${productId}?pageNo=${pageNumber}`
@@ -110,7 +113,7 @@ export const get_reviews = createAsyncThunk(
       // console.log(data);
       return fulfillWithValue(data);
     } catch (error) {
-      console.error("💥 Error in homeSlice: get_reviews:", error);
+      // console.error("💥 Error in homeSlice: get_reviews:", error);
       return rejectWithValue(error.response.data);
     }
   }
@@ -118,13 +121,13 @@ export const get_reviews = createAsyncThunk(
 
 export const get_banners = createAsyncThunk(
   "banner/get_banners",
-  async (_, { fulfillWithValue }) => {
+  async (_, { fulfillWithValue, rejectWithValue }) => {
     try {
       const { data } = await api.get(`/banners`);
       // console.log(data);
       return fulfillWithValue(data);
     } catch (error) {
-      console.error("💥 Error in homeSlice: get_banners:", error);
+      // console.error("💥 Error in homeSlice: get_banners:", error);
       return rejectWithValue(error.response.data);
     }
   }
