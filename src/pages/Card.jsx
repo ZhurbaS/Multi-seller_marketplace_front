@@ -71,9 +71,7 @@ const Card = () => {
       <Header />
       <section
         style={{
-          backgroundImage: `url(${
-            import.meta.env.VITE_PRODUCTION_FRONT
-          }/images/banner/shop.png)`,
+          backgroundImage: `url('https://res.cloudinary.com/dk1sgixl4/image/upload/v1759319695/shop_ymq0yc.png')`,
         }}
         className="h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left"
       >
