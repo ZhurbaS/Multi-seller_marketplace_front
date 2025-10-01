@@ -3,7 +3,7 @@ import axios from "axios";
 const local = import.meta.env.VITE_LOCAL;
 const production = import.meta.env.VITE_PRODUCTION;
 
-let api_url = import.meta.env.VITE_API_URL;
+let api_url = "";
 let mode = import.meta.env.VITE_MODE;
 
 if (mode === "pro") {
