@@ -40,7 +40,7 @@ const api = axios.create({
   baseURL: `${apiBaseUrl}/api`,
 });
 
-// Функції для використання
+//   Функції для використання
 export const getApiUrl = (path = "") => `${apiBaseUrl}/api${path}`;
 export const getFrontendUrl = (path = "") => `${frontendBaseUrl}${path}`;
 
