@@ -3,6 +3,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import axios from "axios";
 import CheckoutForm from "./CheckoutForm";
+import { getApiUrl } from "../utils/apiRoutes";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -19,10 +20,11 @@ const Stripe = ({ orderId, price }) => {
     try {
       // console.log("Sending create-payment request...");
       const response = await axios.post(
-        "http://localhost:5000/api/order/create-payment",
+        getApiUrl("/api/order/create-payment"),
         { price },
         { withCredentials: true }
       );
+
       // console.log("Response from server:", response);
       setClientSecret(response.data.clientSecret);
     } catch (error) {

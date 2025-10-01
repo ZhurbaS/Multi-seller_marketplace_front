@@ -13,8 +13,12 @@ import {
 } from "../../store/reducers/chatSlice";
 import toast from "react-hot-toast";
 import io from "socket.io-client";
+import { getApiUrl } from "../../utils/apiRoutes";
 
-const socket = io("http://localhost:5000"); // must be last
+const socket = io(getApiUrl(), {
+  withCredentials: true,
+  transports: ["websocket"],
+}); // must be last
 
 const Chat = () => {
   const scrollRef = useRef();
@@ -238,7 +242,3 @@ const Chat = () => {
 };
 
 export default Chat;
-
-
-
-

@@ -4,7 +4,7 @@ import errorImg from "../assets/error.png";
 import successImg from "../assets/success.png";
 import { Link } from "react-router-dom";
 import { FadeLoader } from "react-spinners";
-import axios from "axios";
+import api from "../api/api";
 
 const load = async () => {
   return await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -56,7 +56,7 @@ const ConfirmOrder = () => {
     console.log("ORDERID in update_payment " + orderId);
     if (orderId) {
       try {
-        await axios.get(`http://localhost:5000/api/order/confirm/${orderId}`);
+        await api.get(`/order/confirm/${orderId}`);
         localStorage.removeItem("orderId");
         setLoader(false);
       } catch (error) {
