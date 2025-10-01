@@ -5,7 +5,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoIosArrowForward } from "react-icons/io";
 import { useDispatch, useSelector } from "react-redux";
 import { place_order } from "../store/reducers/orderSlice";
-import { getFrontendUrl } from "../api/api";
 
 const Shipping = () => {
   const {
@@ -59,9 +58,12 @@ const Shipping = () => {
     <div>
       <Header />
       <section
-        className={`bg-[url('${getFrontendUrl(
-          "/images/banner/shop.png"
-        )}')] h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left`}
+        style={{
+          backgroundImage: `url(${
+            import.meta.env.VITE_PRODUCTION_FRONT
+          }/images/banner/shop.png)`,
+        }}
+        className="h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left"
       >
         <div className="absolute left-0 top-0 w-full h-full bg-[var(--bg-section)]">
           <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto ">

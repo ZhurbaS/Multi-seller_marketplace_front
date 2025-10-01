@@ -12,7 +12,6 @@ import {
   quantity_dec,
 } from "../store/reducers/cardSlice";
 import toast from "react-hot-toast";
-import { getFrontendUrl } from "../api/api";
 
 const Card = () => {
   const dispatch = useDispatch();
@@ -71,7 +70,9 @@ const Card = () => {
       <Header />
       <section
         style={{
-          backgroundImage: `url('https://res.cloudinary.com/dk1sgixl4/image/upload/v1759319695/shop_ymq0yc.png')`,
+          backgroundImage: `url(${
+            import.meta.env.VITE_PRODUCTION_FRONT
+          }/images/banner/shop.png)`,
         }}
         className="h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left"
       >
