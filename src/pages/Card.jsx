@@ -70,7 +70,9 @@ const Card = () => {
     <div>
       <Header />
       <section
-        className={`bg-[url('https://multi-seller-marketplace-front.vercel.app/images/banner/shop.png')] h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left`}
+        className={`bg-[url(${getFrontendUrl(
+          "/images/banner/shop.png"
+        )})] h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left`}
       >
         <div className="absolute left-0 top-0 w-full h-full bg-[var(--bg-section)]">
           <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto ">
