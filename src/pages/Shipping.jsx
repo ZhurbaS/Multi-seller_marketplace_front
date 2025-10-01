@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoIosArrowForward } from "react-icons/io";
 import { useDispatch, useSelector } from "react-redux";
 import { place_order } from "../store/reducers/orderSlice";
+import { getFrontendUrl } from "../api/api";
 
 const Shipping = () => {
   const {
@@ -57,7 +58,11 @@ const Shipping = () => {
   return (
     <div>
       <Header />
-      <section className="bg-[url('http://localhost:5173/images/banner/shop.png')] h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left">
+      <section
+        className={`bg-[url('${getFrontendUrl(
+          "/images/banner/shop.png"
+        )}')] h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left`}
+      >
         <div className="absolute left-0 top-0 w-full h-full bg-[var(--bg-section)]">
           <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto ">
             <div className="flex flex-col justify-center gap-1 items-center h-full w-full text-[var(--text-section)]">

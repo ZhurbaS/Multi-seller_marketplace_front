@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { customer_register, messageClear } from "../store/reducers/authSlice";
 import toast from "react-hot-toast";
+import { getFrontendUrl } from "../api/api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -177,7 +178,7 @@ const Register = () => {
             </div>
 
             <div className="w-full h-full py-4 pr-4">
-              <img src="http://localhost:5173/images/login.jpg" alt="" />
+              <img src={getFrontendUrl("/images/login.jpg")} alt="" />
             </div>
           </div>
         </div>

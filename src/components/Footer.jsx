@@ -7,6 +7,7 @@ import { FaSquareYoutube } from "react-icons/fa6";
 import { useSelector } from "react-redux";
 import { IoHeart } from "react-icons/io5";
 import { FaShoppingCart } from "react-icons/fa";
+import { getFrontendUrl } from "../api/api";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const Footer = () => {
           <div className="flex flex-col gap-3">
             <img
               className="w-[210px] h-[70px]"
-              src={`http://localhost:5173/images/logoTS.png`}
+              src={getFrontendUrl("/images/logoTS.png")}
               alt="logo"
             />
             <ul className="flex flex-col gap-2 text-[var(--text-footer)]">

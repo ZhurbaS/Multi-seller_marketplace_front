@@ -8,6 +8,7 @@ import { customer_login, messageClear } from "../store/reducers/authSlice";
 import toast from "react-hot-toast";
 import { FadeLoader } from "react-spinners";
 import { useDispatch, useSelector } from "react-redux";
+import { getFrontendUrl } from "../api/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -160,7 +161,7 @@ const Login = () => {
             </div>
 
             <div className="w-full h-full py-4 pr-4">
-              <img src="http://localhost:5173/images/login.jpg" alt="" />
+              <img src={getFrontendUrl("/images/login.jpg")} alt="" />
             </div>
           </div>
         </div>

@@ -19,6 +19,7 @@ import {
   get_card_products,
   get_wishlist_products,
 } from "../store/reducers/cardSlice";
+import { getFrontendUrl } from "../api/api";
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -95,7 +96,7 @@ const Header = () => {
                   </a>
                 </div>
                 <div className="flex group cursor-pointer text-[var(--text-header-leng)] text-sm justify-center items-center gap-1 relative after:h-[18px] after:w-[1px] after:bg-[var(--bg-header-li)] after:-right-[16px] after:absolute before:absolute before:h-[18px] before:bg-[var(--bg-header-li)] before:w-[1px] before:-left-[20px]">
-                  <img src="http://localhost:5173/images/language.png" alt="" />
+                  <img src={getFrontendUrl(`/images/language.png`)} alt="" />
                   <span>
                     <IoMdArrowDropdown />
                   </span>
@@ -141,7 +142,7 @@ const Header = () => {
                 <Link to="/">
                   <img
                     className="w-[235px]"
-                    src="http://localhost:5173/images/logoTS.png"
+                    src={getFrontendUrl("/images/logoTS.png")}
                     alt=""
                   />
                 </Link>
@@ -273,13 +274,13 @@ const Header = () => {
             <Link to="/">
               <img
                 className="w-[235px]"
-                src="http://localhost:5173/images/logoTS.png"
+                src={getFrontendUrl("/images/logoTS.png")}
                 alt=""
               />
             </Link>
             <div className="flex justify-start items-center gap-10">
               <div className="flex group cursor-pointer text-[var(--text-header-leng)] text-sm justify-center items-center gap-1 relative after:h-[18px] after:w-[1px] after:bg-[var(--bg-header-li)] after:-right-[16px] after:absolute">
-                <img src="http://localhost:5173/images/language.png" alt="" />
+                <img src={getFrontendUrl("/images/language.png")} alt="" />
                 <span>
                   <IoMdArrowDropdown />
                 </span>

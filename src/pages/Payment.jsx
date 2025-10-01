@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useLocation } from "react-router-dom";
 import Stripe from "../components/Stripe";
+import { getFrontendUrl } from "../api/api";
 
 const Payment = () => {
   const {
@@ -30,7 +31,7 @@ const Payment = () => {
                   >
                     <div className="flex flex-col gap-[3px] justify-center items-center">
                       <img
-                        src="http://localhost:5173/images/payment/stripe.png"
+                        src={getFrontendUrl("/images/payment/stripe.png")}
                         alt=""
                       />
                     </div>
@@ -46,7 +47,7 @@ const Payment = () => {
                   >
                     <div className="flex flex-col gap-[3px] justify-center items-center">
                       <img
-                        src="http://localhost:5173/images/payment/cod.jpg"
+                        src={getFrontendUrl("/images/payment/cod.jpg")}
                         alt=""
                       />
                     </div>

@@ -14,6 +14,7 @@ import {
 import toast from "react-hot-toast";
 import io from "socket.io-client";
 import { getApiUrl } from "../../utils/apiRoutes";
+import { getFrontendUrl } from "../../api/api";
 
 const socket = io(getApiUrl(), {
   withCredentials: true,
@@ -181,7 +182,7 @@ const Chat = () => {
                         >
                           <img
                             className="w-[30px] h-[30px]"
-                            src="http://localhost:5173/images/user.png"
+                            src={getFrontendUrl("/images/user.png")}
                             alt=""
                           />
                           <div className="p-2 bg-cyan-500 text-white rounded-md">
