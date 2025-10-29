@@ -167,7 +167,7 @@ const Register = () => {
 
               <a
                 target="_blank"
-                href={`${import.meta.env.VITE_PRODUCTION_FRONT}/login`}
+                href={`${import.meta.env.VITE_DASHBOARD_PRODUCTION}/login`}
               >
                 <div className="mt-3 px-8 w-full py-2 bg-[var(--bg-sellerLoginBtn)] shadow hover:shadow-red-500/50 text-[var(--text-regFb)] rounded-md flex justify-center items-center gap-2 mb-3">
                   Ввійти як продавець
@@ -175,7 +175,7 @@ const Register = () => {
               </a>
               <a
                 target="_blank"
-                href={`${import.meta.env.VITE_PRODUCTION_FRONT}/register`}
+                href={`${import.meta.env.VITE_DASHBOARD_PRODUCTION}/register`}
               >
                 <div className="px-8 w-full py-2 bg-[var(--bg-sellerRegisterBtn)] shadow hover:shadow-red-500/50 text-[var(--text-regFb)] rounded-md flex justify-center items-center gap-2 mb-3">
                   Зареєструватися як продавець
