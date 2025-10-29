@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import { FaFacebookF } from "react-icons/fa";
-import { FaGoogle } from "react-icons/fa6";
-import { Link, useNavigate } from "react-router-dom";
-import { customer_login, messageClear } from "../store/reducers/authSlice";
-import toast from "react-hot-toast";
-import { FadeLoader } from "react-spinners";
-import { useDispatch, useSelector } from "react-redux";
-import { getFrontendUrl } from "../api/api";
+import React, { useEffect, useState } from 'react';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import { FaFacebookF } from 'react-icons/fa';
+import { FaGoogle } from 'react-icons/fa6';
+import { Link, useNavigate } from 'react-router-dom';
+import { customer_login, messageClear } from '../store/reducers/authSlice';
+import toast from 'react-hot-toast';
+import { FadeLoader } from 'react-spinners';
+import { useDispatch, useSelector } from 'react-redux';
+import { getFrontendUrl } from '../api/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -20,9 +20,9 @@ const Login = () => {
   const dispatch = useDispatch();
 
   const [state, setState] = useState({
-    email: "",
-    phone: "",
-    password: "",
+    email: '',
+    phone: '',
+    password: '',
   });
 
   const inputHandle = (e) => {
@@ -48,7 +48,7 @@ const Login = () => {
       dispatch(messageClear());
     }
     if (userInfo) {
-      navigate("/");
+      navigate('/');
     }
   }, [successMessage, errorMessage]);
 
@@ -142,18 +142,24 @@ const Login = () => {
 
               <div className="text-center text-[var(--text-reg)] pt-1">
                 <p>
-                  Не маєте акаунту?{" "}
+                  Не маєте акаунту?{' '}
                   <Link to="/register" className="text-[var(--text-regLog)]">
                     Зареєструватися
                   </Link>
                 </p>
               </div>
-              <a target="_blank" href="http://localhost:5001/login">
+              <a
+                target="_blank"
+                href={`${import.meta.env.VITE_DASHBOARD_PRODUCTION}/login`}
+              >
                 <div className="mt-3 px-8 w-full py-2 bg-[var(--bg-sellerLoginBtn)] shadow hover:shadow-red-500/50 text-[var(--text-regFb)] rounded-md flex justify-center items-center gap-2 mb-3">
                   Ввійти як продавець
                 </div>
               </a>
-              <a target="_blank" href="http://localhost:5001/register">
+              <a
+                target="_blank"
+                href={`${import.meta.env.VITE_DASHBOARD_PRODUCTION}/register`}
+              >
                 <div className="px-8 w-full py-2 bg-[var(--bg-sellerRegisterBtn)] shadow hover:shadow-red-500/50 text-[var(--text-regFb)] rounded-md flex justify-center items-center gap-2 mb-3">
                   Зареєструватися як продавець
                 </div>
@@ -161,7 +167,7 @@ const Login = () => {
             </div>
 
             <div className="w-full h-full py-4 pr-4">
-              <img src={getFrontendUrl("/images/login.jpg")} alt="" />
+              <img src={getFrontendUrl('/images/login.jpg')} alt="" />
             </div>
           </div>
         </div>
