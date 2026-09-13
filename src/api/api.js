@@ -38,6 +38,7 @@ const frontendBaseUrl = mode === "pro" ? productionFrontend : localFrontend;
 // Axios інстанс
 const api = axios.create({
   baseURL: `${apiBaseUrl}/api`,
+  withCredentials: true, // без цього браузер не надсилає customerToken cookie на бекенд
 });
 
 //   Функції для використання
