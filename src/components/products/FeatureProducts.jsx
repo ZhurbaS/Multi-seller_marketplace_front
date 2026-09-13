@@ -85,7 +85,7 @@ const FeatureProducts = ({ products }) => {
               )}
               <Link to={`/product/details/${p.slug}`} className="block">
                 <img
-                  className="max-sm:w-full w-full h-[240px]"
+                  className="max-sm:w-full w-full h-[240px] object-cover"
                   src={p.images[0]}
                   alt=""
                 />

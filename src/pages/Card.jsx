@@ -125,7 +125,7 @@ const Card = () => {
                             <div className="flex max-sm:w-full gap-2 w-7/12">
                               <div className="flex gap-2 justify-start items-center">
                                 <img
-                                  className="w-[80px] h-[80px]"
+                                  className="w-[80px] h-[80px] object-cover"
                                   src={pt.productInfo.images[0]}
                                   alt=""
                                 />
@@ -215,7 +215,7 @@ const Card = () => {
                               <div className="flex max-sm:w-full gap-2 w-7/12">
                                 <div className="flex gap-2 justify-start items-center">
                                   <img
-                                    className="w-[80px] h-[80px]"
+                                    className="w-[80px] h-[80px] object-cover"
                                     src={p.products[0].images[0]}
                                     alt=""
                                   />

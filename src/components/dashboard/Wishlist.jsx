@@ -44,7 +44,7 @@ const Wishlist = () => {
             )}
 
             <img
-              className="max-sm:w-full w-full h-[240px]"
+              className="max-sm:w-full w-full h-[240px] object-cover"
               src={p.image}
               alt=""
             />

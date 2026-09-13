@@ -69,7 +69,7 @@ const Products = ({ title, products }) => {
                   key={j}
                 >
                   <img
-                    className="w-[110px] h-[110px]"
+                    className="w-[110px] h-[110px] object-cover"
                     src={pl.images[0]}
                     alt=""
                   />

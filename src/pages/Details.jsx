@@ -226,7 +226,7 @@ const Details = () => {
             <div className="">
               <div className="p-5 border border-[var(--border-deatails)]">
                 <img
-                  className="h-[400px] w-full"
+                  className="h-[400px] w-full object-contain"
                   src={image ? image : product.images?.[0]}
                   alt=""
                 />
@@ -242,9 +242,13 @@ const Details = () => {
                   >
                     {product.images.map((img, i) => {
                       return (
-                        <div onClick={() => setImage(img)} className="" key={i}>
+                        <div
+                          onClick={() => setImage(img)}
+                          className="px-1"
+                          key={i}
+                        >
                           <img
-                            className="h-[120px] cursor-pointer"
+                            className="h-[120px] w-full object-cover cursor-pointer rounded-sm"
                             src={img}
                             alt=""
                           />
@@ -473,7 +477,7 @@ const Details = () => {
                       >
                         <div className="relative h-[270px]">
                           <img
-                            className="w-full h-full"
+                            className="w-full h-full object-cover"
                             src={p.images[0]}
                             alt=""
                           />
@@ -545,7 +549,7 @@ const Details = () => {
                       <div className="relative h-[270px]">
                         <div className="w-full h-full">
                           <img
-                            className="w-full h-full"
+                            className="w-full h-full object-cover"
                             src={p.images[0]}
                             alt=""
                           />
