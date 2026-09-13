@@ -36,7 +36,7 @@ const Wishlist = () => {
           key={i}
           className="border border-[var(--border-category)] group transition-all duration-500 hover:shadow-md hover:-mt-3 bg-[var(--bg-wish)]"
         >
-          <div className="relative overflow-hidden">
+          <div className="relative overflow-hidden aspect-square">
             {p.discount !== 0 && (
               <div className="flex justify-center items-center absolute text-[var(--text-featured-disc)] w-[38px] h-[38px] rounded-full bg-[var(--bg-featured-disc)] font-semibold text-xs left-2 top-2">
                 {p.discount}%
@@ -44,7 +44,7 @@ const Wishlist = () => {
             )}
 
             <img
-              className="max-sm:w-full w-full h-[240px] object-cover"
+              className="w-full h-full object-cover"
               src={p.image}
               alt=""
             />

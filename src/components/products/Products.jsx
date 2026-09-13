@@ -1,88 +1,100 @@
-import React from "react";
-import Carousel from "react-multi-carousel";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import "react-multi-carousel/lib/styles.css";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { Swiper, SwiperSlide, useSwiper } from "swiper/react";
+import "swiper/css";
 
-const Products = ({ title, products }) => {
-  const responsive = {
-    superLargeDesktop: {
-      breakpoint: { max: 4000, min: 3000 },
-      items: 1,
-    },
-    desktop: {
-      breakpoint: { max: 3000, min: 1024 },
-      items: 1,
-    },
-    tablet: {
-      breakpoint: { max: 1024, min: 464 },
-      items: 1,
-    },
-    mobile: {
-      breakpoint: { max: 464, min: 0 },
-      items: 1,
-    },
-  };
-
-  const ButtonGroup = ({ next, previous }) => {
-    return (
-      <div className="flex justify-between items-center">
-        <div className="text-xl font-bold text-[var(var(--text-latest))]">
-          {title}
-        </div>
-        <div className="flex justify-center items-center gap-3 text-[var(var(--text-latest))]">
-          <button
-            onClick={() => previous()}
-            className="w-[30px] h-[30px] flex justify-center items-center bg-[var(--bg-latest-leftArrow)] border border-[var(--border-latest-leftArrow)]"
-          >
-            <FiChevronLeft />
-          </button>
-          <button
-            onClick={() => next()}
-            className="w-[30px] h-[30px] flex justify-center items-center bg-[var(--bg-latest-leftArrow)] border border-[var(--border-latest-leftArrow)]"
-          >
-            <FiChevronRight />
-          </button>
-        </div>
-      </div>
-    );
-  };
+const NavButtons = ({ title }) => {
+  const swiper = useSwiper();
 
   return (
-    <div className="flex gap-8 flex-col-reverse">
-      <Carousel
-        autoPlay={false}
-        infinite={false}
-        arrows={false}
-        responsive={responsive}
-        transitionDuration={500}
-        renderButtonGroupOutside={true}
-        customButtonGroup={<ButtonGroup />}
-      >
-        {products.map((p, i) => {
-          return (
-            <div className="flex flex-col justify-start gap-2" key={i}>
-              {p.map((pl, j) => (
-                <Link
-                  className="flex justify-start items-start"
-                  to={`/product/details/${pl.slug}`}
-                  key={j}
-                >
-                  <img
-                    className="w-[110px] h-[110px] object-cover"
-                    src={pl.images[0]}
-                    alt=""
-                  />
-                  <div className="px-3 flex justify-start items-start gap-1 flex-col text-[var(--text-latest)]">
-                    <h2>{pl.name}</h2>
-                    <span className="text-lg font-bold">₴{pl.price}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          );
-        })}
-      </Carousel>
+    <div className="flex justify-between items-center pb-3">
+      <div className="text-xl font-bold text-[var(var(--text-latest))]">
+        {title}
+      </div>
+      <div className="flex justify-center items-center gap-3 text-[var(var(--text-latest))]">
+        <button
+          type="button"
+          onClick={() => swiper.slidePrev()}
+          className="w-[30px] h-[30px] flex justify-center items-center bg-[var(--bg-latest-leftArrow)] border border-[var(--border-latest-leftArrow)] outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[var(--border-latest-leftArrow)] active:scale-90 transition-transform"
+        >
+          <FiChevronLeft />
+        </button>
+        <button
+          type="button"
+          onClick={() => swiper.slideNext()}
+          className="w-[30px] h-[30px] flex justify-center items-center bg-[var(--bg-latest-leftArrow)] border border-[var(--border-latest-leftArrow)] outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[var(--border-latest-leftArrow)] active:scale-90 transition-transform"
+        >
+          <FiChevronRight />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Swiper measures its container in floating-point pixels (e.g. 379.72px).
+// During a GPU-accelerated slide transition, the browser can round the
+// transformed slide's edge and the overflow-hidden clip edge to slightly
+// different sub-pixel values, leaving a hairline sliver of the next slide
+// visible at certain container widths. Snapping the container to a whole
+// number of pixels removes that fractional boundary entirely, so there is
+// nothing left to round inconsistently.
+const useIntegerWidth = () => {
+  const containerRef = useRef(null);
+  const [width, setWidth] = useState(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver((entries) => {
+      const measured = entries[0]?.contentRect?.width;
+      if (measured) setWidth(Math.floor(measured));
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return { containerRef, width };
+};
+
+const Products = ({ title, products }) => {
+  const { containerRef, width } = useIntegerWidth();
+
+  return (
+    <div ref={containerRef} className="w-full overflow-hidden">
+      <div style={width ? { width } : undefined}>
+        <Swiper slidesPerView={1} spaceBetween={0}>
+          <div slot="container-start">
+            <NavButtons title={title} />
+          </div>
+          {products.map((p, i) => (
+            <SwiperSlide key={i}>
+              <div className="flex flex-col justify-start gap-2 w-full">
+                {p.map((pl, j) => (
+                  <Link
+                    className="flex justify-start items-start w-full"
+                    to={`/product/details/${pl.slug}`}
+                    key={j}
+                  >
+                    <img
+                      className="w-[110px] h-[110px] object-cover shrink-0"
+                      src={pl.images[0]}
+                      alt=""
+                    />
+                    <div className="px-3 flex justify-start items-start gap-1 flex-col text-[var(--text-latest)] min-w-0 flex-1">
+                      <h2 className="w-full line-clamp-2 break-words">
+                        {pl.name}
+                      </h2>
+                      <span className="text-lg font-bold">₴{pl.price}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
     </div>
   );
 };

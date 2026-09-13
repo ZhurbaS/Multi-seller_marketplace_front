@@ -27,6 +27,7 @@ import {
   add_to_wishlist,
   messageClear,
 } from "../store/reducers/cardSlice";
+import useCarouselResizeKey from "../hooks/useCarouselResizeKey";
 
 const Details = () => {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ const Details = () => {
   );
   const { userInfo } = useSelector((state) => state.auth);
   const { errorMessage, successMessage } = useSelector((state) => state.card);
+  const resizeKey = useCarouselResizeKey();
 
   useEffect(() => {
     setImage("");
@@ -224,9 +226,9 @@ const Details = () => {
         <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto pb-16">
           <div className="grid grid-cols-2 max-mdlg:grid-cols-1 gap-8">
             <div className="">
-              <div className="p-5 border border-[var(--border-deatails)]">
+              <div className="p-5 border border-[var(--border-deatails)] aspect-square">
                 <img
-                  className="h-[400px] w-full object-contain"
+                  className="w-full h-full object-contain"
                   src={image ? image : product.images?.[0]}
                   alt=""
                 />
@@ -234,6 +236,7 @@ const Details = () => {
               <div className="py-3">
                 {product.images && (
                   <Carousel
+                    key={resizeKey}
                     autoPlay={true}
                     infinite={true}
                     arrows={true}
@@ -248,7 +251,7 @@ const Details = () => {
                           key={i}
                         >
                           <img
-                            className="h-[120px] w-full object-cover cursor-pointer rounded-sm"
+                            className="aspect-square w-full object-cover cursor-pointer rounded-sm"
                             src={img}
                             alt=""
                           />
@@ -475,7 +478,7 @@ const Details = () => {
                         to={`/product/details/${p.slug}`}
                         className="block"
                       >
-                        <div className="relative h-[270px]">
+                        <div className="relative aspect-square">
                           <img
                             className="w-full h-full object-cover"
                             src={p.images[0]}
@@ -546,7 +549,7 @@ const Details = () => {
                       to={`/product/details/${p.slug}`}
                       className="block"
                     >
-                      <div className="relative h-[270px]">
+                      <div className="relative aspect-square">
                         <div className="w-full h-full">
                           <img
                             className="w-full h-full object-cover"

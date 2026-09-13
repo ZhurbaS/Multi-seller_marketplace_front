@@ -82,13 +82,13 @@ const ShopProducts = ({ styles, products }) => {
           <div
             className={
               styles === "grid"
-                ? "w-full relative group h-[210px] max-md:h-[270px] max-xs:h-[170px] overflow-hidden"
-                : "max-mdlg:w-full relative group h-[210px] max-md:h-[270px] overflow-hidden"
+                ? "w-full relative group aspect-square overflow-hidden"
+                : "w-2/5 max-mdlg:w-full relative group aspect-square overflow-hidden"
             }
           >
-            <Link to={`/product/details/${p.slug}`} className="block">
+            <Link to={`/product/details/${p.slug}`} className="block h-full">
               <img
-                className="h-[240px] rounded-md max-md:h[270px] max-xs:h-[170px] w-full object-cover"
+                className="w-full h-full rounded-md object-cover"
                 src={p.images[0]}
                 alt=""
               />
