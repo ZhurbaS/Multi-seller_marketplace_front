@@ -182,7 +182,7 @@ const Chat = () => {
                         >
                           <img
                             className="w-[30px] h-[30px]"
-                            src={getFrontendUrl("/images/user.png")}
+                            src="/images/user.png"
                             alt=""
                           />
                           <div className="p-2 bg-cyan-500 text-white rounded-md">

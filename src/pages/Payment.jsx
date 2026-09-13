@@ -31,7 +31,7 @@ const Payment = () => {
                   >
                     <div className="flex flex-col gap-[3px] justify-center items-center">
                       <img
-                        src={getFrontendUrl("/images/payment/stripe.png")}
+                        src="/images/payment/stripe.png"
                         alt=""
                       />
                     </div>
@@ -47,7 +47,7 @@ const Payment = () => {
                   >
                     <div className="flex flex-col gap-[3px] justify-center items-center">
                       <img
-                        src={getFrontendUrl("/images/payment/cod.jpg")}
+                        src="/images/payment/cod.jpg"
                         alt=""
                       />
                     </div>

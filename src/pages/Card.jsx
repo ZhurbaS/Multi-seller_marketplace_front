@@ -70,9 +70,7 @@ const Card = () => {
       <Header />
       <section
         style={{
-          backgroundImage: `url(${
-            import.meta.env.VITE_PRODUCTION_FRONT
-          }/images/banner/shop.png)`,
+          backgroundImage: `url(/images/banner/shop.png)`,
         }}
         className="h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left"
       >

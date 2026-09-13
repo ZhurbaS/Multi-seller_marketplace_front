@@ -83,11 +83,13 @@ const FeatureProducts = ({ products }) => {
               ) : (
                 ""
               )}
-              <img
-                className="max-sm:w-full w-full h-[240px]"
-                src={p.images[0]}
-                alt=""
-              />
+              <Link to={`/product/details/${p.slug}`} className="block">
+                <img
+                  className="max-sm:w-full w-full h-[240px]"
+                  src={p.images[0]}
+                  alt=""
+                />
+              </Link>
               <ul className="flex transition-all duration-700 -bottom-10 justify-center items-center gap-2 absolute w-full group-hover:bottom-3">
                 <li
                   onClick={() => add_wishlist(p)}
@@ -110,7 +112,10 @@ const FeatureProducts = ({ products }) => {
               </ul>
             </div>
 
-            <div className="py-3 text-[var(--text-featured-pr_name)] px-2">
+            <Link
+              to={`/product/details/${p.slug}`}
+              className="block py-3 text-[var(--text-featured-pr_name)] px-2"
+            >
               <h2 className="font-bold">{p.name}</h2>
               <div className="flex justify-start items-center gap-3">
                 <span className="text-md font-semibold">₴{p.price}</span>
@@ -118,7 +123,7 @@ const FeatureProducts = ({ products }) => {
                   <Rating ratings={p.rating} />
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
         ))}
       </div>

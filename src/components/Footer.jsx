@@ -24,7 +24,7 @@ const Footer = () => {
           <div className="flex flex-col gap-3">
             <img
               className="w-[210px] h-[70px]"
-              src={getFrontendUrl("/images/logoTS.png")}
+              src="/images/logoTS.png"
               alt="logo"
             />
             <ul className="flex flex-col gap-2 text-[var(--text-footer)]">

@@ -182,9 +182,7 @@ const Details = () => {
       <Header />
       <section
         style={{
-          backgroundImage: `url(${
-            import.meta.env.VITE_PRODUCTION_FRONT
-          }/images/banner/shop.png)`,
+          backgroundImage: `url(/images/banner/shop.png)`,
         }}
         className="h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left"
       >
@@ -468,7 +466,11 @@ const Details = () => {
                 <div className="flex flex-col gap-5 mt-3 border border-[var(--border-deatails)] p-3">
                   {moreProducts.map((p, i) => {
                     return (
-                      <Link key={i} className="block">
+                      <Link
+                        key={i}
+                        to={`/product/details/${p.slug}`}
+                        className="block"
+                      >
                         <div className="relative h-[270px]">
                           <img
                             className="w-full h-full"
@@ -535,7 +537,11 @@ const Details = () => {
               {relatedProducts.map((p, i) => {
                 return (
                   <SwiperSlide key={i}>
-                    <Link key={i} className="block">
+                    <Link
+                      key={i}
+                      to={`/product/details/${p.slug}`}
+                      className="block"
+                    >
                       <div className="relative h-[270px]">
                         <div className="w-full h-full">
                           <img

@@ -96,7 +96,7 @@ const Header = () => {
                   </a>
                 </div>
                 <div className="flex group cursor-pointer text-[var(--text-header-leng)] text-sm justify-center items-center gap-1 relative after:h-[18px] after:w-[1px] after:bg-[var(--bg-header-li)] after:-right-[16px] after:absolute before:absolute before:h-[18px] before:bg-[var(--bg-header-li)] before:w-[1px] before:-left-[20px]">
-                  <img src={getFrontendUrl(`/images/language.png`)} alt="" />
+                  <img src="/images/language.png" alt="" />
                   <span>
                     <IoMdArrowDropdown />
                   </span>
@@ -142,7 +142,7 @@ const Header = () => {
                 <Link to="/">
                   <img
                     className="w-[235px]"
-                    src={getFrontendUrl("/images/logoTS.png")}
+                    src="/images/logoTS.png"
                     alt=""
                   />
                 </Link>
@@ -274,13 +274,13 @@ const Header = () => {
             <Link to="/">
               <img
                 className="w-[235px]"
-                src={getFrontendUrl("/images/logoTS.png")}
+                src="/images/logoTS.png"
                 alt=""
               />
             </Link>
             <div className="flex justify-start items-center gap-10">
               <div className="flex group cursor-pointer text-[var(--text-header-leng)] text-sm justify-center items-center gap-1 relative after:h-[18px] after:w-[1px] after:bg-[var(--bg-header-li)] after:-right-[16px] after:absolute">
-                <img src={getFrontendUrl("/images/language.png")} alt="" />
+                <img src="/images/language.png" alt="" />
                 <span>
                   <IoMdArrowDropdown />
                 </span>
