@@ -83,7 +83,7 @@ const Details = () => {
 
   const inc = () => {
     if (quantity >= product.stock) {
-      toast.error("Out of stock");
+      toast.error("Недостатньо товару на складі");
     } else {
       setQuantity(quantity + 1);
     }
@@ -475,7 +475,7 @@ const Details = () => {
                             <tr
                               key={i}
                               className={
-                                i % 2 === 0
+                                i % 2 === 1
                                   ? "bg-[var(--bg-detailsDescr)]"
                                   : ""
                               }

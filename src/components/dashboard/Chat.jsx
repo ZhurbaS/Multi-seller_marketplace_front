@@ -213,7 +213,7 @@ const Chat = () => {
                         }
                       }}
                       type="text"
-                      placeholder="input message"
+                      placeholder="Введіть повідомлення"
                       className="w-full rounded-full h-full outline-none p-3"
                     />
                     <div className="text-2xl right-2 top-2 absolute cursor-auto">

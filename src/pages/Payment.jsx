@@ -51,7 +51,7 @@ const Payment = () => {
                         alt=""
                       />
                     </div>
-                    <span className="text-[var(--text-pay)]">COD</span>
+                    <span className="text-[var(--text-pay)]">Оплата при отриманні</span>
                   </div>
                 </div>
 

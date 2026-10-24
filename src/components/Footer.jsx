@@ -25,7 +25,7 @@ const Footer = () => {
             <img
               className="w-[210px] h-[70px]"
               src="/images/logoTS.png"
-              alt="logo"
+              alt="Логотип TechScout"
             />
             <ul className="flex flex-col gap-2 text-[var(--text-footer)]">
               <li>

@@ -231,7 +231,15 @@ const Reviews = ({ product }) => {
               <div className="flex gap-1 text-xl">
                 <RatingTemp rating={r.rating} />
               </div>
-              <span className="text-[var(--text-reviews)]">{r.date}</span>
+              <span className="text-[var(--text-reviews)]">
+                {r.createdAt
+                  ? new Date(r.createdAt).toLocaleDateString("uk-UA", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : r.date}
+              </span>
             </div>
             <span className="text-[var(--text-reviews)] text-md">{r.name}</span>
             <p className="text-[var(--text-reviews)] text-sm">{r.review}</p>
