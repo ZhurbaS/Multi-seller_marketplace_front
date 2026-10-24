@@ -59,9 +59,7 @@ const Shipping = () => {
       <Header />
       <section
         style={{
-          backgroundImage: `url(${
-            import.meta.env.VITE_PRODUCTION_FRONT
-          }/images/banner/shop.png)`,
+          backgroundImage: `url(/images/banner/shop.png)`,
         }}
         className="h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left"
       >
@@ -239,7 +237,7 @@ const Shipping = () => {
                         <div className="flex max-sm:w-full gap-2 w-7/12">
                           <div className="flex gap-2 justify-start items-center">
                             <img
-                              className="w-[80px] h-[80px]"
+                              className="w-[80px] h-[80px] object-cover"
                               src={pt.productInfo.images[0]}
                               alt=""
                             />

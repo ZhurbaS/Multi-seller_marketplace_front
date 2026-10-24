@@ -6,6 +6,7 @@ import { IoIosArrowForward } from "react-icons/io";
 import "react-multi-carousel/lib/styles.css";
 import Carousel from "react-multi-carousel";
 import Rating from "../components/Rating";
+import { reviewsWord } from "../utils/pluralize";
 import { FaHeart } from "react-icons/fa6";
 import { AiFillTikTok } from "react-icons/ai";
 import { IoLogoFacebook } from "react-icons/io";
@@ -27,16 +28,17 @@ import {
   add_to_wishlist,
   messageClear,
 } from "../store/reducers/cardSlice";
+import useCarouselResizeKey from "../hooks/useCarouselResizeKey";
 
 const Details = () => {
   const navigate = useNavigate();
   const { slug } = useParams();
   const dispatch = useDispatch();
-  const { product, relatedProducts, moreProducts, category } = useSelector(
-    (state) => state.home
-  );
+  const { product, relatedProducts, moreProducts, category, totalReview } =
+    useSelector((state) => state.home);
   const { userInfo } = useSelector((state) => state.auth);
   const { errorMessage, successMessage } = useSelector((state) => state.card);
+  const resizeKey = useCarouselResizeKey();
 
   useEffect(() => {
     setImage("");
@@ -44,7 +46,7 @@ const Details = () => {
   }, [slug]);
 
   const [image, setImage] = useState("");
-  const [state, setState] = useState("reviews");
+  const [state, setState] = useState("description");
 
   const responsive = {
     superLargeDesktop: {
@@ -81,7 +83,7 @@ const Details = () => {
 
   const inc = () => {
     if (quantity >= product.stock) {
-      toast.error("Out of stock");
+      toast.error("Недостатньо товару на складі");
     } else {
       setQuantity(quantity + 1);
     }
@@ -182,9 +184,7 @@ const Details = () => {
       <Header />
       <section
         style={{
-          backgroundImage: `url(${
-            import.meta.env.VITE_PRODUCTION_FRONT
-          }/images/banner/shop.png)`,
+          backgroundImage: `url(/images/banner/shop.png)`,
         }}
         className="h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left"
       >
@@ -226,9 +226,9 @@ const Details = () => {
         <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto pb-16">
           <div className="grid grid-cols-2 max-mdlg:grid-cols-1 gap-8">
             <div className="">
-              <div className="p-5 border border-[var(--border-deatails)]">
+              <div className="p-5 border border-[var(--border-deatails)] aspect-square">
                 <img
-                  className="h-[400px] w-full"
+                  className="w-full h-full object-contain"
                   src={image ? image : product.images?.[0]}
                   alt=""
                 />
@@ -236,6 +236,7 @@ const Details = () => {
               <div className="py-3">
                 {product.images && (
                   <Carousel
+                    key={resizeKey}
                     autoPlay={true}
                     infinite={true}
                     arrows={true}
@@ -244,9 +245,13 @@ const Details = () => {
                   >
                     {product.images.map((img, i) => {
                       return (
-                        <div onClick={() => setImage(img)} className="" key={i}>
+                        <div
+                          onClick={() => setImage(img)}
+                          className="px-1"
+                          key={i}
+                        >
                           <img
-                            className="h-[120px] cursor-pointer"
+                            className="aspect-square w-full object-cover cursor-pointer rounded-sm"
                             src={img}
                             alt=""
                           />
@@ -264,10 +269,10 @@ const Details = () => {
               </div>
               <div className="flex justify-start items-center gap-4">
                 <div className="flex text-xl">
-                  <Rating ratings={4.5} />
+                  <Rating ratings={product.rating} />
                 </div>
                 <span className="text-[var(--text-deatailsRaiting)]">
-                  (24 відгуки)
+                  ({totalReview} {reviewsWord(totalReview)})
                 </span>
               </div>
               <div className="text-2xl text-[var(--text-deatailsPrice)] font-bold flex gap-3">
@@ -425,17 +430,7 @@ const Details = () => {
           <div className="flex flex-wrap">
             <div className="w-[72%] max-mdlg:w-full">
               <div className="pr-4 max-mdlg:pr-0">
-                <div className="grid grid-cols-2">
-                  <button
-                    onClick={() => setState("reviews")}
-                    className={` py-1 hover:text-[var(--text-detailsAddBtn)] px-5 hover:bg-[var(--bg-detailsAddBtn)] ${
-                      state === "reviews"
-                        ? "bg-[var(--bg-detailsAddBtn)] text-[var(--text-detailsAddBtn)]"
-                        : "bg-[var(--bg-detailsDescr)] text-[var(--bg-detailsNonActBtn)]"
-                    } rounded-sm`}
-                  >
-                    Відгуки
-                  </button>
+                <div className="grid grid-cols-3">
                   <button
                     onClick={() => setState("description")}
                     className={` py-1 hover:text-[var(--text-detailsAddBtn)] px-5 hover:bg-[var(--bg-detailsAddBtn)] ${
@@ -446,11 +441,60 @@ const Details = () => {
                   >
                     Опис
                   </button>
+                  <button
+                    onClick={() => setState("specifications")}
+                    className={` py-1 hover:text-[var(--text-detailsAddBtn)] px-5 hover:bg-[var(--bg-detailsAddBtn)] ${
+                      state === "specifications"
+                        ? "bg-[var(--bg-detailsAddBtn)] text-[var(--text-detailsAddBtn)]"
+                        : "bg-[var(--bg-detailsDescr)] text-[var(--bg-detailsNonActBtn)]"
+                    } rounded-sm`}
+                  >
+                    Характеристики
+                  </button>
+                  <button
+                    onClick={() => setState("reviews")}
+                    className={` py-1 hover:text-[var(--text-detailsAddBtn)] px-5 hover:bg-[var(--bg-detailsAddBtn)] ${
+                      state === "reviews"
+                        ? "bg-[var(--bg-detailsAddBtn)] text-[var(--text-detailsAddBtn)]"
+                        : "bg-[var(--bg-detailsDescr)] text-[var(--bg-detailsNonActBtn)]"
+                    } rounded-sm`}
+                  >
+                    Відгуки ({totalReview})
+                  </button>
                 </div>
 
                 <div className="">
                   {state === "reviews" ? (
                     <Reviews product={product} />
+                  ) : state === "specifications" ? (
+                    Array.isArray(product.specifications) &&
+                    product.specifications.length > 0 ? (
+                      <table className="w-full py-5 text-[var(--text-deatails)]">
+                        <tbody>
+                          {product.specifications.map((spec, i) => (
+                            <tr
+                              key={i}
+                              className={
+                                i % 2 === 1
+                                  ? "bg-[var(--bg-detailsDescr)]"
+                                  : ""
+                              }
+                            >
+                              <td className="py-2 px-4 font-medium w-[45%] align-top break-words">
+                                {spec.key}
+                              </td>
+                              <td className="py-2 px-4 align-top break-words">
+                                {spec.value}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p className="py-5 text-[var(--text-deatails)]">
+                        Для цього товару ще не додано характеристик.
+                      </p>
+                    )
                   ) : (
                     <p className="py-5 text-[var(--text-deatails)]">
                       {product.description}
@@ -468,10 +512,14 @@ const Details = () => {
                 <div className="flex flex-col gap-5 mt-3 border border-[var(--border-deatails)] p-3">
                   {moreProducts.map((p, i) => {
                     return (
-                      <Link key={i} className="block">
-                        <div className="relative h-[270px]">
+                      <Link
+                        key={i}
+                        to={`/product/details/${p.slug}`}
+                        className="block"
+                      >
+                        <div className="relative aspect-square">
                           <img
-                            className="w-full h-full"
+                            className="w-full h-full object-cover"
                             src={p.images[0]}
                             alt=""
                           />
@@ -535,11 +583,15 @@ const Details = () => {
               {relatedProducts.map((p, i) => {
                 return (
                   <SwiperSlide key={i}>
-                    <Link key={i} className="block">
-                      <div className="relative h-[270px]">
+                    <Link
+                      key={i}
+                      to={`/product/details/${p.slug}`}
+                      className="block"
+                    >
+                      <div className="relative aspect-square">
                         <div className="w-full h-full">
                           <img
-                            className="w-full h-full"
+                            className="w-full h-full object-cover"
                             src={p.images[0]}
                             alt=""
                           />

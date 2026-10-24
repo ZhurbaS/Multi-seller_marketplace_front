@@ -7,7 +7,7 @@ import {
   FaList,
   FaShoppingCart,
 } from "react-icons/fa";
-import { IoMdArrowDropdown, IoIosArrowDown } from "react-icons/io";
+import { IoIosArrowDown } from "react-icons/io";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoHeart } from "react-icons/io5";
 import { AiFillTikTok } from "react-icons/ai";
@@ -95,18 +95,6 @@ const Header = () => {
                     <FaSquareInstagram />
                   </a>
                 </div>
-                <div className="flex group cursor-pointer text-[var(--text-header-leng)] text-sm justify-center items-center gap-1 relative after:h-[18px] after:w-[1px] after:bg-[var(--bg-header-li)] after:-right-[16px] after:absolute before:absolute before:h-[18px] before:bg-[var(--bg-header-li)] before:w-[1px] before:-left-[20px]">
-                  <img src={getFrontendUrl(`/images/language.png`)} alt="" />
-                  <span>
-                    <IoMdArrowDropdown />
-                  </span>
-                  <ul className="absolute invisible transition-all top-12 rounded-sm duration-200 text-[var(--text-header-leng-hover)] p-2 w-[100px] flex flex-col gap-3 group-hover:visible group-hover:top-6 group-hover:bg-[var(--bg-header-leng-hover)] z-10">
-                    <li>Українська</li>
-                    <li>Русский</li>
-                    <li>English</li>
-                  </ul>
-                </div>
-
                 {userInfo ? (
                   <Link
                     className="flex cursor-pointer justify-center items-center gap-2 text-sm text-[var(--text-header-list)]"
@@ -142,7 +130,7 @@ const Header = () => {
                 <Link to="/">
                   <img
                     className="w-[235px]"
-                    src={getFrontendUrl("/images/logoTS.png")}
+                    src="/images/logoTS.png"
                     alt=""
                   />
                 </Link>
@@ -274,23 +262,11 @@ const Header = () => {
             <Link to="/">
               <img
                 className="w-[235px]"
-                src={getFrontendUrl("/images/logoTS.png")}
+                src="/images/logoTS.png"
                 alt=""
               />
             </Link>
             <div className="flex justify-start items-center gap-10">
-              <div className="flex group cursor-pointer text-[var(--text-header-leng)] text-sm justify-center items-center gap-1 relative after:h-[18px] after:w-[1px] after:bg-[var(--bg-header-li)] after:-right-[16px] after:absolute">
-                <img src={getFrontendUrl("/images/language.png")} alt="" />
-                <span>
-                  <IoMdArrowDropdown />
-                </span>
-                <ul className="absolute invisible transition-all top-12 rounded-sm duration-200 text-[var(--text-header-leng-hover)] p-2 w-[100px] flex flex-col gap-3 group-hover:visible group-hover:top-6 group-hover:bg-[var(--bg-header-leng-hover)] z-10">
-                  <li>Українська</li>
-                  <li>Русский</li>
-                  <li>English</li>
-                </ul>
-              </div>
-
               {userInfo ? (
                 <Link
                   className="flex cursor-pointer justify-center items-center gap-2 text-sm text-[var(--text-header-list)]"

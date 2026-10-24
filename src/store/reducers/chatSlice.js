@@ -78,7 +78,7 @@ export const chatSlice = createSlice({
 
         state.my_friends = tempFriends;
         state.fd_messages = [...state.fd_messages, payload.message];
-        state.successMessage = "Message sent successfully";
+        state.successMessage = "Повідомлення надіслано";
       });
   },
 });

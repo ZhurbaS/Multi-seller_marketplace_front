@@ -4,10 +4,12 @@ import { Link } from "react-router-dom";
 import "react-multi-carousel/lib/styles.css";
 import { useDispatch, useSelector } from "react-redux";
 import { get_banners } from "../store/reducers/homeSlice";
+import useCarouselResizeKey from "../hooks/useCarouselResizeKey";
 
 const Banner = () => {
   const dispatch = useDispatch();
   const { banners } = useSelector((state) => state.home);
+  const resizeKey = useCarouselResizeKey();
 
   const responsive = {
     superLargeDesktop: {
@@ -39,6 +41,7 @@ const Banner = () => {
           <div className="w-full">
             <div className="my-8">
               <Carousel
+                key={resizeKey}
                 autoPlay={true}
                 infinite={true}
                 arrows={true}

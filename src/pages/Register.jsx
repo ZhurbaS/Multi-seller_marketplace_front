@@ -184,7 +184,7 @@ const Register = () => {
             </div>
 
             <div className="w-full h-full py-4 pr-4">
-              <img src={getFrontendUrl('/images/login.jpg')} alt="" />
+              <img src="/images/login.jpg" alt="" />
             </div>
           </div>
         </div>

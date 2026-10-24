@@ -103,6 +103,18 @@ export const customer_review = createAsyncThunk(
   }
 );
 
+export const can_review = createAsyncThunk(
+  "review/can_review",
+  async (productId, { fulfillWithValue, rejectWithValue }) => {
+    try {
+      const { data } = await api.get(`/home/customer/can-review/${productId}`);
+      return fulfillWithValue(data);
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 export const get_reviews = createAsyncThunk(
   "review/get_reviews",
   async ({ productId, pageNumber }, { fulfillWithValue, rejectWithValue }) => {
@@ -159,6 +171,8 @@ export const homeSlice = createSlice({
     rating_review: [],
     reviews: [],
     banners: [],
+    canReview: false,
+    existingReview: null,
   },
   reducers: {
     messageClear: (state, _) => {
@@ -203,6 +217,13 @@ export const homeSlice = createSlice({
       })
       .addCase(customer_review.fulfilled, (state, { payload }) => {
         state.successMessage = payload.message;
+      })
+      .addCase(customer_review.rejected, (state, { payload }) => {
+        state.errorMessage = payload?.error || "Не вдалося надіслати відгук";
+      })
+      .addCase(can_review.fulfilled, (state, { payload }) => {
+        state.canReview = payload.canReview;
+        state.existingReview = payload.existingReview;
       })
       .addCase(get_reviews.fulfilled, (state, { payload }) => {
         state.reviews = payload.reviews;

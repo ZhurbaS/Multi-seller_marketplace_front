@@ -3,9 +3,11 @@ import Carousel from "react-multi-carousel";
 import { Link } from "react-router-dom";
 import "react-multi-carousel/lib/styles.css";
 import { useSelector } from "react-redux";
+import useCarouselResizeKey from "../hooks/useCarouselResizeKey";
 
 const Categories = () => {
   const { categories } = useSelector((state) => state.home);
+  const resizeKey = useCarouselResizeKey();
 
   const responsive = {
     superLargeDesktop: {
@@ -47,6 +49,7 @@ const Categories = () => {
         </div>
       </div>
       <Carousel
+        key={resizeKey}
         autoPlay={true}
         infinite={true}
         arrows={true}

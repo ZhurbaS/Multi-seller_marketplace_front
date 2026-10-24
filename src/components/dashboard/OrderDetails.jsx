@@ -83,7 +83,7 @@ const OrderDetails = () => {
                 <div className="flex gap-5 justify-start items-center text-[var(--text-ordDet)] ">
                   <div className="flex gap-2">
                     <img
-                      className="w-[55px] h-[55px]"
+                      className="w-[55px] h-[55px] object-cover"
                       src={p.images[0]}
                       alt=""
                     />

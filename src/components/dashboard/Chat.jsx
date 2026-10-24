@@ -182,7 +182,7 @@ const Chat = () => {
                         >
                           <img
                             className="w-[30px] h-[30px]"
-                            src={getFrontendUrl("/images/user.png")}
+                            src="/images/user.png"
                             alt=""
                           />
                           <div className="p-2 bg-cyan-500 text-white rounded-md">
@@ -213,7 +213,7 @@ const Chat = () => {
                         }
                       }}
                       type="text"
-                      placeholder="input message"
+                      placeholder="Введіть повідомлення"
                       className="w-full rounded-full h-full outline-none p-3"
                     />
                     <div className="text-2xl right-2 top-2 absolute cursor-auto">
