@@ -480,10 +480,12 @@ const Details = () => {
                                   : ""
                               }
                             >
-                              <td className="py-2 px-4 font-medium w-1/3">
+                              <td className="py-2 px-4 font-medium w-[45%] align-top break-words">
                                 {spec.key}
                               </td>
-                              <td className="py-2 px-4">{spec.value}</td>
+                              <td className="py-2 px-4 align-top break-words">
+                                {spec.value}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
