@@ -21,6 +21,7 @@ import Wishlist from "./components/dashboard/Wishlist";
 import OrderDetails from "./components/dashboard/OrderDetails";
 import Chat from "./components/dashboard/Chat";
 import ConfirmOrder from "./pages/ConfirmOrder";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   const dispatch = useDispatch();
@@ -30,6 +31,7 @@ function App() {
 
   return (
     <>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />

@@ -8,6 +8,7 @@ import { CiStar } from "react-icons/ci";
 import { FaStar } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  can_review,
   customer_review,
   get_reviews,
   messageClear,
@@ -22,9 +23,15 @@ const Reviews = ({ product }) => {
   const [pageNumber, setPageNumber] = useState(1);
 
   const { userInfo } = useSelector((state) => state.auth);
-  const { successMessage, reviews, totalReview, rating_review } = useSelector(
-    (state) => state.home
-  );
+  const {
+    successMessage,
+    errorMessage,
+    reviews,
+    totalReview,
+    rating_review,
+    canReview,
+    existingReview,
+  } = useSelector((state) => state.home);
 
   const [rat, setRat] = useState(""); // rating
   const [re, setRe] = useState(""); // review
@@ -32,7 +39,6 @@ const Reviews = ({ product }) => {
   const review_submit = (e) => {
     e.preventDefault();
     const obj = {
-      name: userInfo.name,
       review: re,
       rating: rat,
       productId: product._id,
@@ -44,18 +50,15 @@ const Reviews = ({ product }) => {
   useEffect(() => {
     if (successMessage) {
       toast.success(successMessage);
-      dispatch(
-        get_reviews({
-          productId: product._id,
-          pageNumber,
-        })
-      );
       dispatch(product_details(product.slug));
-      setRat("");
-      setRe("");
+      dispatch(can_review(product._id));
       dispatch(messageClear());
     }
-  }, [successMessage]);
+    if (errorMessage) {
+      toast.error(errorMessage);
+      dispatch(messageClear());
+    }
+  }, [successMessage, errorMessage]);
 
   useEffect(() => {
     if (product._id) {
@@ -67,6 +70,21 @@ const Reviews = ({ product }) => {
       );
     }
   }, [pageNumber, product]);
+
+  useEffect(() => {
+    if (userInfo && product._id) {
+      dispatch(can_review(product._id));
+    }
+  }, [userInfo, product._id]);
+
+  // Prefill the form with the customer's existing (pending/approved) review
+  // so resubmitting reads as "edit my review", not "write a new one".
+  useEffect(() => {
+    if (existingReview) {
+      setRat(existingReview.rating);
+      setRe(existingReview.review);
+    }
+  }, [existingReview]);
 
   return (
     <div className="mt-8">
@@ -93,15 +111,17 @@ const Reviews = ({ product }) => {
             <div className="w-[200px] h-[14px] bg-[var(--bg-details-rating)] relative">
               <div
                 style={{
-                  width: `${Math.floor(
-                    (100 * (rating_review[0]?.sum || 0)) / totalReview
-                  )}%`,
+                  width: `${
+                    totalReview > 0
+                      ? Math.floor((100 * (rating_review[0]?.sum || 0)) / totalReview)
+                      : 0
+                  }%`,
                 }}
-                className="h-full bg-[var(--text-ratingTemp)] w-[60%]"
+                className="h-full bg-[var(--text-ratingTemp)]"
               ></div>
             </div>
             <p className="text-sm text-[var(--text-reviews)] w-[0%]">
-              {rating_review[0]?.sum}
+              {rating_review[0]?.sum || 0}
             </p>
           </div>
 
@@ -112,15 +132,17 @@ const Reviews = ({ product }) => {
             <div className="w-[200px] h-[14px] bg-[var(--bg-details-rating)] relative">
               <div
                 style={{
-                  width: `${Math.floor(
-                    (100 * (rating_review[1]?.sum || 0)) / totalReview
-                  )}%`,
+                  width: `${
+                    totalReview > 0
+                      ? Math.floor((100 * (rating_review[1]?.sum || 0)) / totalReview)
+                      : 0
+                  }%`,
                 }}
-                className="h-full bg-[var(--text-ratingTemp)] w-[70%]"
+                className="h-full bg-[var(--text-ratingTemp)]"
               ></div>
             </div>
             <p className="text-sm text-[var(--text-reviews)] w-[0%]">
-              {rating_review[1]?.sum}
+              {rating_review[1]?.sum || 0}
             </p>
           </div>
 
@@ -131,15 +153,17 @@ const Reviews = ({ product }) => {
             <div className="w-[200px] h-[14px] bg-[var(--bg-details-rating)] relative">
               <div
                 style={{
-                  width: `${Math.floor(
-                    (100 * (rating_review[2]?.sum || 0)) / totalReview
-                  )}%`,
+                  width: `${
+                    totalReview > 0
+                      ? Math.floor((100 * (rating_review[2]?.sum || 0)) / totalReview)
+                      : 0
+                  }%`,
                 }}
-                className="h-full bg-[var(--text-ratingTemp)] w-[40%]"
+                className="h-full bg-[var(--text-ratingTemp)]"
               ></div>
             </div>
             <p className="text-sm text-[var(--text-reviews)] w-[0%]">
-              {rating_review[2]?.sum}
+              {rating_review[2]?.sum || 0}
             </p>
           </div>
 
@@ -150,15 +174,17 @@ const Reviews = ({ product }) => {
             <div className="w-[200px] h-[14px] bg-[var(--bg-details-rating)] relative">
               <div
                 style={{
-                  width: `${Math.floor(
-                    (100 * (rating_review[3]?.sum || 0)) / totalReview
-                  )}%`,
+                  width: `${
+                    totalReview > 0
+                      ? Math.floor((100 * (rating_review[3]?.sum || 0)) / totalReview)
+                      : 0
+                  }%`,
                 }}
-                className="h-full bg-[var(--text-ratingTemp)] w-[30%]"
+                className="h-full bg-[var(--text-ratingTemp)]"
               ></div>
             </div>
             <p className="text-sm text-[var(--text-reviews)] w-[0%]">
-              {rating_review[3]?.sum}
+              {rating_review[3]?.sum || 0}
             </p>
           </div>
 
@@ -169,15 +195,17 @@ const Reviews = ({ product }) => {
             <div className="w-[200px] h-[14px] bg-[var(--bg-details-rating)] relative">
               <div
                 style={{
-                  width: `${Math.floor(
-                    (100 * (rating_review[4]?.sum || 0)) / totalReview
-                  )}%`,
+                  width: `${
+                    totalReview > 0
+                      ? Math.floor((100 * (rating_review[4]?.sum || 0)) / totalReview)
+                      : 0
+                  }%`,
                 }}
-                className="h-full bg-[var(--text-ratingTemp)] w-[10%]"
+                className="h-full bg-[var(--text-ratingTemp)]"
               ></div>
             </div>
             <p className="text-sm text-[var(--text-reviews)] w-[0%]">
-              {rating_review[4]?.sum}
+              {rating_review[4]?.sum || 0}
             </p>
           </div>
 
@@ -223,8 +251,34 @@ const Reviews = ({ product }) => {
       </div>
 
       <div className="">
-        {userInfo ? (
+        {!userInfo ? (
+          <div>
+            <Link
+              to="/login"
+              className="py-1 px-5 bg-[var(--bg-details-login)] text-[var(--text-details-login)] rounded-sm"
+            >
+              Зареєструйтесь для написання відгуку
+            </Link>
+          </div>
+        ) : !canReview ? (
+          <p className="text-sm text-[var(--text-reviews)]">
+            Залишити відгук можна лише після того, як замовлення з цим
+            товаром буде доставлено.
+          </p>
+        ) : (
           <div className="flex flex-col gap-3">
+            {existingReview && existingReview.status === "pending" && (
+              <p className="text-sm text-[var(--text-reviews)] italic">
+                Ваш відгук очікує на перевірку модератором. Можете
+                відредагувати текст нижче — він знову піде на перевірку.
+              </p>
+            )}
+            {existingReview && existingReview.status === "rejected" && (
+              <p className="text-sm text-[var(--text-reviews)] italic">
+                Ваш попередній відгук відхилено модератором. Можете
+                відредагувати й надіслати ще раз.
+              </p>
+            )}
             <div className="flex gap-1">
               <RatingReact
                 onChange={(e) => setRat(e)}
@@ -255,19 +309,10 @@ const Reviews = ({ product }) => {
               ></textarea>
               <div className="mt-2 max-mdlg:mb-8 max-md:mb-8 max-sm:mb-8">
                 <button className="py-1 px-5 bg-[var(--bg-details-submitBtn)] text-[var(--text-details-submitBtn)] rounded-sm">
-                  Надіслати
+                  {existingReview ? "Оновити відгук" : "Надіслати"}
                 </button>
               </div>
             </form>
-          </div>
-        ) : (
-          <div>
-            <Link
-              to="/login"
-              className="py-1 px-5 bg-[var(--bg-details-login)] text-[var(--text-details-login)] rounded-sm"
-            >
-              Зареєструйтесь для написання відгуку
-            </Link>
           </div>
         )}
       </div>

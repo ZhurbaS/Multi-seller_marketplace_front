@@ -21,7 +21,7 @@
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
-    "react-multi-carousel": "^2.8.5",
+    "react-multi-carousel": "2.8.5",
     "react-range": "^1.10.0",
     "react-rating": "^2.0.5",
     "react-redux": "^9.2.0",
@@ -44,11 +44,5 @@
     "globals": "^16.3.0",
     "postcss": "^8.5.6",
     "vite": "^7.1.2"
-  },
-  "allowScripts": {
-    "@swc/core@1.13.4": true,
-    "@tailwindcss/oxide@4.1.12": true,
-    "core-js@3.45.1": true,
-    "esbuild@0.28.2": true
   }
 }
