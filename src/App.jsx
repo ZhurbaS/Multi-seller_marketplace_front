@@ -21,6 +21,7 @@ import Wishlist from "./components/dashboard/Wishlist";
 import OrderDetails from "./components/dashboard/OrderDetails";
 import Chat from "./components/dashboard/Chat";
 import ConfirmOrder from "./pages/ConfirmOrder";
+import MockPay from "./pages/MockPay";
 import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
         <Route path="/products/search?" element={<SearchProducts />} />
         <Route path="/product/details/:slug" element={<Details />} />
         <Route path="/order/confirm?" element={<ConfirmOrder />} />
+        <Route path="/pay/mock" element={<MockPay />} />
 
         <Route path="/dashboard" element={<ProtectUser />}>
           <Route path="" element={<Dashboard />}>

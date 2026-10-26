@@ -1,16 +1,86 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { useLocation } from "react-router-dom";
-import Stripe from "../components/Stripe";
-import { getFrontendUrl } from "../api/api";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import api from "../api/api";
+
+const DESCRIPTIONS = {
+  monobank:
+    "Ви перейдете на захищену сторінку monobank (картка, Apple Pay, Google Pay). Після оплати повернетеся на сайт.",
+  liqpay:
+    "Ви перейдете на захищену сторінку LiqPay. Після оплати повернетеся на сайт.",
+  mock: "Тестовий режим: гроші не списуються. Ви зможете імітувати успішну або невдалу оплату.",
+  cod: "Оплата готівкою або карткою при отриманні замовлення. Замовлення буде передано в обробку одразу.",
+};
+
+// Створює й автоматично відправляє POST-форму (потрібно для LiqPay Checkout).
+const submitForm = (url, fields) => {
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = url;
+  form.acceptCharset = "utf-8";
+  Object.entries(fields).forEach(([name, value]) => {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  form.submit();
+};
 
 const Payment = () => {
-  const {
-    state: { price, items, orderId },
-  } = useLocation();
+  const { state } = useLocation();
+  const navigate = useNavigate();
 
-  const [paymentMethod, setPaymentMethod] = useState("stripe");
+  const [methods, setMethods] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState(null);
+  const [loadingMethods, setLoadingMethods] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api
+      .get("/pay/methods")
+      .then(({ data }) => {
+        setMethods(data.methods || []);
+        if (data.methods?.length) setPaymentMethod(data.methods[0].id);
+      })
+      .catch(() => toast.error("Не вдалося завантажити способи оплати"))
+      .finally(() => setLoadingMethods(false));
+  }, []);
+
+  // Сторінку відкрили напряму (без оформленого замовлення)
+  if (!state?.orderId) return <Navigate to="/card" replace />;
+  const { price, items, orderId } = state;
+
+  const pay = async () => {
+    if (!paymentMethod || loading) return;
+    setLoading(true);
+    try {
+      const { data } = await api.post("/pay/start", {
+        orderId,
+        method: paymentMethod,
+      });
+      if (data.type === "cod") {
+        navigate(`/order/confirm?orderId=${orderId}&method=cod`);
+      } else if (data.type === "form") {
+        submitForm(data.url, data.fields);
+      } else if (data.type === "redirect") {
+        if (data.internal) {
+          navigate(`/pay/mock?orderId=${orderId}`);
+        } else {
+          window.location.href = data.url;
+        }
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.error || "Не вдалося почати оплату. Спробуйте ще раз"
+      );
+      setLoading(false);
+    }
+  };
 
   return (
     <div>
@@ -20,51 +90,56 @@ const Payment = () => {
           <div className="flex flex-wrap max-md:flex-col-reverse">
             <div className="w-7/12 max-md:w-full">
               <div className="pr-2 max-md:pr-0">
-                <div className="flex flex-wrap">
-                  <div
-                    onClick={() => setPaymentMethod("stripe")}
-                    className={`w-[20%] border-r border-[var(--border-payStripe)] cursor-pointer py-8 px-12 ${
-                      paymentMethod === "stripe"
-                        ? "bg-[var(--bg-stripe)]"
-                        : "bg-[var(--bg-notStripe)]"
-                    }`}
-                  >
-                    <div className="flex flex-col gap-[3px] justify-center items-center">
-                      <img
-                        src="/images/payment/stripe.png"
-                        alt=""
-                      />
-                    </div>
-                    <span className="text-[var(--text-pay)]">Stripe</span>
-                  </div>
-                  <div
-                    onClick={() => setPaymentMethod("cod")}
-                    className={`w-[20%] border-r border-[var(--border-payStripe)] cursor-pointer py-8 px-12 ${
-                      paymentMethod === "cod"
-                        ? "bg-[var(--bg-stripe)]"
-                        : "bbg-[var(--bg-notStripe)]"
-                    }`}
-                  >
-                    <div className="flex flex-col gap-[3px] justify-center items-center">
-                      <img
-                        src="/images/payment/cod.jpg"
-                        alt=""
-                      />
-                    </div>
-                    <span className="text-[var(--text-pay)]">Оплата при отриманні</span>
-                  </div>
-                </div>
+                <h2 className="font-bold text-lg mb-3 text-[var(--text-pay)]">
+                  Спосіб оплати
+                </h2>
 
-                {paymentMethod === "stripe" && (
-                  <div className="">
-                    <Stripe orderId={orderId} price={price} />
+                {loadingMethods ? (
+                  <div className="px-4 py-8 bg-[var(--bg-stripe)]">
+                    Завантаження...
+                  </div>
+                ) : methods.length === 0 ? (
+                  <div className="px-4 py-8 bg-[var(--bg-stripe)]">
+                    Наразі способи оплати недоступні. Зверніться до адміністратора.
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {methods.map((m) => (
+                      <label
+                        key={m.id}
+                        className={`flex items-center gap-3 border border-[var(--border-payStripe)] cursor-pointer p-4 ${
+                          paymentMethod === m.id
+                            ? "bg-[var(--bg-stripe)]"
+                            : "bg-[var(--bg-notStripe)]"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          checked={paymentMethod === m.id}
+                          onChange={() => setPaymentMethod(m.id)}
+                        />
+                        <span className="text-[var(--text-pay)]">{m.title}</span>
+                      </label>
+                    ))}
                   </div>
                 )}
 
-                {paymentMethod === "cod" && (
-                  <div className="w-full px-4 py-8 bg-[var(--bg-stripe)]">
-                    <button className="px-10 py-[6px] rounded-sm hover:shadow-green-500/20 hover:shadow-lg bg-[var(--bg-payBtn)] text-[var(--text-payBtn)]">
-                      Оплатити
+                {paymentMethod && (
+                  <div className="w-full px-4 py-6 bg-[var(--bg-stripe)] mt-2">
+                    <p className="text-sm text-[var(--text-pay)] mb-4">
+                      {DESCRIPTIONS[paymentMethod]}
+                    </p>
+                    <button
+                      onClick={pay}
+                      disabled={loading}
+                      className="px-10 py-[6px] rounded-sm hover:shadow-green-500/20 hover:shadow-lg bg-[var(--bg-payBtn)] text-[var(--text-payBtn)] disabled:opacity-60"
+                    >
+                      {loading
+                        ? "Зачекайте..."
+                        : paymentMethod === "cod"
+                        ? "Підтвердити замовлення"
+                        : "Оплатити"}
                     </button>
                   </div>
                 )}
