@@ -15,6 +15,9 @@ const ConfirmOrder = () => {
   const [params] = useSearchParams();
   const orderId = params.get("orderId");
   const isCod = params.get("method") === "cod";
+  const isInvoice = params.get("method") === "invoice";
+  const emailed = params.get("emailed") === "1";
+  const invoiceNumber = params.get("number") || "";
 
   // loading | paid | cod | failed | pending
   const [result, setResult] = useState("loading");
@@ -27,6 +30,10 @@ const ConfirmOrder = () => {
     }
     if (isCod) {
       setResult("cod");
+      return;
+    }
+    if (isInvoice) {
+      setResult("invoice");
       return;
     }
     let timer;
@@ -50,7 +57,7 @@ const ConfirmOrder = () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [orderId, isCod]);
+  }, [orderId, isCod, isInvoice]);
 
   const toDashboard = (
     <Link
@@ -81,6 +88,27 @@ const ConfirmOrder = () => {
           <img src={successImg} alt="Замовлення оформлено" />
           <p>Замовлення оформлено. Оплата — при отриманні.</p>
           {toDashboard}
+        </>
+      )}
+      {result === "invoice" && (
+        <>
+          <img src={successImg} alt="Рахунок виставлено" />
+          <p>
+            Замовлення оформлено. Рахунок {invoiceNumber}{" "}
+            {emailed
+              ? "надіслано на вашу електронну пошту."
+              : "сформовано, але лист поки не надіслано — ми надішлемо його найближчим часом."}
+          </p>
+          <p className="text-sm max-w-[460px]">
+            Рахунок також можна завантажити в «Моїх замовленнях» (деталі замовлення). Замовлення піде в обробку після
+            надходження коштів на наш рахунок.
+          </p>
+          <Link
+            className="px-5 py-2 bg-green-500 rounded-sm text-white"
+            to={`/dashboard/order/details/${orderId}`}
+          >
+            Перейти до замовлення
+          </Link>
         </>
       )}
       {result === "pending" && (

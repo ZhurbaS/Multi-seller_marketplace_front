@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useState } from "react";
+import api from "../../api/api";
+import { INVOICE_STATUS, downloadInvoice } from "../../utils/invoice";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { get_orders_details } from "../../store/reducers/orderSlice";
@@ -10,8 +12,15 @@ const OrderDetails = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const { myOrder } = useSelector((state) => state.order);
 
+  const [el, setEl] = useState(null); // можливість повернення/скасування
+  const { cabinetVisible } = useSelector((state) => state.returns);
+
   useEffect(() => {
     dispatch(get_orders_details(orderId));
+    api
+      .get(`/home/returns/eligibility/${orderId}`)
+      .then(({ data }) => setEl(data.eligibility))
+      .catch(() => setEl(null));
   }, [orderId]);
 
   return (
@@ -37,12 +46,30 @@ const OrderDetails = () => {
           <p className="text-[var(--text-ordDet)] text-md font-semibold">
             Email: {userInfo.email}
           </p>
+          {myOrder.buyer?.kind === "company" && (
+            <p className="text-[var(--text-ordDet)] text-sm">
+              Платник: {myOrder.buyer.companyName}, ЄДРПОУ {myOrder.buyer.edrpou}
+              {myOrder.buyer.ipn ? `, ІПН ${myOrder.buyer.ipn}` : ""}
+            </p>
+          )}
         </div>
 
         <div className="text-[var(--text-ordDet)]">
-          <h2 className="font-mono">
-            Ціна: ₴{myOrder.price}, включаючи доставку
-          </h2>
+          <h2 className="font-mono">Сума до сплати: ₴{myOrder.price}</h2>
+          {myOrder.order_discount?.amount > 0 && (
+            <p className="font-mono text-green-700">
+              Знижка за сумою: −₴{myOrder.order_discount.amount}
+            </p>
+          )}
+          {myOrder.coupon?.amount > 0 && (
+            <p className="font-mono text-green-700">
+              Купон {myOrder.coupon.code}: −₴{myOrder.coupon.amount}
+            </p>
+          )}
+          {myOrder.refunded_total > 0 && (
+            <p className="font-mono">Повернено: ₴{myOrder.refunded_total}</p>
+          )}
+          <p className="text-xs opacity-70">Доставка оплачується перевізнику при отриманні.</p>
           <p className="font-mono">
             Статус платежу:{" "}
             <span
@@ -70,6 +97,49 @@ const OrderDetails = () => {
           </p>
         </div>
       </div>
+
+      {myOrder.invoice?.number && (
+        <div className="mt-4 p-3 border border-slate-300 rounded text-[var(--text-ordDet)] text-sm flex flex-col gap-1">
+          <div className="font-semibold">Рахунок на оплату {myOrder.invoice.number}</div>
+          <div>{INVOICE_STATUS[myOrder.invoice.status] || ""}</div>
+          {["awaiting", "sent"].includes(myOrder.invoice.status) && myOrder.delivery_status !== "cancelled" && myOrder.invoice.dueAt && (
+            <div>Дійсний до: {new Date(myOrder.invoice.dueAt).toLocaleDateString("uk-UA")}</div>
+          )}
+          {myOrder.invoice.sentTo && myOrder.invoice.status === "sent" && <div>Надіслано на: {myOrder.invoice.sentTo}</div>}
+          {myOrder.invoice.company &&
+            ["awaiting", "sent"].includes(myOrder.invoice.status) &&
+            myOrder.delivery_status !== "cancelled" && (
+            <div>
+              Реквізити для оплати: {myOrder.invoice.company.name}, IBAN {myOrder.invoice.company.iban}
+            </div>
+          )}
+          <button
+            onClick={() => downloadInvoice(orderId, myOrder.invoice.number)}
+            className="self-start mt-1 px-3 py-1 bg-[var(--bg-card-processBtn)] text-[var(--text-card)] rounded"
+          >
+            Завантажити рахунок (PDF)
+          </button>
+        </div>
+      )}
+
+      {el && el.enabled && (el.canCancel || el.canReturn) && (
+        <div className="mt-4">
+          <Link
+            to={`/dashboard/returns/new/${orderId}`}
+            className="inline-block px-4 py-2 bg-[var(--bg-card-processBtn)] text-[var(--text-card)] rounded"
+          >
+            {el.canCancel ? "Скасувати замовлення" : "Повернути товар"}
+          </Link>
+          {cabinetVisible && (
+            <Link to="/dashboard/returns" className="ml-4 text-sm underline text-[var(--text-ordDet)]">
+              Мої повернення
+            </Link>
+          )}
+        </div>
+      )}
+      {el && !el.canCancel && !el.canReturn && el.message && (
+        <p className="mt-3 text-sm text-[var(--text-ordDet)] opacity-80">{el.message}</p>
+      )}
 
       <div className="mt-4 ">
         <h2 className="text-[var(--text-ordDet)] text-lg pb-2 font-sans font-bold">

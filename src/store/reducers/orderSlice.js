@@ -1,38 +1,35 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "../../api/api";
+import toast from "react-hot-toast";
+import { set_coupon_code } from "./cardSlice";
 
 export const place_order = createAsyncThunk(
   "order/place_order",
-  async ({
-    price,
-    products,
-    shipping_fee,
-    items,
-    shippingInfo,
-    userId,
-    navigate,
-  }) => {
+  async ({ products, items, shippingInfo, couponCode, buyer, navigate }, { rejectWithValue, dispatch }) => {
     try {
+      // Суму, знижки й доставку (її в замовленні немає) рахує сервер;
+      // клієнт надсилає лише товари й адресу.
       const { data } = await api.post("/home/orders/place-order", {
-        price,
         products,
-        shipping_fee,
-        items,
         shippingInfo,
-        userId,
-        navigate,
+        couponCode: couponCode || "",
+        buyer,
       });
+      if (couponCode) dispatch(set_coupon_code("")); // купон використано
       navigate("/payment", {
         state: {
-          price: price + shipping_fee,
+          price: data.price, // остаточна сума від сервера
           items,
           orderId: data.orderId,
+          buyerKind: buyer?.kind || "individual", // «За рахунком» пропонуємо лише юрособам
         },
       });
-      //   console.log(data);
     } catch (error) {
       console.error("💥 Error in orderSlice: place_order:", error);
-      return rejectWithValue(error.response.data);
+      toast.error(
+        error.response?.data?.error || "Не вдалося оформити замовлення"
+      );
+      return rejectWithValue(error.response?.data);
     }
   }
 );

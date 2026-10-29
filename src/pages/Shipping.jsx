@@ -1,15 +1,21 @@
 import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { IoIosArrowForward } from "react-icons/io";
 import { useDispatch, useSelector } from "react-redux";
 import { place_order } from "../store/reducers/orderSlice";
+import toast from "react-hot-toast";
 
 const Shipping = () => {
-  const {
-    state: { products, price, shipping_fee, items },
-  } = useLocation();
+  const location = useLocation();
+  // Сторінку відкрили напряму (без кошика) — повертаємо в кошик
+  if (!location.state?.products) return <Navigate to="/card" replace />;
+  return <ShippingForm state={location.state} />;
+};
+
+const ShippingForm = ({ state: routeState }) => {
+  const { products, price, items, order_discount, total, coupon, coupon_discount, couponCode } = routeState;
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { userInfo } = useSelector((state) => state.auth);
@@ -23,7 +29,30 @@ const Shipping = () => {
     district: "",
     city: "",
     area: "",
+    // Тип доставки зберігаємо в замовленні; оплачує доставку покупець перевізнику при отриманні
+    deliveryType: "nova_poshta_warehouse",
   });
+
+  // Покупець: фізична особа або юридична особа / ФОП (реквізити потрібні для рахунку й документів).
+  // Остаточну перевірку (в т.ч. контрольної цифри ЄДРПОУ) робить сервер.
+  const [buyer, setBuyer] = useState({
+    kind: "individual",
+    companyName: "",
+    edrpou: "",
+    ipn: "",
+  });
+  const buyerHandle = (e) =>
+    setBuyer({ ...buyer, [e.target.name]: e.target.value.replace(/^\s+/, "") });
+
+  const buyerError = () => {
+    if (buyer.kind !== "company") return "";
+    if (buyer.companyName.trim().length < 2) return "Вкажіть назву організації";
+    const code = buyer.edrpou.replace(/\s/g, "");
+    if (!/^\d{8}$|^\d{10}$/.test(code)) return "Код ЄДРПОУ — 8 цифр (для ФОП — 10 цифр РНОКПП)";
+    const ipn = buyer.ipn.replace(/\s/g, "");
+    if (ipn && !/^\d{10}$|^\d{12}$/.test(ipn)) return "ІПН — 12 цифр (платник ПДВ) або 10 цифр";
+    return "";
+  };
 
   const inputHandle = (e) => {
     setState({
@@ -35,6 +64,8 @@ const Shipping = () => {
   const save = (e) => {
     e.preventDefault();
     const { name, address, phone, post, district, city, area } = state;
+    const err = buyerError();
+    if (err) return toast.error(err);
     if (name && address && phone && post && district && city && area) {
       setRes(true);
     }
@@ -45,9 +76,10 @@ const Shipping = () => {
       place_order({
         price,
         products,
-        shipping_fee,
         items,
         shippingInfo: state,
+        couponCode,
+        buyer,
         userId: userInfo.id,
         navigate,
       })
@@ -91,6 +123,88 @@ const Shipping = () => {
                   {!res && (
                     <>
                       <form onSubmit={save}>
+                        <div className="flex flex-col gap-2 mb-4 text-[var(--text-ship)]">
+                          <label className="font-semibold">Замовляю як</label>
+                          <div className="flex gap-5 flex-wrap">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="kind"
+                                checked={buyer.kind === "individual"}
+                                onChange={() => setBuyer({ ...buyer, kind: "individual" })}
+                              />
+                              Фізична особа
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="kind"
+                                checked={buyer.kind === "company"}
+                                onChange={() => setBuyer({ ...buyer, kind: "company" })}
+                              />
+                              Юридична особа / ФОП
+                            </label>
+                          </div>
+                          {buyer.kind === "company" && (
+                            <div className="flex flex-col gap-2 mt-1">
+                              <input
+                                onChange={buyerHandle}
+                                value={buyer.companyName}
+                                name="companyName"
+                                maxLength={200}
+                                placeholder='Повна назва організації, напр. ТОВ "Ромашка"'
+                                className="w-full px-3 py-2 border border-[var(--border-ship)] outline-none focus:border-[var(--border-ship-foc)] rounded-md"
+                              />
+                              <div className="flex max-md:flex-col gap-2">
+                                <input
+                                  onChange={buyerHandle}
+                                  value={buyer.edrpou}
+                                  name="edrpou"
+                                  inputMode="numeric"
+                                  maxLength={10}
+                                  placeholder="Код ЄДРПОУ (8 цифр) / РНОКПП ФОП"
+                                  className="w-full px-3 py-2 border border-[var(--border-ship)] outline-none focus:border-[var(--border-ship-foc)] rounded-md"
+                                />
+                                <input
+                                  onChange={buyerHandle}
+                                  value={buyer.ipn}
+                                  name="ipn"
+                                  inputMode="numeric"
+                                  maxLength={12}
+                                  placeholder="ІПН (якщо платник ПДВ)"
+                                  className="w-full px-3 py-2 border border-[var(--border-ship)] outline-none focus:border-[var(--border-ship-foc)] rounded-md"
+                                />
+                              </div>
+                              <span className="text-sm opacity-70">
+                                Реквізити потрібні для виставлення рахунку й документів. Умови повернення для
+                                юридичних осіб можуть відрізнятися від умов для фізичних осіб.
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-1 mb-3 text-[var(--text-ship)]">
+                          <label htmlFor="deliveryType">Спосіб доставки</label>
+                          <select
+                            onChange={inputHandle}
+                            value={state.deliveryType}
+                            name="deliveryType"
+                            id="deliveryType"
+                            className="w-full px-3 py-2 border border-[var(--border-ship)] outline-none focus:border-[var(--border-ship-foc)] rounded-md"
+                          >
+                            <option value="nova_poshta_warehouse">
+                              Нова пошта — у відділення
+                            </option>
+                            <option value="nova_poshta_courier">
+                              Нова пошта — кур'єр
+                            </option>
+                            <option value="ukrposhta">Укрпошта</option>
+                            <option value="pickup">Самовивіз</option>
+                          </select>
+                          <span className="text-sm opacity-70">
+                            Вартість доставки не входить у замовлення: її
+                            оплачуєте ви перевізнику при отриманні посилки.
+                          </span>
+                        </div>
                         <div className="flex max-md:flex-col max-md:gap-2 w-full gap-5 text-[var(--text-ship)]">
                           <div className="flex flex-col gap-1 mb-2 w-full">
                             <label htmlFor="name">Ім'я</label>
@@ -212,9 +326,17 @@ const Shipping = () => {
                           {" Змінити"}
                         </span>
                       </p>
-                      <p className="text-[var(--text-ship)] text-sm">
-                        Email адреса: sergij@gmail.com
-                      </p>
+                      {buyer.kind === "company" && (
+                        <p className="text-[var(--text-ship)] text-sm">
+                          Покупець: {buyer.companyName}, ЄДРПОУ {buyer.edrpou}
+                          {buyer.ipn ? `, ІПН ${buyer.ipn}` : ""}
+                        </p>
+                      )}
+                      {userInfo?.email && (
+                        <p className="text-[var(--text-ship)] text-sm">
+                          Email адреса: {userInfo.email}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -254,27 +376,23 @@ const Shipping = () => {
 
                         <div className="flex justify-between w-5/12 max-sm:w-full max-sm:mt-3">
                           <div className="pl-4 max-sm:pl-0">
-                            {pt.productInfo.discount &&
-                            pt.productInfo.discount > 0 ? (
-                              <>
-                                <h2 className="text-lg text-[var(--text-card-price)] ">
-                                  ₴
-                                  {pt.productInfo.price -
-                                    Math.floor(
-                                      (pt.productInfo.price *
-                                        pt.productInfo.discount) /
-                                        100
-                                    )}
-                                </h2>
-                                <p className="line-through text-[var(--text-card-priceOrdinary)]">
-                                  ₴{pt.productInfo.price}
-                                </p>
-                                <p>-{pt.productInfo.discount}%</p>
-                              </>
-                            ) : (
-                              <h2 className="text-lg text-[var(--text-card-priceOrdinary)] ">
+                            <h2 className="text-lg text-[var(--text-card-price)] ">
+                              ₴{pt.unitPrice ?? pt.productInfo.price} / шт
+                            </h2>
+                            {pt.productInfo.discount > 0 && (
+                              <p className="line-through text-[var(--text-card-priceOrdinary)]">
                                 ₴{pt.productInfo.price}
-                              </h2>
+                              </p>
+                            )}
+                            {pt.tierPercent > 0 && (
+                              <p className="text-xs text-green-600">
+                                знижка за кількість −{pt.tierPercent}%
+                              </p>
+                            )}
+                            {pt.preorder && (
+                              <p className="text-xs text-orange-600">
+                                Передзамовлення
+                              </p>
                             )}
                           </div>
                           <div className="flex gap-2 flex-col">
@@ -300,19 +418,26 @@ const Shipping = () => {
                     <span>Всього товарів ({items}) на суму</span>
                     <span>₴{price}</span>
                   </div>
-                  <div className="flex justify-between items-center ">
-                    <span>Доставка</span>
-                    <span>₴{shipping_fee}</span>
-                  </div>
-                  <div className="flex justify-between items-center ">
-                    <span>Разом до сплати</span>
-                    <span>₴{price + shipping_fee}</span>
-                  </div>
+                  {order_discount?.amount > 0 && (
+                    <div className="flex justify-between items-center text-green-600">
+                      <span>Знижка за сумою (−{order_discount.percent}%)</span>
+                      <span>−₴{order_discount.amount}</span>
+                    </div>
+                  )}
+                  {coupon?.status === "applied" && coupon_discount > 0 && (
+                    <div className="flex justify-between items-center text-green-600">
+                      <span>Купон {coupon.code}</span>
+                      <span>−₴{coupon_discount}</span>
+                    </div>
+                  )}
+                  <p className="text-sm">
+                    Доставку оплачує покупець перевізнику при отриманні.
+                  </p>
 
                   <div className="flex justify-between items-center ">
-                    <span>Всього</span>
+                    <span>Всього до сплати</span>
                     <span className="text-lg text-[var(--text-card-sum)]">
-                      ₴{price + shipping_fee}
+                      ₴{total ?? price}
                     </span>
                   </div>
                   <button

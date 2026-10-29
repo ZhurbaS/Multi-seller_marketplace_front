@@ -29,6 +29,8 @@ import {
   messageClear,
 } from "../store/reducers/cardSlice";
 import useCarouselResizeKey from "../hooks/useCarouselResizeKey";
+import api from "../api/api";
+import { baseUnitPrice, unitPrice, restockText } from "../utils/pricing";
 
 const Details = () => {
   const navigate = useNavigate();
@@ -79,19 +81,69 @@ const Details = () => {
     },
   };
 
+  // Умови продажу: мінімальне замовлення і крок (комплекти/упаковки)
+  const minQty = product.minOrderQty || 1;
+  const step = product.orderStep || 1;
+  const noStock = !(product.stock > 0);
+  const isPreorder = noStock && !!product.allowPreorder;
+  // Купити можна, якщо на складі не менше мінімального замовлення, або це передзамовлення
+  const canBuy = isPreorder || (product.stock > 0 && product.stock >= minQty);
+  const hasTiers = (product.priceTiers || []).length > 0;
+
   const [quantity, setQuantity] = useState(1);
+  const [subscribed, setSubscribed] = useState(false);
+  const currentUnit = product._id ? unitPrice(product, quantity) : 0;
+
+  // Коли товар завантажився — ставимо мінімальну кількість
+  useEffect(() => {
+    if (product._id) setQuantity(product.minOrderQty || 1);
+  }, [product._id]);
+
+  // Чи підписаний покупець на повідомлення про наявність
+  useEffect(() => {
+    if (userInfo && product._id && noStock) {
+      api
+        .get(`/home/product/notify-me/${product._id}`)
+        .then(({ data }) => setSubscribed(!!data.subscribed))
+        .catch(() => {});
+    } else {
+      setSubscribed(false);
+    }
+  }, [product._id, noStock, userInfo]);
+
+  const toggleSubscribe = async () => {
+    if (!userInfo) return navigate("/login");
+    try {
+      if (subscribed) {
+        await api.delete(`/home/product/notify-me/${product._id}`);
+        setSubscribed(false);
+        toast.success("Підписку скасовано");
+      } else {
+        const { data } = await api.post("/home/product/notify-me", {
+          productId: product._id,
+        });
+        setSubscribed(true);
+        toast.success(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Не вдалося виконати дію");
+    }
+  };
 
   const inc = () => {
-    if (quantity >= product.stock) {
-      toast.error("Недостатньо товару на складі");
+    const next = quantity + step;
+    if (!isPreorder && next > product.stock) {
+      toast.error(`Доступно лише ${product.stock} шт на складі`);
     } else {
-      setQuantity(quantity + 1);
+      setQuantity(next);
     }
   };
 
   const dec = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
+    if (quantity - step >= minQty) {
+      setQuantity(quantity - step);
+    } else {
+      toast.error(`Мінімальне замовлення — ${minQty} шт`);
     }
   };
 
@@ -140,29 +192,25 @@ const Details = () => {
     }
   };
 
+  // «Купити зараз» — той самий шлях, що й кошик, але для одного товару.
+  // Доставка в ціну не входить (оплачується перевізнику при отриманні),
+  // остаточні суми і знижки рахує сервер.
   const buynow = () => {
-    let price = 0;
-    if (product.discount !== 0) {
-      price =
-        product.price - Math.floor((product.price * product.discount) / 100);
-    } else {
-      price = product.price;
-    }
-
-    const sellerCommission = parseInt(
-      import.meta.env.VITE_SELLER_COMMISSION || "0"
-    );
-    const shippingFee = parseInt(import.meta.env.VITE_SHIPPING_FEE);
+    if (!userInfo) return navigate("/login");
+    const unit = unitPrice(product, quantity);
+    const total = unit * quantity;
 
     const obj = [
       {
         sellerId: product.sellerId,
         shopName: product.shopName,
-        price:
-          (price - Math.floor((price * sellerCommission) / 100)) * quantity, // 5 % commission
+        price: total,
         products: [
           {
             quantity,
+            unitPrice: unit,
+            lineTotal: total,
+            preorder: isPreorder,
             productInfo: product,
           },
         ],
@@ -172,9 +220,8 @@ const Details = () => {
     navigate("/shipping", {
       state: {
         products: obj,
-        price: price * quantity,
-        shipping_fee: shippingFee, // 100 варість доставки
-        items: 1,
+        price: total,
+        items: quantity,
       },
     });
   };
@@ -295,6 +342,52 @@ const Details = () => {
                 )}
               </div>
 
+              {/* Умови продажу: упаковка/мінімум, ціна при вибраній кількості, знижки за кількість */}
+              {(minQty > 1 || step > 1 || product.packLabel) && (
+                <div className="text-[var(--text-deatails)] text-sm bg-[var(--bg-detailsDescr)] px-3 py-2 rounded-sm">
+                  {product.packLabel && (
+                    <p className="font-semibold">{product.packLabel}</p>
+                  )}
+                  <p>
+                    Мінімальне замовлення: {minQty} шт
+                    {step > 1 ? `, кратно ${step}` : ""}
+                  </p>
+                </div>
+              )}
+              {hasTiers && (
+                <div className="text-[var(--text-deatails)]">
+                  <p className="font-semibold mb-1">Знижки за кількість</p>
+                  <table className="text-sm border border-[var(--border-deatails)]">
+                    <tbody>
+                      <tr>
+                        <td className="px-3 py-1 border-b border-[var(--border-deatails)]">
+                          від {minQty} шт
+                        </td>
+                        <td className="px-3 py-1 border-b border-[var(--border-deatails)]">
+                          ₴{baseUnitPrice(product)} / шт
+                        </td>
+                      </tr>
+                      {product.priceTiers.map((t) => (
+                        <tr key={t.minQty}>
+                          <td className="px-3 py-1 border-b border-[var(--border-deatails)]">
+                            від {t.minQty} шт
+                          </td>
+                          <td className="px-3 py-1 border-b border-[var(--border-deatails)]">
+                            ₴{unitPrice(product, t.minQty)} / шт (−{t.percent}%)
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {canBuy && (hasTiers || quantity > 1) && (
+                <p className="text-[var(--text-deatails)]">
+                  Ваше замовлення: {quantity} шт × ₴{currentUnit} ={" "}
+                  <b>₴{currentUnit * quantity}</b>
+                </p>
+              )}
+
               <div className="text-[var(--text-deatails)] ">
                 <p>
                   {product.description
@@ -306,7 +399,7 @@ const Details = () => {
                 </p>
               </div>
               <div className="flex gap-3 pb-10 border-b border-[var(--border-deatails)]">
-                {product.stock ? (
+                {canBuy ? (
                   <>
                     <div className="flex bg-[var(--bg-detailsDescr)] h-[50px] justify-center items-center text-xl">
                       <div onClick={dec} className="px-6 cursor-pointer">
@@ -322,12 +415,22 @@ const Details = () => {
                         onClick={add_card}
                         className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-green-500/40 bg-[var(--bg-detailsAddBtn)] text-[var(--text-detailsAddBtn)]"
                       >
-                        Додати до кошика
+                        {isPreorder ? "Передзамовити" : "Додати до кошика"}
                       </button>
                     </div>
                   </>
                 ) : (
-                  ""
+                  <button
+                    onClick={toggleSubscribe}
+                    disabled={!noStock}
+                    className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-green-500/40 bg-[var(--bg-detailsAddBtn)] text-[var(--text-detailsAddBtn)] disabled:opacity-60"
+                  >
+                    {!noStock
+                      ? `Доступно лише ${product.stock} шт (мін. ${minQty})`
+                      : subscribed
+                      ? "Скасувати сповіщення"
+                      : "Повідомити про наявність"}
+                  </button>
                 )}
                 <div className="">
                   <div
@@ -352,10 +455,17 @@ const Details = () => {
                         : "text-[var(--text-detailsOutOfStock)]"
                     }`}
                   >
-                    {product.stock
-                      ? `Є в наявності ${product.stock}`
-                      : "Передзамовлення"}
+                    {product.stock > 0
+                      ? `Є в наявності ${product.stock} шт`
+                      : isPreorder
+                      ? "Передзамовлення"
+                      : "Немає в наявності"}
                   </span>
+                  {noStock && restockText(product) && (
+                    <span className="text-[var(--text-deatails)] text-sm">
+                      Очікується через {restockText(product)}
+                    </span>
+                  )}
 
                   <ul className="flex justify-start items-center gap-3">
                     <li>
@@ -403,12 +513,12 @@ const Details = () => {
               </div>
 
               <div className="flex gap-3">
-                {product.stock ? (
+                {canBuy ? (
                   <button
                     onClick={buynow}
                     className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-green-500/40 bg-[var(--bg-detailsBuyBtn)] text-[var(--text-detailsAddBtn)]"
                   >
-                    Купити зараз
+                    {isPreorder ? "Передзамовити зараз" : "Купити зараз"}
                   </button>
                 ) : (
                   ""

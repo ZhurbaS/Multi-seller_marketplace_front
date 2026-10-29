@@ -11,6 +11,8 @@ const DESCRIPTIONS = {
   liqpay:
     "Ви перейдете на захищену сторінку LiqPay. Після оплати повернетеся на сайт.",
   mock: "Тестовий режим: гроші не списуються. Ви зможете імітувати успішну або невдалу оплату.",
+  invoice:
+    "Ми виставимо рахунок на оплату (PDF) і надішлемо його на вашу електронну пошту; він також буде доступний у вашому кабінеті. Сплатіть його переказом на наш IBAN — після надходження коштів замовлення піде в обробку. Рахунок дійсний обмежений час (вказано в рахунку); якщо оплата не надійде, замовлення скасується автоматично.",
   cod: "Оплата готівкою або карткою при отриманні замовлення. Замовлення буде передано в обробку одразу.",
 };
 
@@ -44,8 +46,11 @@ const Payment = () => {
     api
       .get("/pay/methods")
       .then(({ data }) => {
-        setMethods(data.methods || []);
-        if (data.methods?.length) setPaymentMethod(data.methods[0].id);
+        const list = (data.methods || []).filter(
+          (m) => !m.businessOnly || state?.buyerKind === "company"
+        );
+        setMethods(list);
+        if (list.length) setPaymentMethod(list[0].id);
       })
       .catch(() => toast.error("Не вдалося завантажити способи оплати"))
       .finally(() => setLoadingMethods(false));
@@ -63,7 +68,11 @@ const Payment = () => {
         orderId,
         method: paymentMethod,
       });
-      if (data.type === "cod") {
+      if (data.type === "invoice") {
+        navigate(
+          `/order/confirm?orderId=${orderId}&method=invoice&emailed=${data.emailed ? 1 : 0}&number=${encodeURIComponent(data.number || "")}`
+        );
+      } else if (data.type === "cod") {
         navigate(`/order/confirm?orderId=${orderId}&method=cod`);
       } else if (data.type === "form") {
         submitForm(data.url, data.fields);
@@ -139,6 +148,8 @@ const Payment = () => {
                         ? "Зачекайте..."
                         : paymentMethod === "cod"
                         ? "Підтвердити замовлення"
+                        : paymentMethod === "invoice"
+                        ? "Виставити рахунок"
                         : "Оплатити"}
                     </button>
                   </div>
@@ -151,7 +162,7 @@ const Payment = () => {
                 <div className="bg-[var(--bg-pay-rightSection)] shadow p-5 text-[var(--text-pay)] flex flex-col gap-3">
                   <h2 className="font-bold text-lg">Замовлення</h2>
                   <div className="flex justify-between items-center ">
-                    <span>{items} Товари з доставкою</span>
+                    <span>Товарів: {items} (доставка — окремо, при отриманні)</span>
                     <span>₴{price} </span>
                   </div>
                   <div className="flex justify-between items-center font-semibold">

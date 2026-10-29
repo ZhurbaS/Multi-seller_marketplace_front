@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { get_orders } from "../../store/reducers/orderSlice";
 import { FadeLoader } from "react-spinners";
+import { INVOICE_STATUS } from "../../utils/invoice";
 
 const Orders = () => {
   const [state, setState] = useState("all");
@@ -29,6 +30,7 @@ const Orders = () => {
         price: customerOrder.price,
         items,
         orderId: customerOrder._id,
+        buyerKind: customerOrder.buyer?.kind || "individual",
       },
     });
   };
@@ -126,6 +128,11 @@ const Orders = () => {
                       className="px-6 py-4 font-medium whitespace-nowrap"
                     >
                       {o.payment_status}
+                      {o.invoice?.number && (
+                        <div className="text-xs font-normal opacity-80">
+                          Рахунок {o.invoice.number}: {INVOICE_STATUS[o.invoice.status] || ""}
+                        </div>
+                      )}
                     </td>
                     <td
                       scope="row"

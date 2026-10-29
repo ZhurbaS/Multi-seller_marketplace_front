@@ -33,15 +33,13 @@ const Index = () => {
   }, []);
 
   const redirect = (customerOrder) => {
-    let items = 0;
-    for (let i = 0; i < customerOrder.length; i++) {
-      items = customerOrder.products[i].quantity + items;
-    }
+    const items = (customerOrder.products || []).reduce((s, p) => s + p.quantity, 0);
     navigate("/payment", {
       state: {
         price: customerOrder.price,
         items,
         orderId: customerOrder._id,
+        buyerKind: customerOrder.buyer?.kind || "individual",
       },
     });
   };

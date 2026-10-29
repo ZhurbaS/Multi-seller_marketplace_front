@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { FaList } from "react-icons/fa";
@@ -10,7 +10,9 @@ import { IoMdChatbubbles } from "react-icons/io";
 import { RiLogoutBoxFill } from "react-icons/ri";
 import { RiLockPasswordFill } from "react-icons/ri";
 import api from "../api/api";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { MdAssignmentReturn } from "react-icons/md";
+import { get_return_policy } from "../store/reducers/returnSlice";
 import { user_reset } from "../store/reducers/authSlice";
 import { reset_count } from "../store/reducers/cardSlice";
 
@@ -19,6 +21,10 @@ const Dashboard = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const cabinetVisible = useSelector((s) => s.returns.cabinetVisible);
+  useEffect(() => {
+    dispatch(get_return_policy());
+  }, []);
 
   const logout = async () => {
     try {
@@ -71,6 +77,16 @@ const Dashboard = () => {
                     Мої замовлення
                   </Link>
                 </li>
+                {cabinetVisible && (
+                  <li className="flex justify-start items-center gap-2 py-2">
+                    <span className="text-xl">
+                      <MdAssignmentReturn />
+                    </span>
+                    <Link to="/dashboard/returns" className="block">
+                      Мої повернення
+                    </Link>
+                  </li>
+                )}
                 <li className="flex justify-start items-center gap-2 py-2">
                   <span className="text-xl">
                     <IoHeart />

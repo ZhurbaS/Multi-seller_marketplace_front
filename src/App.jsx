@@ -23,6 +23,9 @@ import Chat from "./components/dashboard/Chat";
 import ConfirmOrder from "./pages/ConfirmOrder";
 import MockPay from "./pages/MockPay";
 import ScrollToTop from "./components/ScrollToTop";
+import Returns from "./components/dashboard/Returns";
+import ReturnNew from "./components/dashboard/ReturnNew";
+import ReturnsPolicy from "./pages/ReturnsPolicy";
 
 function App() {
   const dispatch = useDispatch();
@@ -46,6 +49,7 @@ function App() {
         <Route path="/product/details/:slug" element={<Details />} />
         <Route path="/order/confirm?" element={<ConfirmOrder />} />
         <Route path="/pay/mock" element={<MockPay />} />
+        <Route path="/returns-policy" element={<ReturnsPolicy />} />
 
         <Route path="/dashboard" element={<ProtectUser />}>
           <Route path="" element={<Dashboard />}>
@@ -54,6 +58,8 @@ function App() {
             <Route path="change-password" element={<ChangePassword />} />
             <Route path="my-wishlist" element={<Wishlist />} />
             <Route path="order/details/:orderId" element={<OrderDetails />} />
+            <Route path="returns" element={<Returns />} />
+            <Route path="returns/new/:orderId" element={<ReturnNew />} />
             <Route path="chat" element={<Chat />} />
             <Route path="chat/:sellerId" element={<Chat />} />
           </Route>

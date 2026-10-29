@@ -15,16 +15,35 @@ export const add_to_card = createAsyncThunk(
   }
 );
 
+// Код купона зберігається лише на час сесії браузера (сума знижки завжди рахується на сервері).
+const loadCoupon = () => {
+  try {
+    return sessionStorage.getItem("coupon_code") || "";
+  } catch {
+    return "";
+  }
+};
+const saveCoupon = (code) => {
+  try {
+    if (code) sessionStorage.setItem("coupon_code", code);
+    else sessionStorage.removeItem("coupon_code");
+  } catch {
+    /* sessionStorage недоступний — купон діятиме до перезавантаження */
+  }
+};
+
 export const get_card_products = createAsyncThunk(
   "card/get_card_products",
-  async (userId, { rejectWithValue, fulfillWithValue }) => {
+  async (userId, { rejectWithValue, fulfillWithValue, getState }) => {
     try {
       if (!userId || typeof userId !== "string") {
         throw new Error("Невірний userId передано до get_card_products...");
       }
 
+      const couponCode = getState().card.coupon_code;
       const { data } = await api.get(
-        `/home/product/get-card-product/${userId}`
+        `/home/product/get-card-product/${userId}`,
+        couponCode ? { params: { coupon: couponCode } } : undefined
       );
       // console.log(data);
       return fulfillWithValue(data);
@@ -135,7 +154,14 @@ export const cardSlice = createSlice({
     price: 0,
     errorMessage: "",
     successMessage: "",
-    shipping_fee: 0,
+    // Доставка в ціну не входить — її оплачує покупець перевізнику при отриманні.
+    order_discount: { percent: 0, amount: 0 },
+    total: 0,
+    coupon_code: loadCoupon(),
+    coupon: null, // { code, status: applied|not_applied|invalid, discount, message }
+    coupon_discount: 0,
+    next_order_discount: null,
+    cart_ttl_days: 30,
     outofstock_products: [],
     buy_product_item: 0,
   },
@@ -143,6 +169,14 @@ export const cardSlice = createSlice({
     messageClear: (state, _) => {
       state.errorMessage = "";
       state.successMessage = "";
+    },
+    set_coupon_code: (state, { payload }) => {
+      state.coupon_code = String(payload || "").trim().toUpperCase();
+      saveCoupon(state.coupon_code);
+      if (!state.coupon_code) {
+        state.coupon = null;
+        state.coupon_discount = 0;
+      }
     },
     reset_count: (state, _) => {
       state.card_product_count = 0;
@@ -153,7 +187,7 @@ export const cardSlice = createSlice({
     builder
 
       .addCase(add_to_card.rejected, (state, { payload }) => {
-        state.errorMessage = payload.error;
+        state.errorMessage = payload?.error || "Не вдалося додати до кошика";
       })
       .addCase(add_to_card.fulfilled, (state, { payload }) => {
         state.successMessage = payload.message;
@@ -163,9 +197,22 @@ export const cardSlice = createSlice({
         state.card_products = payload.card_products;
         state.price = payload.price;
         state.card_product_count = payload.card_product_count;
-        state.shipping_fee = payload.shipping_fee;
+        state.order_discount = payload.order_discount || { percent: 0, amount: 0 };
+        state.total = payload.total ?? payload.price;
+        state.coupon = payload.coupon || null;
+        state.coupon_discount = payload.coupon_discount || 0;
+        // Невідомий/недійсний купон не тримаємо в сесії
+        if (payload.coupon?.status === "invalid") {
+          state.coupon_code = "";
+          saveCoupon("");
+        }
+        state.next_order_discount = payload.next_order_discount || null;
+        state.cart_ttl_days = payload.cart_ttl_days || 30;
         state.outofstock_products = payload.outOfStockProduct;
         state.buy_product_item = payload.buy_product_item;
+      })
+      .addCase(get_card_products.rejected, (state, { payload }) => {
+        if (payload?.error) state.errorMessage = payload.error;
       })
       .addCase(delete_card_product.fulfilled, (state, { payload }) => {
         state.successMessage = payload.message;
@@ -173,8 +220,14 @@ export const cardSlice = createSlice({
       .addCase(quantity_inc.fulfilled, (state, { payload }) => {
         state.successMessage = payload.message;
       })
+      .addCase(quantity_inc.rejected, (state, { payload }) => {
+        state.errorMessage = payload?.error || "Не вдалося змінити кількість";
+      })
       .addCase(quantity_dec.fulfilled, (state, { payload }) => {
         state.successMessage = payload.message;
+      })
+      .addCase(quantity_dec.rejected, (state, { payload }) => {
+        state.errorMessage = payload?.error || "Не вдалося змінити кількість";
       })
       .addCase(add_to_wishlist.rejected, (state, { payload }) => {
         state.errorMessage = payload.error;
@@ -198,5 +251,5 @@ export const cardSlice = createSlice({
   },
 });
 
-export const { messageClear, reset_count } = cardSlice.actions;
+export const { messageClear, reset_count, set_coupon_code } = cardSlice.actions;
 export default cardSlice.reducer;

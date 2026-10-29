@@ -52,7 +52,7 @@ const Footer = () => {
                     <Link>Оплата і доставка</Link>
                   </li>
                   <li>
-                    <Link>Обмін та повернення</Link>
+                    <Link to="/returns-policy">Обмін та повернення</Link>
                   </li>
                   <li>
                     <Link>Контактна інформація</Link>

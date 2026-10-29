@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Link, useNavigate } from "react-router-dom";
@@ -10,8 +10,10 @@ import {
   delete_card_product,
   quantity_inc,
   quantity_dec,
+  set_coupon_code,
 } from "../store/reducers/cardSlice";
 import toast from "react-hot-toast";
+import { restockText } from "../utils/pricing";
 
 const Card = () => {
   const dispatch = useDispatch();
@@ -21,10 +23,18 @@ const Card = () => {
     card_product_count,
     price,
     successMessage,
+    errorMessage,
     buy_product_item,
-    shipping_fee,
+    order_discount,
+    total,
+    next_order_discount,
+    cart_ttl_days,
     outofstock_products,
+    coupon,
+    coupon_code,
+    coupon_discount,
   } = useSelector((state) => state.card);
+  const [couponInput, setCouponInput] = useState(coupon_code || "");
 
   const navigate = useNavigate();
 
@@ -32,12 +42,35 @@ const Card = () => {
     dispatch(get_card_products(userInfo.id));
   }, []);
 
+  const applyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+    dispatch(set_coupon_code(code));
+    const res = await dispatch(get_card_products(userInfo.id));
+    if (res.meta?.requestStatus === "rejected") {
+      return toast.error(res.payload?.error || "Не вдалося застосувати купон. Спробуйте за хвилину");
+    }
+    const c = res?.payload?.coupon;
+    if (c?.status === "applied") toast.success(c.message || "Купон застосовано");
+    else if (c?.message) toast.error(c.message);
+  };
+  const removeCoupon = () => {
+    setCouponInput("");
+    dispatch(set_coupon_code(""));
+    dispatch(get_card_products(userInfo.id));
+  };
+
+  // Доставка в ціну не входить: її оплачує покупець перевізнику при отриманні.
   const redirect = () => {
     navigate("/shipping", {
       state: {
         products: card_products,
         price: price,
-        shipping_fee: shipping_fee,
+        order_discount,
+        coupon,
+        coupon_discount,
+        couponCode: coupon?.status === "applied" ? coupon.code : "",
+        total,
         items: buy_product_item,
       },
     });
@@ -51,19 +84,17 @@ const Card = () => {
     }
   }, [successMessage]);
 
-  const inc = (quantity, stock, card_id) => {
-    const temp = quantity + 1;
-    if (temp <= stock) {
-      dispatch(quantity_inc(card_id));
+  useEffect(() => {
+    if (errorMessage) {
+      toast.error(errorMessage);
+      dispatch(messageClear());
     }
-  };
+  }, [errorMessage]);
 
-  const dec = (quantity, card_id) => {
-    const temp = quantity - 1;
-    if (temp !== 0) {
-      dispatch(quantity_dec(card_id));
-    }
-  };
+  // Крок зміни кількості (мінімум, кратність) і перевірку наявності робить сервер —
+  // у разі відмови покупець бачить повідомлення з причиною.
+  const inc = (card_id) => dispatch(quantity_inc(card_id));
+  const dec = (card_id) => dispatch(quantity_dec(card_id));
 
   return (
     <div>
@@ -92,7 +123,7 @@ const Card = () => {
 
       <section className="bg-[var(--bg-card)] ">
         <div className="w-[85%] max-lg:w-[90%] max-md:w-[90%] max-sm:w-[90%] mx-auto py-16">
-          {card_products.length > 0 || outofstock_products > 0 ? (
+          {card_products.length > 0 || outofstock_products.length > 0 ? (
             <div className="flex flex-wrap">
               <div className="w-[67%] max-mdlg:w-full">
                 <div className="pr-3 max-mdlg:pr-0">
@@ -136,52 +167,54 @@ const Card = () => {
                                   <span className="text-sm">
                                     Бренд: {pt.productInfo.brand}
                                   </span>
+                                  {pt.preorder && (
+                                    <span className="block text-xs text-orange-600">
+                                      Передзамовлення — товар очікується
+                                    </span>
+                                  )}
+                                  {(pt.productInfo.minOrderQty > 1 ||
+                                    pt.productInfo.orderStep > 1) && (
+                                    <span className="block text-xs">
+                                      Мін. {pt.productInfo.minOrderQty || 1} шт
+                                      {pt.productInfo.orderStep > 1
+                                        ? `, крок ${pt.productInfo.orderStep}`
+                                        : ""}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
 
                             <div className="flex justify-between w-5/12 max-sm:w-full max-sm:mt-3">
                               <div className="pl-4 max-sm:pl-0">
-                                {pt.productInfo.discount &&
-                                pt.productInfo.discount > 0 ? (
-                                  <>
-                                    <h2 className="text-lg text-[var(--text-card-price)] ">
-                                      ₴
-                                      {pt.productInfo.price -
-                                        Math.floor(
-                                          (pt.productInfo.price *
-                                            pt.productInfo.discount) /
-                                            100
-                                        )}
-                                    </h2>
-                                    <p className="line-through text-[var(--text-card-priceOrdinary)]">
-                                      ₴{pt.productInfo.price}
-                                    </p>
-                                    <p>-{pt.productInfo.discount}%</p>
-                                  </>
-                                ) : (
-                                  <h2 className="text-lg text-[var(--text-card-priceOrdinary)] ">
+                                <h2 className="text-lg text-[var(--text-card-price)] ">
+                                  ₴{pt.unitPrice} / шт
+                                </h2>
+                                {pt.productInfo.discount > 0 && (
+                                  <p className="line-through text-[var(--text-card-priceOrdinary)]">
                                     ₴{pt.productInfo.price}
-                                  </h2>
+                                  </p>
                                 )}
+                                {pt.tierPercent > 0 && (
+                                  <p className="text-xs text-green-600">
+                                    знижка за кількість −{pt.tierPercent}%
+                                  </p>
+                                )}
+                                <p className="font-semibold">
+                                  ₴{pt.lineTotal}
+                                </p>
                               </div>
                               <div className="flex gap-2 flex-col">
                                 <div className="flex bg-[var(--bg-card-btn)] h-[30px] justify-center items-center text-xl">
                                   <div
-                                    onClick={() => dec(pt.quantity, pt._id)}
+                                    onClick={() => dec(pt._id)}
                                     className="px-3 cursor-pointer"
                                   >
                                     -
                                   </div>
                                   <div className="px-3">{pt.quantity}</div>
                                   <div
-                                    onClick={() =>
-                                      inc(
-                                        pt.quantity,
-                                        pt.productInfo.stock,
-                                        pt._id
-                                      )
-                                    }
+                                    onClick={() => inc(pt._id)}
                                     className="px-3 cursor-pointer"
                                   >
                                     +
@@ -256,26 +289,17 @@ const Card = () => {
                                   )}
                                 </div>
                                 <div className="flex gap-2 flex-col">
-                                  <div className="flex bg-[var(--bg-card-btn)] h-[30px] justify-center items-center text-xl">
-                                    <div
-                                      onClick={() => dec(p.quantity, p._id)}
-                                      className="px-3 cursor-pointer"
-                                    >
-                                      -
-                                    </div>
-                                    <div className="px-3">{p.quantity}</div>
-                                    <div
-                                      // onClick={() =>
-                                      //   inc(
-                                      //     p.quantity,
-                                      //     p.productInfo.stock,
-                                      //     p._id
-                                      //   )
-                                      // }
-                                      className="px-3 cursor-pointer"
-                                    >
-                                      +
-                                    </div>
+                                  <div className="text-sm text-[var(--text-card-outOfStock)]">
+                                    {p.problem || "Немає в наявності"}
+                                    <div>Кількість: {p.quantity}</div>
+                                    {p.products[0].stock <= 0 &&
+                                      (p.products[0].restockDaysMin ||
+                                        p.products[0].restockDaysMax) && (
+                                        <div>
+                                          Очікується через{" "}
+                                          {restockText(p.products[0])}
+                                        </div>
+                                      )}
                                   </div>
                                   <button
                                     onClick={() =>
@@ -312,25 +336,66 @@ const Card = () => {
                         </span>
                         <span>₴{price}</span>
                       </div>
-                      <div className="flex justify-between items-center ">
-                        <span>Доставка</span>
-                        <span>₴{shipping_fee}</span>
+                      {order_discount?.amount > 0 && (
+                        <div className="flex justify-between items-center text-green-600">
+                          <span>Знижка за сумою замовлення (−{order_discount.percent}%)</span>
+                          <span>−₴{order_discount.amount}</span>
+                        </div>
+                      )}
+                      {coupon?.status === "applied" && coupon_discount > 0 && (
+                        <div className="flex justify-between items-center text-green-600">
+                          <span>Купон {coupon.code}</span>
+                          <span>−₴{coupon_discount}</span>
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-1">
+                        <div className="flex gap-2">
+                          <input
+                            value={couponInput}
+                            onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                            onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
+                            maxLength={32}
+                            placeholder="Промокод"
+                            className="flex-1 min-w-0 px-3 py-[6px] border border-slate-300 outline-none text-sm text-black"
+                          />
+                          {coupon?.status === "applied" ? (
+                            <button
+                              type="button"
+                              onClick={removeCoupon}
+                              className="px-3 py-[6px] border text-sm"
+                            >
+                              Прибрати
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={applyCoupon}
+                              className="px-3 py-[6px] border text-sm"
+                            >
+                              Застосувати
+                            </button>
+                          )}
+                        </div>
+                        {coupon?.status === "not_applied" && (
+                          <p className="text-xs text-orange-600">{coupon.message}</p>
+                        )}
                       </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-[var(--bg-card-coupon)] outline-0 focus:border-[var(--border-card-coupon)] rounded-sm"
-                          placeholder="Купон зі знижкою"
-                        />
-                        <button className="px-5 py-[1px] bg-[var(--bg-card-couponApplyBtn)] text-[var(--text-card)] rounded-sm uppercase text-sm">
-                          Застосувати
-                        </button>
-                      </div>
+                      {next_order_discount && (
+                        <p className="text-sm text-green-700">
+                          Додайте ще на ₴{next_order_discount.remaining} і
+                          отримайте знижку {next_order_discount.percent}% на все
+                          замовлення
+                        </p>
+                      )}
+                      <p className="text-sm">
+                        Доставку оплачує покупець перевізнику при отриманні
+                        (за тарифами перевізника).
+                      </p>
 
                       <div className="flex justify-between items-center ">
                         <span>Разом до сплати</span>
                         <span className="text-lg text-[var(--text-card-sum)]">
-                          ₴{price + shipping_fee}
+                          ₴{total}
                         </span>
                       </div>
                       <button
@@ -339,6 +404,11 @@ const Card = () => {
                       >
                         Оформити замовлення ({buy_product_item})
                       </button>
+                      <p className="text-xs opacity-70">
+                        Товари зберігаються в кошику {cart_ttl_days} днів. Ціни
+                        й наявність оновлюються автоматично — товар не
+                        резервується, доки ви не оформите замовлення.
+                      </p>
                     </div>
                   )}
                 </div>
