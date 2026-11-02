@@ -2,10 +2,11 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "../../api/api";
 import toast from "react-hot-toast";
 import { set_coupon_code } from "./cardSlice";
+import { startPayment } from "../../utils/startPayment";
 
 export const place_order = createAsyncThunk(
   "order/place_order",
-  async ({ products, items, shippingInfo, couponCode, buyer, navigate }, { rejectWithValue, dispatch }) => {
+  async ({ products, items, shippingInfo, couponCode, buyer, comment, paymentMethod, navigate }, { rejectWithValue, dispatch }) => {
     try {
       // Суму, знижки й доставку (її в замовленні немає) рахує сервер;
       // клієнт надсилає лише товари й адресу.
@@ -14,16 +15,26 @@ export const place_order = createAsyncThunk(
         shippingInfo,
         couponCode: couponCode || "",
         buyer,
+        comment: comment || "",
       });
       if (couponCode) dispatch(set_coupon_code("")); // купон використано
-      navigate("/payment", {
-        state: {
-          price: data.price, // остаточна сума від сервера
-          items,
-          orderId: data.orderId,
-          buyerKind: buyer?.kind || "individual", // «За рахунком» пропонуємо лише юрособам
-        },
-      });
+      const payState = {
+        price: data.price, // остаточна сума від сервера
+        items,
+        orderId: data.orderId,
+        buyerKind: buyer?.kind || "individual", // «За рахунком» пропонуємо лише юрособам
+      };
+      // Спосіб оплати обрано вже на сторінці оформлення — одразу починаємо оплату.
+      // Якщо не вдалося — замовлення вже створене, тож відправляємо на сторінку оплати, щоб повторити.
+      if (paymentMethod) {
+        try {
+          await startPayment({ orderId: data.orderId, method: paymentMethod, navigate });
+          return;
+        } catch (e) {
+          toast.error(e.response?.data?.error || "Не вдалося почати оплату — оберіть спосіб оплати ще раз");
+        }
+      }
+      navigate("/payment", { state: payState });
     } catch (error) {
       console.error("💥 Error in orderSlice: place_order:", error);
       toast.error(

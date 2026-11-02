@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Link, useNavigate } from "react-router-dom";
@@ -10,8 +10,9 @@ import {
   delete_card_product,
   quantity_inc,
   quantity_dec,
-  set_coupon_code,
+  add_to_card,
 } from "../store/reducers/cardSlice";
+import RecommendedCarousel from "../components/RecommendedCarousel";
 import toast from "react-hot-toast";
 import { restockText } from "../utils/pricing";
 
@@ -30,35 +31,12 @@ const Card = () => {
     next_order_discount,
     cart_ttl_days,
     outofstock_products,
-    coupon,
-    coupon_code,
-    coupon_discount,
   } = useSelector((state) => state.card);
-  const [couponInput, setCouponInput] = useState(coupon_code || "");
-
   const navigate = useNavigate();
 
   useEffect(() => {
     dispatch(get_card_products(userInfo.id));
   }, []);
-
-  const applyCoupon = async () => {
-    const code = couponInput.trim();
-    if (!code) return;
-    dispatch(set_coupon_code(code));
-    const res = await dispatch(get_card_products(userInfo.id));
-    if (res.meta?.requestStatus === "rejected") {
-      return toast.error(res.payload?.error || "Не вдалося застосувати купон. Спробуйте за хвилину");
-    }
-    const c = res?.payload?.coupon;
-    if (c?.status === "applied") toast.success(c.message || "Купон застосовано");
-    else if (c?.message) toast.error(c.message);
-  };
-  const removeCoupon = () => {
-    setCouponInput("");
-    dispatch(set_coupon_code(""));
-    dispatch(get_card_products(userInfo.id));
-  };
 
   // Доставка в ціну не входить: її оплачує покупець перевізнику при отриманні.
   const redirect = () => {
@@ -67,9 +45,6 @@ const Card = () => {
         products: card_products,
         price: price,
         order_discount,
-        coupon,
-        coupon_discount,
-        couponCode: coupon?.status === "applied" ? coupon.code : "",
         total,
         items: buy_product_item,
       },
@@ -93,6 +68,16 @@ const Card = () => {
 
   // Крок зміни кількості (мінімум, кратність) і перевірку наявності робить сервер —
   // у разі відмови покупець бачить повідомлення з причиною.
+  const cartProductIds = card_products.flatMap((g) =>
+    g.products.map((pt) => String(pt.productInfo._id))
+  );
+  // Додаємо рекомендований товар (кількість — мінімальне замовлення, визначає сервер)
+  const addRecommended = async (productId) => {
+    const r = await dispatch(add_to_card({ userId: userInfo.id, productId }));
+    // повідомлення (успіх/помилка) показує cardSlice
+    if (r.meta?.requestStatus === "fulfilled") dispatch(get_card_products(userInfo.id));
+  };
+
   const inc = (card_id) => dispatch(quantity_inc(card_id));
   const dec = (card_id) => dispatch(quantity_dec(card_id));
 
@@ -164,9 +149,6 @@ const Card = () => {
                                   <h2 className="text-md font-semibold">
                                     {pt.productInfo.name}
                                   </h2>
-                                  <span className="text-sm">
-                                    Бренд: {pt.productInfo.brand}
-                                  </span>
                                   {pt.preorder && (
                                     <span className="block text-xs text-orange-600">
                                       Передзамовлення — товар очікується
@@ -256,9 +238,6 @@ const Card = () => {
                                     <h2 className="text-md font-semibold">
                                       {p.products[0].name}
                                     </h2>
-                                    <span className="text-sm">
-                                      Бренд: {p.products[0].brand}
-                                    </span>
                                   </div>
                                 </div>
                               </div>
@@ -316,6 +295,9 @@ const Card = () => {
                         </div>
                       </div>
                     )}
+                    {cartProductIds.length > 0 && (
+                      <RecommendedCarousel productIds={cartProductIds} onAdd={addRecommended} />
+                    )}
                   </div>
                 </div>
               </div>
@@ -342,44 +324,6 @@ const Card = () => {
                           <span>−₴{order_discount.amount}</span>
                         </div>
                       )}
-                      {coupon?.status === "applied" && coupon_discount > 0 && (
-                        <div className="flex justify-between items-center text-green-600">
-                          <span>Купон {coupon.code}</span>
-                          <span>−₴{coupon_discount}</span>
-                        </div>
-                      )}
-                      <div className="flex flex-col gap-1">
-                        <div className="flex gap-2">
-                          <input
-                            value={couponInput}
-                            onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                            onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
-                            maxLength={32}
-                            placeholder="Промокод"
-                            className="flex-1 min-w-0 px-3 py-[6px] border border-slate-300 outline-none text-sm text-black"
-                          />
-                          {coupon?.status === "applied" ? (
-                            <button
-                              type="button"
-                              onClick={removeCoupon}
-                              className="px-3 py-[6px] border text-sm"
-                            >
-                              Прибрати
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={applyCoupon}
-                              className="px-3 py-[6px] border text-sm"
-                            >
-                              Застосувати
-                            </button>
-                          )}
-                        </div>
-                        {coupon?.status === "not_applied" && (
-                          <p className="text-xs text-orange-600">{coupon.message}</p>
-                        )}
-                      </div>
                       {next_order_discount && (
                         <p className="text-sm text-green-700">
                           Додайте ще на ₴{next_order_discount.remaining} і
@@ -387,10 +331,6 @@ const Card = () => {
                           замовлення
                         </p>
                       )}
-                      <p className="text-sm">
-                        Доставку оплачує покупець перевізнику при отриманні
-                        (за тарифами перевізника).
-                      </p>
 
                       <div className="flex justify-between items-center ">
                         <span>Разом до сплати</span>
@@ -405,9 +345,7 @@ const Card = () => {
                         Оформити замовлення ({buy_product_item})
                       </button>
                       <p className="text-xs opacity-70">
-                        Товари зберігаються в кошику {cart_ttl_days} днів. Ціни
-                        й наявність оновлюються автоматично — товар не
-                        резервується, доки ви не оформите замовлення.
+                        Товари зберігаються в кошику {cart_ttl_days} днів. Товар не резервується, доки ви не оформите замовлення.
                       </p>
                     </div>
                   )}

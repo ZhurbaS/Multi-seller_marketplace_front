@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { get_orders } from "../../store/reducers/orderSlice";
 import { FadeLoader } from "react-spinners";
 import { INVOICE_STATUS } from "../../utils/invoice";
+import { payLabel, deliveryLabel } from "../../utils/statusLabels";
 
 const Orders = () => {
   const [state, setState] = useState("all");
@@ -127,7 +128,7 @@ const Orders = () => {
                       scope="row"
                       className="px-6 py-4 font-medium whitespace-nowrap"
                     >
-                      {o.payment_status}
+                      {payLabel(o.payment_status)}
                       {o.invoice?.number && (
                         <div className="text-xs font-normal opacity-80">
                           Рахунок {o.invoice.number}: {INVOICE_STATUS[o.invoice.status] || ""}
@@ -138,7 +139,7 @@ const Orders = () => {
                       scope="row"
                       className="px-6 py-4 font-medium whitespace-nowrap"
                     >
-                      {o.delivery_status}
+                      {deliveryLabel(o.delivery_status)}
                     </td>
                     <td
                       scope="row"

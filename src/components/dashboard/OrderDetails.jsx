@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/api";
 import { INVOICE_STATUS, downloadInvoice } from "../../utils/invoice";
+import { payLabel, deliveryLabel, DELIVERY_TYPE, formatAddress, recipientText } from "../../utils/statusLabels";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { get_orders_details } from "../../store/reducers/orderSlice";
@@ -31,21 +32,30 @@ const OrderDetails = () => {
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1 ">
           <h2 className="text-[var(--text-ordDet)] font-semibold font-sans">
-            Отримувач: {myOrder.shippingInfo?.name}
+            Замовник: {myOrder.shippingInfo?.name}, {myOrder.shippingInfo?.phone}
           </h2>
+          {recipientText(myOrder.shippingInfo) && (
+            <p className="text-[var(--text-ordDet)] text-sm font-semibold">
+              Отримувач: {recipientText(myOrder.shippingInfo)}
+            </p>
+          )}
+          <p className="text-[var(--text-ordDet)] text-sm">
+            {DELIVERY_TYPE[myOrder.shippingInfo?.deliveryType] || ""}
+          </p>
           <p>
             <span className="bg-[var(--bg-ordDet-home)] text-[var(--text-ordDet-home)] text-xs font-medium mr-2 px-2 py-2 rounded">
               Адреса
             </span>
             <span className="text-[var(--text-ordDet)] text-sm ">
-              {myOrder.shippingInfo?.post}, {myOrder.shippingInfo?.district},{" "}
-              {myOrder.shippingInfo?.area}, {myOrder.shippingInfo?.city},{" "}
-              {myOrder.shippingInfo?.address}, {myOrder.shippingInfo?.phone}
+              {formatAddress(myOrder.shippingInfo)}
             </span>
           </p>
           <p className="text-[var(--text-ordDet)] text-md font-semibold">
             Email: {userInfo.email}
           </p>
+          {myOrder.comment && (
+            <p className="text-[var(--text-ordDet)] text-sm whitespace-pre-wrap">Коментар: {myOrder.comment}</p>
+          )}
           {myOrder.buyer?.kind === "company" && (
             <p className="text-[var(--text-ordDet)] text-sm">
               Платник: {myOrder.buyer.companyName}, ЄДРПОУ {myOrder.buyer.edrpou}
@@ -79,7 +89,7 @@ const OrderDetails = () => {
                   : "bg-[var(--bg-ordDet-NotPaid)] text-[var(--text-ordDet-NotPaid)]"
               } rounded-md`}
             >
-              {myOrder.payment_status}
+              {payLabel(myOrder.payment_status)}
             </span>
           </p>
 
@@ -92,7 +102,7 @@ const OrderDetails = () => {
                   : "bg-[var(--bg-ordDet-NotPaid)] text-[var(--text-ordDet-NotPaid)]"
               } rounded-md`}
             >
-              {myOrder.delivery_status}
+              {deliveryLabel(myOrder.delivery_status)}
             </span>
           </p>
         </div>

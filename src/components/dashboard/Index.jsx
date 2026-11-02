@@ -5,6 +5,7 @@ import { FaCartArrowDown } from "react-icons/fa6";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { get_dashboard_index_data } from "../../store/reducers/dashboardSlice";
+import { payLabel, deliveryLabel } from "../../utils/statusLabels";
 
 const getOrderWord = (count) => {
   const lastDigit = count % 10;
@@ -131,13 +132,13 @@ const Index = () => {
                       scope="row"
                       className="px-6 py-4 font-medium whitespace-nowrap"
                     >
-                      {o.payment_status}
+                      {payLabel(o.payment_status)}
                     </td>
                     <td
                       scope="row"
                       className="px-6 py-4 font-medium whitespace-nowrap"
                     >
-                      {o.delivery_status}
+                      {deliveryLabel(o.delivery_status)}
                     </td>
                     <td
                       scope="row"

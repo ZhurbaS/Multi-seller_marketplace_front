@@ -32,24 +32,26 @@ const saveCoupon = (code) => {
   }
 };
 
+// Кошик рахується БЕЗ купона. Купон застосовується лише на оформленні: get_card_products({ userId, coupon: true }).
 export const get_card_products = createAsyncThunk(
   "card/get_card_products",
-  async (userId, { rejectWithValue, fulfillWithValue, getState }) => {
+  async (arg, { rejectWithValue, fulfillWithValue, getState }) => {
     try {
+      const userId = typeof arg === "string" ? arg : arg?.userId;
+      const withCoupon = typeof arg === "object" && arg?.coupon === true;
       if (!userId || typeof userId !== "string") {
         throw new Error("Невірний userId передано до get_card_products...");
       }
 
-      const couponCode = getState().card.coupon_code;
+      const couponCode = withCoupon ? getState().card.coupon_code : "";
       const { data } = await api.get(
         `/home/product/get-card-product/${userId}`,
         couponCode ? { params: { coupon: couponCode } } : undefined
       );
-      // console.log(data);
       return fulfillWithValue(data);
     } catch (error) {
       console.error("💥 Error in cardSlice: get_card_products:", error);
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data || { error: "Не вдалося завантажити кошик" });
     }
   }
 );
