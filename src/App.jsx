@@ -28,6 +28,8 @@ import Returns from "./components/dashboard/Returns";
 import ReturnNew from "./components/dashboard/ReturnNew";
 import ReturnsPolicy from "./pages/ReturnsPolicy";
 import Oferta from "./pages/Oferta";
+import LegalPage from "./pages/LegalPage";
+import CookieBanner from "./components/CookieBanner";
 
 function App() {
   const dispatch = useDispatch();
@@ -53,6 +55,11 @@ function App() {
         <Route path="/pay/mock" element={<MockPay />} />
         <Route path="/returns-policy" element={<ReturnsPolicy />} />
         <Route path="/oferta" element={<Oferta />} />
+        <Route path="/delivery" element={<LegalPage slug="delivery" />} />
+        <Route path="/returns" element={<LegalPage slug="returns" />} />
+        <Route path="/warranty" element={<LegalPage slug="warranty" />} />
+        <Route path="/privacy" element={<LegalPage slug="privacy" />} />
+        <Route path="/cookies" element={<LegalPage slug="cookies" />} />
 
         <Route path="/dashboard" element={<ProtectUser />}>
           <Route path="" element={<Dashboard />}>
@@ -69,6 +76,7 @@ function App() {
           </Route>
         </Route>
       </Routes>
+      <CookieBanner />
     </>
   );
 }

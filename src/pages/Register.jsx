@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { FaFacebookF } from 'react-icons/fa';
-import { FaGoogle } from 'react-icons/fa6';
 import { FadeLoader } from 'react-spinners';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { customer_register, messageClear } from '../store/reducers/authSlice';
 import toast from 'react-hot-toast';
-import { getFrontendUrl } from '../api/api';
+import { getFrontendUrl } from '../api/api'; // eslint-disable-line no-unused-vars
+import GoogleButton from '../components/GoogleButton';
+import ConsentCheckboxes from '../components/ConsentCheckboxes';
+import { consentRequired } from '../utils/consentRequired';
+import useLegalStatus from '../hooks/useLegalStatus';
+import useAuthConfig from '../hooks/useAuthConfig';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -25,6 +28,10 @@ const Register = () => {
   });
 
   const dispatch = useDispatch();
+  const legal = useLegalStatus();
+  const authCfg = useAuthConfig();
+  const [accept, setAccept] = useState(false);
+  const [marketing, setMarketing] = useState(false);
 
   const inputHandle = (e) => {
     setState({
@@ -35,8 +42,8 @@ const Register = () => {
 
   const register = (e) => {
     e.preventDefault();
-    // console.log(state);
-    dispatch(customer_register(state));
+    if (consentRequired(legal) && !accept) return toast.error('Підтвердіть, що ознайомились з публічною офертою та політикою конфіденційності');
+    dispatch(customer_register({ ...state, acceptLegal: accept, marketing }));
   };
 
   useEffect(() => {
@@ -48,10 +55,10 @@ const Register = () => {
       toast.error(errorMessage);
       dispatch(messageClear());
     }
-    if (userInfo) {
+    if (userInfo && !userInfo.guest) {
       navigate('/');
     }
-  }, [successMessage, errorMessage]);
+  }, [successMessage, errorMessage, userInfo]);
 
   return (
     <div>
@@ -131,6 +138,9 @@ const Register = () => {
                       className="w-full px-3 py-2 border border-[var(--border-reg)] outline-none focus:border-[var(--border-regFoc)] rounded-md"
                     />
                   </div>
+                  <div className="mb-3">
+                    <ConsentCheckboxes accept={accept} setAccept={setAccept} marketing={marketing} setMarketing={setMarketing} />
+                  </div>
                   <button className="px-8 w-full py-2 bg-[var(--bg-regBtn)] shadow-lg hover:shadow-green-500/40 text-[var(--text-regBtn)] rounded-md">
                     Зареєструватися
                   </button>
@@ -141,19 +151,11 @@ const Register = () => {
                   <span className="px-3 text-[var(--text-reg)] ">Чи</span>
                   <div className="h-[1px] bg-[var(--bg-regOrLine)] w-[95%]"></div>
                 </div>
-                <button className="px-8 w-full py-2 bg-[var(--bg-regFb)] shadow hover:shadow-indigo-500/50 text-[var(--text-regFb)] rounded-md flex justify-center items-center gap-2 mb-3">
-                  <span>
-                    <FaFacebookF />
-                  </span>
-                  <span>Зареєструватися через Facebook</span>
-                </button>
-
-                <button className="px-8 w-full py-2 bg-[var(--bg-regG)] shadow hover:shadow-red-500/50 text-[var(--text-regFb)] rounded-md flex justify-center items-center gap-2 mb-3">
-                  <span>
-                    <FaGoogle />
-                  </span>
-                  <span>Зареєструватися через Gmail</span>
-                </button>
+                {authCfg.google && (
+                  <div className="mb-3">
+                    <GoogleButton clientId={authCfg.google.clientId} acceptLegal={accept} marketing={marketing} onDone={() => navigate('/')} />
+                  </div>
+                )}
               </div>
 
               <div className="text-center text-[var(--text-reg)] pt-1">

@@ -1,8 +1,9 @@
+import useEnsureUser from "../../hooks/useEnsureUser";
 import React, { useEffect } from "react";
 import { FaEye, FaRegHeart } from "react-icons/fa";
 import { RiShoppingCartLine } from "react-icons/ri";
 import Rating from "../Rating";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   add_to_card,
@@ -12,23 +13,20 @@ import {
 import toast from "react-hot-toast";
 
 const FeatureProducts = ({ products }) => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { userInfo } = useSelector((state) => state.auth);
+  const ensureUser = useEnsureUser();
   const { errorMessage, successMessage } = useSelector((state) => state.card);
 
-  const add_card = (id) => {
-    // console.log(id);
-    if (userInfo) {
+  const add_card = async (id) => {
+    const uid = await ensureUser();
+    if (uid) {
       dispatch(
         add_to_card({
-          userId: userInfo.id,
+          userId: uid,
           quantity: 1,
           productId: id,
         })
       );
-    } else {
-      navigate("/login");
     }
   };
 
@@ -43,11 +41,12 @@ const FeatureProducts = ({ products }) => {
     }
   }, [successMessage, errorMessage]);
 
-  const add_wishlist = (product) => {
-    // console.log(product);
+  const add_wishlist = async (product) => {
+    const uid = await ensureUser();
+    if (!uid) return;
     dispatch(
       add_to_wishlist({
-        userId: userInfo.id,
+        userId: uid,
         productId: product._id,
         name: product.name,
         price: product.price,

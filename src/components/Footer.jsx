@@ -9,6 +9,7 @@ import { IoHeart } from "react-icons/io5";
 import { FaShoppingCart } from "react-icons/fa";
 import { getFrontendUrl } from "../api/api";
 import useLegalStatus from "../hooks/useLegalStatus";
+import { openCookieSettings } from "../utils/consent";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -51,11 +52,16 @@ const Footer = () => {
                     <Link>Про нас</Link>
                   </li>
                   <li>
-                    <Link>Оплата і доставка</Link>
+                    {legal.delivery?.published ? <Link to="/delivery">Доставка й оплата</Link> : <Link>Оплата і доставка</Link>}
                   </li>
                   <li>
-                    <Link to="/returns-policy">Обмін та повернення</Link>
+                    <Link to={legal.returns?.published ? "/returns" : "/returns-policy"}>Обмін та повернення</Link>
                   </li>
+                  {legal.warranty?.published && (
+                    <li>
+                      <Link to="/warranty">Гарантія</Link>
+                    </li>
+                  )}
                   <li>
                     <Link>Контактна інформація</Link>
                   </li>
@@ -78,6 +84,21 @@ const Footer = () => {
                       <Link to="/oferta">Публічна оферта</Link>
                     </li>
                   )}
+                  {legal.privacy?.published && (
+                    <li>
+                      <Link to="/privacy">Політика конфіденційності</Link>
+                    </li>
+                  )}
+                  {legal.cookies?.published && (
+                    <li>
+                      <Link to="/cookies">Політика cookies</Link>
+                    </li>
+                  )}
+                  <li>
+                    <button type="button" onClick={openCookieSettings} className="text-left">
+                      Налаштування cookies
+                    </button>
+                  </li>
                 </ul>
               </div>
             </div>

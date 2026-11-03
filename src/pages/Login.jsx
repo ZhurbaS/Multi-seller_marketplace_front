@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { FaFacebookF } from 'react-icons/fa';
-import { FaGoogle } from 'react-icons/fa6';
 import { Link, useNavigate } from 'react-router-dom';
 import { customer_login, messageClear } from '../store/reducers/authSlice';
 import toast from 'react-hot-toast';
 import { FadeLoader } from 'react-spinners';
 import { useDispatch, useSelector } from 'react-redux';
-import { getFrontendUrl } from '../api/api';
+import { getFrontendUrl } from '../api/api'; // eslint-disable-line no-unused-vars
+import OtpLogin from '../components/OtpLogin';
+import GoogleButton from '../components/GoogleButton';
+import ConsentCheckboxes from '../components/ConsentCheckboxes';
+import useAuthConfig from '../hooks/useAuthConfig';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,6 +20,8 @@ const Login = () => {
   );
 
   const dispatch = useDispatch();
+  const authCfg = useAuthConfig();
+  const [accept, setAccept] = useState(false);
 
   const [state, setState] = useState({
     email: '',
@@ -47,10 +51,11 @@ const Login = () => {
       toast.error(errorMessage);
       dispatch(messageClear());
     }
-    if (userInfo) {
+    // Гостьова сесія (кошик без реєстрації) — не вхід: сторінку входу не закриваємо
+    if (userInfo && !userInfo.guest) {
       navigate('/');
     }
-  }, [successMessage, errorMessage]);
+  }, [successMessage, errorMessage, userInfo]);
 
   return (
     <div>
@@ -125,19 +130,17 @@ const Login = () => {
                   <span className="px-3 text-[var(--text-reg)] ">Чи</span>
                   <div className="h-[1px] bg-[var(--bg-regOrLine)] w-[95%]"></div>
                 </div>
-                <button className="px-8 w-full py-2 bg-[var(--bg-regFb)] shadow hover:shadow-indigo-500/50 text-[var(--text-regFb)] rounded-md flex justify-center items-center gap-2 mb-3">
-                  <span>
-                    <FaFacebookF />
-                  </span>
-                  <span>Війти через Facebook</span>
-                </button>
-
-                <button className="px-8 w-full py-2 bg-[var(--bg-regG)] shadow hover:shadow-red-500/50 text-[var(--text-regFb)] rounded-md flex justify-center items-center gap-2 mb-3">
-                  <span>
-                    <FaGoogle />
-                  </span>
-                  <span>Війти через Gmail</span>
-                </button>
+                {authCfg.google && (
+                  <div className="flex flex-col gap-2 mb-3 text-[var(--text-reg)]">
+                    <GoogleButton clientId={authCfg.google.clientId} acceptLegal={accept} onDone={() => navigate('/')} />
+                    <ConsentCheckboxes accept={accept} setAccept={setAccept} showMarketing={false} />
+                  </div>
+                )}
+                {authCfg.otp && (
+                  <div className="mb-3">
+                    <OtpLogin onDone={() => navigate('/')} />
+                  </div>
+                )}
               </div>
 
               <div className="text-center text-[var(--text-reg)] pt-1">

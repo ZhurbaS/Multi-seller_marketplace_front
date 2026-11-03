@@ -12,6 +12,7 @@ import CartEditModal from "../components/CartEditModal";
 import { emptyDelivery, deliveryError, fromSaved, toPayload, savedAddressTitle } from "../utils/delivery";
 import { get_card_products, set_coupon_code } from "../store/reducers/cardSlice";
 import { isValidPhone, nextPhone, maskPhone } from "../utils/phone";
+import { set_token } from "../store/reducers/authSlice";
 import InvoiceChannelPick from "../components/InvoiceChannelPick";
 
 const inputCls =
@@ -91,7 +92,7 @@ const Checkout = ({ cart }) => {
         setNpOn(!!data.novaPoshta);
         // Підставляємо збережені контакти й останню адресу (можна змінити)
         setForm((f) => ({
-          name: f.name || data.profile?.name || "",
+          name: f.name || (data.profile?.name === "Гість" ? "" : data.profile?.name) || "",
           phone: f.phone || (data.profile?.phone ? maskPhone(data.profile.phone) : ""),
         }));
         if (data.addresses?.length) {
@@ -103,7 +104,12 @@ const Checkout = ({ cart }) => {
   }, []);
 
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: userInfo?.name || "", phone: "" });
+  const [form, setForm] = useState({ name: userInfo?.name && userInfo.name !== "Гість" ? userInfo.name : "", phone: "" });
+  // Оформлення без реєстрації: гість вказує e-mail (на нього — підтвердження й рахунок); акаунт створюється тихо
+  const needEmail = !!userInfo?.guest && !userInfo?.email;
+  const [guestEmail, setGuestEmail] = useState("");
+  const [marketing, setMarketing] = useState(false);
+  const [emailTaken, setEmailTaken] = useState(false);
   const [del, setDel] = useState(emptyDelivery());
   const [addrSel, setAddrSel] = useState("new");
   const [editOpen, setEditOpen] = useState(false);
@@ -196,6 +202,7 @@ const Checkout = ({ cart }) => {
       if (!isValidPhone(recipient.phone)) return "Вкажіть коректний телефон отримувача";
     }
     if (!method) return "Оберіть спосіб оплати";
+    if (needEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(guestEmail.trim())) return "Вкажіть коректну електронну пошту";
     if (legal.oferta?.published && !acceptOferta) return "Підтвердьте ознайомлення з публічною офертою";
     if (isCompany) {
       if (company.companyName.trim().length < 2) return "Вкажіть назву організації";
@@ -213,6 +220,23 @@ const Checkout = ({ cart }) => {
     if (busy) return;
     if (err) return toast.error(err);
     setBusy(true);
+    if (needEmail) {
+      try {
+        const { data } = await api.put("/customer/guest-claim", {
+          email: guestEmail.trim(),
+          name: form.name,
+          phone: form.phone,
+          acceptLegal: acceptOferta,
+          marketing,
+        });
+        dispatch(set_token(data.token));
+      } catch (e) {
+        setEmailTaken(e.response?.data?.code === "EMAIL_EXISTS");
+        toast.error(e.response?.data?.error || "Не вдалося зберегти контактні дані");
+        setBusy(false);
+        return;
+      }
+    }
     const res = await dispatch(
       place_order({
         price,
@@ -265,6 +289,20 @@ const Checkout = ({ cart }) => {
                     placeholder="+38(067)-323-57-85"
                   />
                 </div>
+                {needEmail && (
+                  <div className="mt-3 flex flex-col gap-1">
+                    <Field label="Email *" name="guestEmail" type="email" value={guestEmail} onChange={(e) => { setGuestEmail(e.target.value); setEmailTaken(false); }} placeholder="name@example.com" autoComplete="email" />
+                    <p className="text-xs opacity-60">На цю пошту прийдуть підтвердження замовлення й рахунок. Окремо реєструватися не потрібно — вхід у кабінет можливий за кодом з листа.</p>
+                    {emailTaken && (
+                      <p className="text-sm">
+                        Цей e-mail уже зареєстровано.{" "}
+                        <Link to="/login" className="underline">
+                          Увійти за кодом
+                        </Link>
+                      </p>
+                    )}
+                  </div>
+                )}
                 {userInfo?.email && <p className="text-sm opacity-70 mt-2">Email: {userInfo.email}</p>}
                 <label className="flex items-center gap-2 cursor-pointer mt-3">
                   <input type="checkbox" checked={other} onChange={(e) => toggleOther(e.target.checked)} />
@@ -573,9 +611,23 @@ const Checkout = ({ cart }) => {
                       Я ознайомився(лась) з{" "}
                       <Link to="/oferta" target="_blank" className="underline">
                         Публічною офертою
-                      </Link>{" "}
-                      і приймаю її умови
+                      </Link>
+                      {legal.privacy?.published && (
+                        <>
+                          {" "}та{" "}
+                          <Link to="/privacy" target="_blank" className="underline">
+                            Політикою конфіденційності
+                          </Link>
+                        </>
+                      )}{" "}
+                      і приймаю їх умови
                     </span>
+                  </label>
+                )}
+                {needEmail && (
+                  <label className="flex items-start gap-2 text-sm cursor-pointer opacity-90">
+                    <input type="checkbox" className="mt-1" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} />
+                    <span>Хочу отримувати новини та пропозиції на e-mail (необов'язково)</span>
                   </label>
                 )}
                 <button

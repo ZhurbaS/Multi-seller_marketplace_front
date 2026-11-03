@@ -1,7 +1,8 @@
+import useEnsureUser from "../../hooks/useEnsureUser";
 import React, { useEffect } from "react";
 import { FaEye, FaRegHeart } from "react-icons/fa";
 import { RiShoppingCartLine } from "react-icons/ri";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   add_to_card,
@@ -12,9 +13,8 @@ import toast from "react-hot-toast";
 import Rating from "../Rating";
 
 const ShopProducts = ({ styles, products }) => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { userInfo } = useSelector((state) => state.auth);
+  const ensureUser = useEnsureUser();
   const { errorMessage, successMessage } = useSelector((state) => state.card);
 
   useEffect(() => {
@@ -28,25 +28,25 @@ const ShopProducts = ({ styles, products }) => {
     }
   }, [successMessage, errorMessage]);
 
-  const add_card = (id) => {
-    if (userInfo) {
+  const add_card = async (id) => {
+    const uid = await ensureUser();
+    if (uid) {
       dispatch(
         add_to_card({
-          userId: userInfo.id,
+          userId: uid,
           quantity: 1,
           productId: id,
         })
       );
-    } else {
-      navigate("/login");
     }
   };
 
-  const add_wishlist = (product) => {
-    if (userInfo) {
+  const add_wishlist = async (product) => {
+    const uid = await ensureUser();
+    if (uid) {
       dispatch(
         add_to_wishlist({
-          userId: userInfo.id,
+          userId: uid,
           productId: product._id,
           name: product.name,
           price: product.price,
@@ -57,8 +57,6 @@ const ShopProducts = ({ styles, products }) => {
           slugBase: product.slugBase,
         })
       );
-    } else {
-      navigate("/login");
     }
   };
 

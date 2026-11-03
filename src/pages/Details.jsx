@@ -1,3 +1,4 @@
+import useEnsureUser from "../hooks/useEnsureUser";
 import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -39,6 +40,7 @@ const Details = () => {
   const { product, relatedProducts, moreProducts, category, totalReview } =
     useSelector((state) => state.home);
   const { userInfo } = useSelector((state) => state.auth);
+  const ensureUser = useEnsureUser();
   const { errorMessage, successMessage } = useSelector((state) => state.card);
   const resizeKey = useCarouselResizeKey();
 
@@ -112,7 +114,7 @@ const Details = () => {
   }, [product._id, noStock, userInfo]);
 
   const toggleSubscribe = async () => {
-    if (!userInfo) return navigate("/login");
+    if (!userInfo?.email) return navigate("/login"); // повідомлення надсилаємо на e-mail
     try {
       if (subscribed) {
         await api.delete(`/home/product/notify-me/${product._id}`);
@@ -147,17 +149,16 @@ const Details = () => {
     }
   };
 
-  const add_card = () => {
-    if (userInfo) {
+  const add_card = async () => {
+    const uid = await ensureUser();
+    if (uid) {
       dispatch(
         add_to_card({
-          userId: userInfo.id,
+          userId: uid,
           quantity: quantity,
           productId: product._id,
         })
       );
-    } else {
-      navigate("/login");
     }
   };
 
@@ -172,11 +173,12 @@ const Details = () => {
     }
   }, [successMessage, errorMessage]);
 
-  const add_wishlist = () => {
-    if (userInfo) {
+  const add_wishlist = async () => {
+    const uid = await ensureUser();
+    if (uid) {
       dispatch(
         add_to_wishlist({
-          userId: userInfo.id,
+          userId: uid,
           productId: product._id,
           name: product.name,
           price: product.price,
@@ -187,16 +189,14 @@ const Details = () => {
           slugBase: product.slugBase,
         })
       );
-    } else {
-      navigate("/login");
     }
   };
 
   // «Купити зараз» — той самий шлях, що й кошик, але для одного товару.
   // Доставка в ціну не входить (оплачується перевізнику при отриманні),
   // остаточні суми і знижки рахує сервер.
-  const buynow = () => {
-    if (!userInfo) return navigate("/login");
+  const buynow = async () => {
+    if (!(await ensureUser())) return;
     const unit = unitPrice(product, quantity);
     const total = unit * quantity;
 

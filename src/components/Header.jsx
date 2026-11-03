@@ -95,7 +95,7 @@ const Header = () => {
                     <FaSquareInstagram />
                   </a>
                 </div>
-                {userInfo ? (
+                {userInfo && !(userInfo.guest && !userInfo.email) ? (
                   <Link
                     className="flex cursor-pointer justify-center items-center gap-2 text-sm text-[var(--text-header-list)]"
                     to="/dashboard"
@@ -267,7 +267,7 @@ const Header = () => {
               />
             </Link>
             <div className="flex justify-start items-center gap-10">
-              {userInfo ? (
+              {userInfo && !(userInfo.guest && !userInfo.email) ? (
                 <Link
                   className="flex cursor-pointer justify-center items-center gap-2 text-sm text-[var(--text-header-list)]"
                   to="/dashboard"
