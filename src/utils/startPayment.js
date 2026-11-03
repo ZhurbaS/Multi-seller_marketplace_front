@@ -18,11 +18,11 @@ const submitForm = (url, fields) => {
 };
 
 // Починає оплату обраним способом: перехід на банк / підтвердження / рахунок.
-export async function startPayment({ orderId, method, navigate }) {
-  const { data } = await api.post("/pay/start", { orderId, method });
+export async function startPayment({ orderId, method, invoiceChannel, navigate }) {
+  const { data } = await api.post("/pay/start", { orderId, method, invoiceChannel });
   if (data.type === "invoice") {
     navigate(
-      `/order/confirm?orderId=${orderId}&method=invoice&emailed=${data.emailed ? 1 : 0}&number=${encodeURIComponent(data.number || "")}`
+      `/order/confirm?orderId=${orderId}&method=invoice&emailed=${data.emailed ? 1 : 0}&channel=${data.channel || "email"}&number=${encodeURIComponent(data.number || "")}`
     );
   } else if (data.type === "cod") {
     navigate(`/order/confirm?orderId=${orderId}&method=cod`);

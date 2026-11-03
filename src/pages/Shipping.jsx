@@ -12,6 +12,7 @@ import CartEditModal from "../components/CartEditModal";
 import { emptyDelivery, deliveryError, fromSaved, toPayload, savedAddressTitle } from "../utils/delivery";
 import { get_card_products, set_coupon_code } from "../store/reducers/cardSlice";
 import { isValidPhone, nextPhone, maskPhone } from "../utils/phone";
+import InvoiceChannelPick from "../components/InvoiceChannelPick";
 
 const inputCls =
   "w-full px-3 py-2 border border-[var(--border-ship)] outline-none focus:border-[var(--border-ship-foc)] rounded-md bg-transparent";
@@ -173,6 +174,7 @@ const Checkout = ({ cart }) => {
   };
   // «За реквізитами»: платник — фізособа (за замовчуванням) або юрособа/ФОП
   const [payerKind, setPayerKind] = useState("individual");
+  const [invoiceChannel, setInvoiceChannel] = useState("email");
   const chooseMethod = (id) => {
     setMethod(id);
   };
@@ -204,6 +206,8 @@ const Checkout = ({ cart }) => {
     return "";
   };
   const err = error();
+  // Без згоди з офертою кнопку вимкнено (опубліковану оферту потрібно прийняти)
+  const ofertaMissing = !!legal.oferta?.published && !acceptOferta;
 
   const submit = async () => {
     if (busy) return;
@@ -225,6 +229,7 @@ const Checkout = ({ cart }) => {
         comment,
         acceptOferta,
         paymentMethod: method,
+        invoiceChannel,
         navigate,
       })
     );
@@ -395,7 +400,7 @@ const Checkout = ({ cart }) => {
                 {method === "invoice" && (
                   <div className="mt-4 flex flex-col gap-2 text-sm">
                     <p className="opacity-80">
-                      Після оформлення ми надішлемо рахунок з реквізитами на вашу пошту. Оплатіть його переказом за IBAN у банківському застосунку
+                      Після оформлення ми надішлемо рахунок з реквізитами у вибраний вами спосіб (e-mail, Viber або WhatsApp). Оплатіть його переказом за IBAN у банківському застосунку
                       або в касі банку — без додаткових комісій від магазину. Рахунок діє обмежений час; без оплати замовлення скасується.
                     </p>
                     <div className="flex gap-4 mt-1">
@@ -408,6 +413,7 @@ const Checkout = ({ cart }) => {
                         Юрособа або ФОП
                       </label>
                     </div>
+                    <InvoiceChannelPick value={invoiceChannel} onChange={setInvoiceChannel} phone={form.phone} />
                   </div>
                 )}
                 {isCompany && (
@@ -574,8 +580,8 @@ const Checkout = ({ cart }) => {
                 )}
                 <button
                   onClick={submit}
-                  disabled={busy}
-                  className="px-5 py-3 rounded-md bg-[var(--bg-card-processBtn)] text-[var(--text-card)] font-semibold uppercase disabled:opacity-60"
+                  disabled={busy || ofertaMissing}
+                  className="px-5 py-3 rounded-md bg-[var(--bg-card-processBtn)] text-[var(--text-card)] font-semibold uppercase disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {busy ? "Зачекайте..." : "Підтвердити замовлення"}
                 </button>

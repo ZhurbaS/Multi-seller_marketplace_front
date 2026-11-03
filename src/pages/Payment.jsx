@@ -4,6 +4,7 @@ import Footer from "../components/Footer";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../api/api";
+import InvoiceChannelPick from "../components/InvoiceChannelPick";
 
 const DESCRIPTIONS = {
   monobank:
@@ -12,7 +13,7 @@ const DESCRIPTIONS = {
     "Ви перейдете на захищену сторінку LiqPay. Після оплати повернетеся на сайт.",
   mock: "Тестовий режим: гроші не списуються. Ви зможете імітувати успішну або невдалу оплату.",
   invoice:
-    "Ми виставимо рахунок (PDF) з реквізитами й надішлемо його на вашу електронну пошту; він також буде в кабінеті. Сплатіть його переказом на наш IBAN у будь-якому банківському застосунку або в касі, вказавши призначення платежу з рахунку. Додаткових комісій від магазину немає. Після надходження коштів замовлення піде в обробку. Рахунок дійсний обмежений час (вказано в рахунку); якщо оплата не надійде, замовлення скасується автоматично, а товар повернеться в продаж.",
+    "Ми виставимо рахунок (PDF) з реквізитами й надішлемо його обраним вами способом (e-mail, Viber або WhatsApp); він також буде в кабінеті. Сплатіть його переказом на наш IBAN у будь-якому банківському застосунку або в касі, вказавши призначення платежу з рахунку. Додаткових комісій від магазину немає. Після надходження коштів замовлення піде в обробку. Рахунок дійсний обмежений час (вказано в рахунку); якщо оплата не надійде, замовлення скасується автоматично, а товар повернеться в продаж.",
   cod: "Оплата готівкою або карткою при отриманні замовлення. Замовлення буде передано в обробку одразу.",
 };
 
@@ -41,6 +42,7 @@ const Payment = () => {
   const [paymentMethod, setPaymentMethod] = useState(null);
   const [loadingMethods, setLoadingMethods] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [invoiceChannel, setInvoiceChannel] = useState("email");
 
   useEffect(() => {
     api
@@ -65,10 +67,11 @@ const Payment = () => {
       const { data } = await api.post("/pay/start", {
         orderId,
         method: paymentMethod,
+        invoiceChannel,
       });
       if (data.type === "invoice") {
         navigate(
-          `/order/confirm?orderId=${orderId}&method=invoice&emailed=${data.emailed ? 1 : 0}&number=${encodeURIComponent(data.number || "")}`
+          `/order/confirm?orderId=${orderId}&method=invoice&emailed=${data.emailed ? 1 : 0}&channel=${data.channel || "email"}&number=${encodeURIComponent(data.number || "")}`
         );
       } else if (data.type === "cod") {
         navigate(`/order/confirm?orderId=${orderId}&method=cod`);
@@ -137,6 +140,11 @@ const Payment = () => {
                     <p className="text-sm text-[var(--text-pay)] mb-4">
                       {DESCRIPTIONS[paymentMethod]}
                     </p>
+                    {paymentMethod === "invoice" && (
+                      <div className="text-sm text-[var(--text-pay)] mb-4">
+                        <InvoiceChannelPick value={invoiceChannel} onChange={setInvoiceChannel} />
+                      </div>
+                    )}
                     <button
                       onClick={pay}
                       disabled={loading}

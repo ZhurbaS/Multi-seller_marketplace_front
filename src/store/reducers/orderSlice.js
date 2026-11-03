@@ -6,7 +6,7 @@ import { startPayment } from "../../utils/startPayment";
 
 export const place_order = createAsyncThunk(
   "order/place_order",
-  async ({ products, items, shippingInfo, couponCode, buyer, comment, acceptOferta, paymentMethod, navigate }, { rejectWithValue, dispatch }) => {
+  async ({ products, items, shippingInfo, couponCode, buyer, comment, acceptOferta, paymentMethod, invoiceChannel, navigate }, { rejectWithValue, dispatch }) => {
     try {
       // Суму, знижки й доставку (її в замовленні немає) рахує сервер;
       // клієнт надсилає лише товари й адресу.
@@ -29,7 +29,7 @@ export const place_order = createAsyncThunk(
       // Якщо не вдалося — замовлення вже створене, тож відправляємо на сторінку оплати, щоб повторити.
       if (paymentMethod) {
         try {
-          await startPayment({ orderId: data.orderId, method: paymentMethod, navigate });
+          await startPayment({ orderId: data.orderId, method: paymentMethod, invoiceChannel, navigate });
           return;
         } catch (e) {
           toast.error(e.response?.data?.error || "Не вдалося почати оплату — оберіть спосіб оплати ще раз");

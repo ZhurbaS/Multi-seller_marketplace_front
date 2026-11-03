@@ -59,6 +59,15 @@ export const authSlice = createSlice({
     user_reset: (state, _) => {
       state.userInfo = "";
     },
+    // Новий токен (наприклад, після зміни e-mail) — оновлюємо сесію без повторного входу
+    set_token: (state, { payload }) => {
+      try {
+        localStorage.setItem("customerToken", payload);
+      } catch {
+        /* ignore */
+      }
+      state.userInfo = decodeToken(payload);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -91,5 +100,5 @@ export const authSlice = createSlice({
   },
 });
 
-export const { messageClear, user_reset } = authSlice.actions;
+export const { messageClear, user_reset, set_token } = authSlice.actions;
 export default authSlice.reducer;

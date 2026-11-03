@@ -16,6 +16,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { get_orders_details } from "../../store/reducers/orderSlice";
+import EditShipping from "./EditShipping";
 
 const STEPS = ["Оформлено", "Оплачено", "Опрацьовується", "Відправлено", "Доставлено"];
 
@@ -44,6 +45,8 @@ const OrderDetails = () => {
   const { myOrder } = useSelector((state) => state.order);
 
   const [el, setEl] = useState(null); // можливість повернення/скасування
+  const [editInfo, setEditInfo] = useState({ allowed: false, reason: "" }); // чи можна змінити отримувача/доставку
+  const [editing, setEditing] = useState(false);
   const { cabinetVisible } = useSelector((state) => state.returns);
 
   useEffect(() => {
@@ -52,6 +55,10 @@ const OrderDetails = () => {
       .get(`/home/returns/eligibility/${orderId}`)
       .then(({ data }) => setEl(data.eligibility))
       .catch(() => setEl(null));
+    api
+      .get(`/home/customer/orders/${orderId}/shipping-edit`)
+      .then(({ data }) => setEditInfo(data))
+      .catch(() => setEditInfo({ allowed: false, reason: "" }));
   }, [orderId]);
 
   if (!myOrder?._id) return <div className="bg-[var(--bg-ordDet)] p-5">Завантаження...</div>;
@@ -137,6 +144,14 @@ const OrderDetails = () => {
           <p>{formatAddress(o.shippingInfo)}</p>
           {o.trackingNumber && <p>Накладна (ТТН): <span className="font-semibold">{o.trackingNumber}</span></p>}
           <p className="opacity-70">Вартість доставки — за тарифами перевізника, оплачується при отриманні.</p>
+          {editInfo.allowed && (
+            <div className="mt-2 flex flex-col gap-1">
+              <button onClick={() => setEditing(true)} className="self-start px-4 py-2 border border-[var(--border-myOrders)] rounded hover:bg-slate-100">
+                Змінити отримувача та доставку
+              </button>
+              <span className="text-xs opacity-70">Доступно, поки замовлення не відправлено. Зміна може потребувати додаткового часу на опрацювання.</span>
+            </div>
+          )}
         </Card>
 
         <Card title="Оплата">
@@ -233,12 +248,23 @@ const OrderDetails = () => {
               <span>за тарифами перевізника</span>
             </div>
             <div className="flex justify-between text-lg font-bold border-t border-[var(--border-myOrders)] pt-2 mt-1">
-              <span>Разом до сплати</span>
-              <span>₴{o.price}</span>
+              <span>{o.payment_status === "paid" ? "Сплачено" : "Разом до сплати"}</span>
+              <span className={o.payment_status === "paid" ? "text-green-700" : ""}>₴{o.price}</span>
             </div>
           </div>
         </div>
       </div>
+
+      {editing && (
+        <EditShipping
+          order={o}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false);
+            dispatch(get_orders_details(orderId));
+          }}
+        />
+      )}
 
       {el && el.enabled && (el.canCancel || el.canReturn) && (
         <div>

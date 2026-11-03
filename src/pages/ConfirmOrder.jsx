@@ -18,6 +18,7 @@ const ConfirmOrder = () => {
   const isInvoice = params.get("method") === "invoice";
   const emailed = params.get("emailed") === "1";
   const invoiceNumber = params.get("number") || "";
+  const channel = params.get("channel") || "email";
 
   // loading | paid | cod | failed | pending
   const [result, setResult] = useState("loading");
@@ -95,7 +96,9 @@ const ConfirmOrder = () => {
           <img src={successImg} alt="Рахунок виставлено" />
           <p>
             Замовлення оформлено. Рахунок {invoiceNumber}{" "}
-            {emailed
+            {channel !== "email"
+              ? `сформовано. Менеджер надішле його у ${channel === "viber" ? "Viber" : "WhatsApp"} на номер, указаний у замовленні, — також його можна одразу завантажити в «Моїх замовленнях».`
+              : emailed
               ? "надіслано на вашу електронну пошту."
               : "сформовано, але лист поки не надіслано — ми надішлемо його найближчим часом."}
           </p>
