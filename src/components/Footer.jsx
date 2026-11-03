@@ -8,9 +8,11 @@ import { useSelector } from "react-redux";
 import { IoHeart } from "react-icons/io5";
 import { FaShoppingCart } from "react-icons/fa";
 import { getFrontendUrl } from "../api/api";
+import useLegalStatus from "../hooks/useLegalStatus";
 
 const Footer = () => {
   const navigate = useNavigate();
+  const legal = useLegalStatus();
 
   const { userInfo } = useSelector((state) => state.auth);
   const { card_product_count, wishlist_count } = useSelector(
@@ -71,9 +73,11 @@ const Footer = () => {
                   <li>
                     <Link>Наші партнери</Link>
                   </li>
-                  <li>
-                    <Link>Публічна оферта</Link>
-                  </li>
+                  {legal.oferta?.published && (
+                    <li>
+                      <Link to="/oferta">Публічна оферта</Link>
+                    </li>
+                  )}
                 </ul>
               </div>
             </div>

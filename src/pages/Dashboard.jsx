@@ -9,6 +9,7 @@ import { IoHeart } from "react-icons/io5";
 import { IoMdChatbubbles } from "react-icons/io";
 import { RiLogoutBoxFill } from "react-icons/ri";
 import { RiLockPasswordFill } from "react-icons/ri";
+import { IoSettingsSharp } from "react-icons/io5";
 import api from "../api/api";
 import { useDispatch, useSelector } from "react-redux";
 import { MdAssignmentReturn } from "react-icons/md";
@@ -101,6 +102,14 @@ const Dashboard = () => {
                   </span>
                   <Link to="/dashboard/chat" className="block">
                     Чат
+                  </Link>
+                </li>
+                <li className="flex justify-start items-center gap-2 py-2">
+                  <span className="text-xl">
+                    <IoSettingsSharp />
+                  </span>
+                  <Link to="/dashboard/settings" className="block">
+                    Налаштування
                   </Link>
                 </li>
                 <li className="flex justify-start items-center gap-2 py-2">

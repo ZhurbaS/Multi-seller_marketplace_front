@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../api/api";
 import { get_my_returns, get_return_policy } from "../../store/reducers/returnSlice";
+import { orderNo } from "../../utils/statusLabels";
 import { RETURN_STATUS, RETURN_REASON, RETURN_STATUS_COLOR, fmtDate } from "../../utils/returnLabels";
 
 const Card = ({ r, onChanged, returnAddress, contactInfo }) => {
@@ -55,7 +56,7 @@ const Card = ({ r, onChanged, returnAddress, contactInfo }) => {
       <div className="text-sm">
         Замовлення:{" "}
         <Link className="underline" to={`/dashboard/order/details/${r.orderId}`}>
-          #{String(r.orderId).slice(-8).toUpperCase()}
+          {orderNo({ orderNumber: r.orderNumber, _id: r.orderId })}
         </Link>
       </div>
 

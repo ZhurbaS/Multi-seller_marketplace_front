@@ -1,14 +1,17 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { place_order } from "../store/reducers/orderSlice";
 import toast from "react-hot-toast";
+import useLegalStatus from "../hooks/useLegalStatus";
 import api from "../api/api";
-import Autocomplete from "../components/Autocomplete";
+import DeliveryFields from "../components/DeliveryFields";
+import CartEditModal from "../components/CartEditModal";
+import { emptyDelivery, deliveryError, fromSaved, toPayload, savedAddressTitle } from "../utils/delivery";
 import { get_card_products, set_coupon_code } from "../store/reducers/cardSlice";
-import { isValidPhone, nextPhone } from "../utils/phone";
+import { isValidPhone, nextPhone, maskPhone } from "../utils/phone";
 
 const inputCls =
   "w-full px-3 py-2 border border-[var(--border-ship)] outline-none focus:border-[var(--border-ship-foc)] rounded-md bg-transparent";
@@ -30,12 +33,6 @@ const Section = ({ n, title, children }) => (
     {children}
   </div>
 );
-
-const DELIVERY = [
-  { id: "nova_poshta_warehouse", title: "У відділення" },
-  { id: "nova_poshta_postomat", title: "У поштомат" },
-  { id: "nova_poshta_courier", title: "Курєром" },
-];
 
 // Сторінку відкрили напряму (без кошика) — повертаємо в кошик
 const Shipping = () => {
@@ -83,33 +80,32 @@ const Checkout = ({ cart }) => {
   };
 
   // Збережені отримувачі й організації; novaPoshta — чи налаштований ключ API Нової пошти
-  const [saved, setSaved] = useState({ recipients: [], companies: [] });
+  const [saved, setSaved] = useState({ recipients: [], companies: [], addresses: [] });
   const [npOn, setNpOn] = useState(false);
   useEffect(() => {
     api
       .get("/home/customer/checkout-data")
       .then(({ data }) => {
-        setSaved({ recipients: data.recipients || [], companies: data.companies || [] });
+        setSaved({ recipients: data.recipients || [], companies: data.companies || [], addresses: data.addresses || [] });
         setNpOn(!!data.novaPoshta);
+        // Підставляємо збережені контакти й останню адресу (можна змінити)
+        setForm((f) => ({
+          name: f.name || data.profile?.name || "",
+          phone: f.phone || (data.profile?.phone ? maskPhone(data.profile.phone) : ""),
+        }));
+        if (data.addresses?.length) {
+          setDel(fromSaved(data.addresses[0]));
+          setAddrSel(data.addresses[0]._id);
+        }
       })
       .catch(() => {});
   }, []);
 
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({
-    name: userInfo?.name || "",
-    phone: "",
-    deliveryType: "nova_poshta_warehouse",
-    district: "",
-    city: "",
-    warehouse: "",
-    street: "",
-    house: "",
-    flat: "",
-    cityRef: "",
-    settlementRef: "",
-    warehouseRef: "",
-  });
+  const [form, setForm] = useState({ name: userInfo?.name || "", phone: "" });
+  const [del, setDel] = useState(emptyDelivery());
+  const [addrSel, setAddrSel] = useState("new");
+  const [editOpen, setEditOpen] = useState(false);
   const set = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const [other, setOther] = useState(false);
@@ -145,6 +141,10 @@ const Checkout = ({ cart }) => {
 
   const [comment, setComment] = useState("");
 
+  // Публічна оферта: галочка з'являється лише коли адмін її опублікував
+  const legal = useLegalStatus();
+  const [acceptOferta, setAcceptOferta] = useState(false);
+
   // Способи оплати. «За рахунком» — безготівковий розрахунок для юросіб: його вибір відкриває реквізити.
   const [methods, setMethods] = useState([]);
   const [method, setMethod] = useState("");
@@ -171,57 +171,30 @@ const Checkout = ({ cart }) => {
     setCompSel("new");
     setCompany({ companyName: "", edrpou: "", ipn: "" });
   };
-  // Обрали «за рахунком» — підставляємо останню збережену організацію
+  // «За реквізитами»: платник — фізособа (за замовчуванням) або юрособа/ФОП
+  const [payerKind, setPayerKind] = useState("individual");
   const chooseMethod = (id) => {
     setMethod(id);
-    if (id === "invoice" && compSel === "new" && !company.edrpou && saved.companies.length) pickCompany(saved.companies[0]);
+  };
+  const choosePayer = (kind) => {
+    setPayerKind(kind);
+    if (kind === "company" && compSel === "new" && !company.edrpou && saved.companies.length) pickCompany(saved.companies[0]);
   };
   const setComp = (e) => setCompany({ ...company, [e.target.name]: e.target.value.replace(/^\s+/, "") });
-  const isCompany = method === "invoice";
-
-  const fetchCities = useCallback(async (q) => {
-    const { data } = await api.get("/np/cities", { params: { q } });
-    if (data.enabled === false) setNpOn(false);
-    return data.items;
-  }, []);
-  const fetchWarehouses = useCallback(
-    async (q) => {
-      const { data } = await api.get("/np/warehouses", {
-        params: { cityRef: form.cityRef, q, type: form.deliveryType === "nova_poshta_postomat" ? "postomat" : "warehouse" },
-      });
-      return data.items;
-    },
-    [form.cityRef, form.deliveryType]
-  );
-  const fetchStreets = useCallback(
-    async (q) => {
-      const { data } = await api.get("/np/streets", { params: { settlementRef: form.settlementRef, q } });
-      return data.items;
-    },
-    [form.settlementRef]
-  );
+  const isCompany = method === "invoice" && payerKind === "company";
 
   const error = () => {
     if (form.name.trim().length < 2) return "Вкажіть ім'я";
     if (!isValidPhone(form.phone)) return "Вкажіть коректний номер телефону";
-    if (npOn && !form.cityRef) return "Оберіть населений пункт зі списку";
-    if (!npOn && form.district.trim().length < 2) return "Вкажіть область";
-    if (form.city.trim().length < 2) return "Вкажіть населений пункт";
-    const t = form.deliveryType;
-    if (t === "nova_poshta_courier") {
-      if (form.street.trim().length < 2) return "Вкажіть вулицю";
-      if (!form.house.trim()) return "Вкажіть номер будинку";
-    } else if (npOn && !form.warehouseRef) {
-      return t === "nova_poshta_postomat" ? "Оберіть поштомат зі списку" : "Оберіть відділення зі списку";
-    } else if (!form.warehouse.trim()) {
-      return t === "nova_poshta_postomat" ? "Вкажіть № поштомата" : "Вкажіть № відділення";
-    }
+    const de = deliveryError(del, npOn);
+    if (de) return de;
     if (other) {
       if (!recipient.lastName.trim()) return "Вкажіть прізвище отримувача";
       if (!recipient.firstName.trim()) return "Вкажіть ім'я отримувача";
       if (!isValidPhone(recipient.phone)) return "Вкажіть коректний телефон отримувача";
     }
     if (!method) return "Оберіть спосіб оплати";
+    if (legal.oferta?.published && !acceptOferta) return "Підтвердьте ознайомлення з публічною офертою";
     if (isCompany) {
       if (company.companyName.trim().length < 2) return "Вкажіть назву організації";
       if (!/^\d{8}$|^\d{10}$/.test(company.edrpou.replace(/\s/g, ""))) return "Код ЄДРПОУ — 8 цифр (для ФОП — 10 цифр РНОКПП)";
@@ -236,33 +209,21 @@ const Checkout = ({ cart }) => {
     if (busy) return;
     if (err) return toast.error(err);
     setBusy(true);
-    const t = form.deliveryType;
-    const address =
-      t === "nova_poshta_courier"
-        ? [`вул. ${form.street.trim()}`, `буд. ${form.house.trim()}`, form.flat.trim() && `кв. ${form.flat.trim()}`]
-            .filter(Boolean)
-            .join(", ")
-        : "";
     const res = await dispatch(
       place_order({
         price,
         products,
         items,
         shippingInfo: {
-          deliveryType: t,
+          ...toPayload(del),
           name: form.name,
           phone: form.phone,
-          district: form.district,
-          city: form.city,
-          cityRef: form.cityRef,
-          warehouseRef: t === "nova_poshta_courier" ? "" : form.warehouseRef,
-          warehouse: t === "nova_poshta_courier" ? "" : form.warehouse,
-          address,
           recipient: { other, ...recipient },
         },
         couponCode,
         buyer: isCompany ? { kind: "company", ...company } : { kind: "individual" },
         comment,
+        acceptOferta,
         paymentMethod: method,
         navigate,
       })
@@ -271,9 +232,9 @@ const Checkout = ({ cart }) => {
   };
 
   const deliveryHint =
-    form.deliveryType === "nova_poshta_courier"
+    del.deliveryType === "nova_poshta_courier"
       ? "Курєр Нової пошти привезе замовлення за вказаною адресою."
-      : form.deliveryType === "nova_poshta_postomat"
+      : del.deliveryType === "nova_poshta_postomat"
       ? "Замовлення чекатиме у поштоматі Нової пошти."
       : "Замовлення чекатиме у відділенні Нової пошти.";
 
@@ -370,81 +331,42 @@ const Checkout = ({ cart }) => {
               </Section>
 
               <Section n={2} title="Доставка">
-                <p className="text-sm mb-2 font-semibold">Нова пошта</p>
-                <div className="flex gap-2 flex-wrap mb-3">
-                  {DELIVERY.map((d) => (
+                {saved.addresses.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {saved.addresses.map((a) => {
+                      const t = savedAddressTitle(a);
+                      return (
+                        <button
+                          type="button"
+                          key={a._id}
+                          onClick={() => {
+                            setAddrSel(a._id);
+                            setDel(fromSaved(a));
+                          }}
+                          className={`text-left px-3 py-2 rounded-md border text-sm max-w-[260px] ${
+                            addrSel === a._id ? "border-[var(--border-ship-foc)] bg-[var(--bg-stripe)] font-semibold" : "border-[var(--border-ship)]"
+                          }`}
+                        >
+                          {t.head}
+                          <span className="block text-xs font-normal opacity-70 truncate">{t.sub}</span>
+                        </button>
+                      );
+                    })}
                     <button
                       type="button"
-                      key={d.id}
-                      onClick={() => setForm({ ...form, deliveryType: d.id, warehouse: "", warehouseRef: "" })}
-                      className={`px-4 py-2 rounded-md border text-sm ${
-                        form.deliveryType === d.id
-                          ? "border-[var(--border-ship-foc)] font-semibold bg-[var(--bg-stripe)]"
-                          : "border-[var(--border-ship)]"
+                      onClick={() => {
+                        setAddrSel("new");
+                        setDel(emptyDelivery());
+                      }}
+                      className={`px-3 py-2 rounded-md border text-sm ${
+                        addrSel === "new" ? "border-[var(--border-ship-foc)] bg-[var(--bg-stripe)] font-semibold" : "border-[var(--border-ship)]"
                       }`}
                     >
-                      {d.title}
+                      + Нова адреса
                     </button>
-                  ))}
-                </div>
-                {npOn ? (
-                  <div className="mb-3">
-                    <Autocomplete
-                      label="Населений пункт *"
-                      value={form.city}
-                      placeholder="Почніть вводити назву міста"
-                      onText={(t) => setForm({ ...form, city: t, district: "", cityRef: "", settlementRef: "", warehouseRef: "", warehouse: "", street: "" })}
-                      onPick={(c) =>
-                        setForm({ ...form, city: c.name, district: c.area, cityRef: c.ref, settlementRef: c.settlementRef, warehouseRef: "", warehouse: "", street: "" })
-                      }
-                      fetcher={fetchCities}
-                    />
-                    {form.cityRef && <p className="text-xs opacity-60 mt-1">{form.city}, {form.district} обл.</p>}
-                  </div>
-                ) : (
-                  <div className="flex max-md:flex-col gap-3 mb-3">
-                    <Field label="Область *" name="district" value={form.district} onChange={set} placeholder="Київська" />
-                    <Field label="Населений пункт *" name="city" value={form.city} onChange={set} placeholder="Київ" />
                   </div>
                 )}
-                {form.deliveryType === "nova_poshta_courier" ? (
-                  <div className="flex max-md:flex-col gap-3">
-                    {npOn ? (
-                      <Autocomplete
-                        label="Вулиця *"
-                        value={form.street}
-                        disabled={!form.settlementRef}
-                        placeholder={form.settlementRef ? "Почніть вводити назву вулиці" : "Спершу оберіть населений пункт"}
-                        onText={(t) => setForm({ ...form, street: t })}
-                        onPick={(st) => setForm({ ...form, street: st.name })}
-                        fetcher={fetchStreets}
-                      />
-                    ) : (
-                      <Field label="Вулиця *" name="street" value={form.street} onChange={set} />
-                    )}
-                    <Field label="Будинок *" name="house" value={form.house} onChange={set} />
-                    <Field label="Квартира" name="flat" value={form.flat} onChange={set} />
-                  </div>
-                ) : npOn ? (
-                  <Autocomplete
-                    label={form.deliveryType === "nova_poshta_postomat" ? "Поштомат *" : "Відділення *"}
-                    value={form.warehouse}
-                    disabled={!form.cityRef}
-                    loadOnFocus
-                    placeholder={form.cityRef ? "Введіть адресу або номер відділення" : "Спершу оберіть населений пункт"}
-                    onText={(t) => setForm({ ...form, warehouse: t, warehouseRef: "" })}
-                    onPick={(w) => setForm({ ...form, warehouse: w.title, warehouseRef: w.ref })}
-                    fetcher={fetchWarehouses}
-                  />
-                ) : (
-                  <Field
-                    label={form.deliveryType === "nova_poshta_postomat" ? "№ поштомата *" : "№ відділення *"}
-                    name="warehouse"
-                    value={form.warehouse}
-                    onChange={set}
-                    placeholder="Напр. 12"
-                  />
-                )}
+                <DeliveryFields form={del} setForm={setDel} npOn={npOn} onNpOff={() => setNpOn(false)} />
                 <p className="text-sm opacity-70 mt-3">
                   {deliveryHint} Вартість доставки — за тарифами перевізника (оплачується при отриманні).
                 </p>
@@ -465,9 +387,27 @@ const Checkout = ({ cart }) => {
                         }`}
                       >
                         <input type="radio" name="paymentMethod" checked={method === m.id} onChange={() => chooseMethod(m.id)} />
-                        <span>{m.id === "invoice" ? "Безготівковий розрахунок для юросіб" : m.title}</span>
+                        <span>{m.title}</span>
                       </label>
                     ))}
+                  </div>
+                )}
+                {method === "invoice" && (
+                  <div className="mt-4 flex flex-col gap-2 text-sm">
+                    <p className="opacity-80">
+                      Після оформлення ми надішлемо рахунок з реквізитами на вашу пошту. Оплатіть його переказом за IBAN у банківському застосунку
+                      або в касі банку — без додаткових комісій від магазину. Рахунок діє обмежений час; без оплати замовлення скасується.
+                    </p>
+                    <div className="flex gap-4 mt-1">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="payerKind" checked={payerKind === "individual"} onChange={() => choosePayer("individual")} />
+                        Я фізична особа
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="payerKind" checked={payerKind === "company"} onChange={() => choosePayer("company")} />
+                        Юрособа або ФОП
+                      </label>
+                    </div>
                   </div>
                 )}
                 {isCompany && (
@@ -548,9 +488,9 @@ const Checkout = ({ cart }) => {
               <div className="bg-[var(--bg-cardStock)] p-4 text-[var(--text-card-shopTitle)] flex flex-col gap-3 rounded-md sticky top-4">
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-bold">Товари</h2>
-                  <Link to="/card" className="text-sm text-[var(--text-shipChange)]">
+                  <button type="button" onClick={() => setEditOpen(true)} className="text-sm underline text-[var(--text-shipChange)]">
                     Редагувати товари
-                  </Link>
+                  </button>
                 </div>
                 <div className="flex flex-col gap-3 max-h-[320px] overflow-y-auto">
                   {products.flatMap((g) =>
@@ -620,6 +560,18 @@ const Checkout = ({ cart }) => {
                   <span>Всього до сплати</span>
                   <span className="text-xl text-[var(--text-card-sum)]">₴{total ?? price}</span>
                 </div>
+                {legal.oferta?.published && (
+                  <label className="flex items-start gap-2 text-sm cursor-pointer">
+                    <input type="checkbox" className="mt-1" checked={acceptOferta} onChange={(e) => setAcceptOferta(e.target.checked)} />
+                    <span>
+                      Я ознайомився(лась) з{" "}
+                      <Link to="/oferta" target="_blank" className="underline">
+                        Публічною офертою
+                      </Link>{" "}
+                      і приймаю її умови
+                    </span>
+                  </label>
+                )}
                 <button
                   onClick={submit}
                   disabled={busy}
@@ -636,6 +588,15 @@ const Checkout = ({ cart }) => {
           </div>
         </div>
       </section>
+      {editOpen && (
+        <CartEditModal
+          userId={userInfo.id}
+          onClose={(empty) => {
+            setEditOpen(false);
+            if (empty) navigate("/card", { replace: true });
+          }}
+        />
+      )}
       <Footer />
     </div>
   );

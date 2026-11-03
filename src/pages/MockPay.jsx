@@ -30,7 +30,7 @@ const MockPay = () => {
         </span>
         <h1 className="text-xl font-bold">Імітація оплати</h1>
         <p className="text-sm text-gray-600">
-          Замовлення №{orderId?.slice(-8).toUpperCase()}
+          Оплата замовлення
         </p>
         <button
           disabled={loading}

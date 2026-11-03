@@ -1,14 +1,44 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/api";
 import { INVOICE_STATUS, downloadInvoice } from "../../utils/invoice";
-import { payLabel, deliveryLabel, DELIVERY_TYPE, formatAddress, recipientText } from "../../utils/statusLabels";
+import {
+  payLabel,
+  deliveryLabel,
+  DELIVERY_TYPE,
+  formatAddress,
+  recipientText,
+  orderNo,
+  formatDateTime,
+  methodLabel,
+  statusBadge,
+  unitPriceOf,
+} from "../../utils/statusLabels";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { get_orders_details } from "../../store/reducers/orderSlice";
 
+const STEPS = ["Оформлено", "Оплачено", "Опрацьовується", "Відправлено", "Доставлено"];
+
+// Поточний крок: 0 оформлено, 1 оплачено, 2 опрацьовується, 3 відправлено, 4 доставлено
+const stepOf = (o) => {
+  if (o.delivery_status === "delivered") return 4;
+  if (o.delivery_status === "shipped") return 3;
+  if (["processing", "packing"].includes(o.delivery_status)) return 2;
+  if (o.payment_status === "paid") return 1;
+  return 0;
+};
+
+const Card = ({ title, children }) => (
+  <div className="border border-[var(--border-myOrders)] rounded-md p-4 flex flex-col gap-1 text-sm">
+    <h3 className="font-semibold text-base mb-1">{title}</h3>
+    {children}
+  </div>
+);
+
 const OrderDetails = () => {
   const { orderId } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const { userInfo } = useSelector((state) => state.auth);
   const { myOrder } = useSelector((state) => state.order);
@@ -24,184 +54,208 @@ const OrderDetails = () => {
       .catch(() => setEl(null));
   }, [orderId]);
 
+  if (!myOrder?._id) return <div className="bg-[var(--bg-ordDet)] p-5">Завантаження...</div>;
+
+  const o = myOrder;
+  const cancelled = o.delivery_status === "cancelled";
+  const step = stepOf(o);
+  const goodsCount = (o.products || []).reduce((s, p) => s + p.quantity, 0);
+  const canPay = o.payment_status !== "paid" && o.payment_method !== "cod" && !cancelled && o.payment_method !== "invoice";
+  const pay = () =>
+    navigate("/payment", {
+      state: {
+        price: o.price,
+        items: goodsCount,
+        orderId: o._id,
+        buyerKind: o.buyer?.kind || "individual",
+      },
+    });
+
   return (
-    <div className="bg-[var(--bg-ordDet)] p-5">
-      <h2 className="text-[var(--text-ordDet)] font-semibold">
-        #{myOrder._id}, <span className="pl-1">{myOrder.date}</span>
-      </h2>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1 ">
-          <h2 className="text-[var(--text-ordDet)] font-semibold font-sans">
-            Замовник: {myOrder.shippingInfo?.name}, {myOrder.shippingInfo?.phone}
-          </h2>
-          {recipientText(myOrder.shippingInfo) && (
-            <p className="text-[var(--text-ordDet)] text-sm font-semibold">
-              Отримувач: {recipientText(myOrder.shippingInfo)}
-            </p>
-          )}
-          <p className="text-[var(--text-ordDet)] text-sm">
-            {DELIVERY_TYPE[myOrder.shippingInfo?.deliveryType] || ""}
-          </p>
-          <p>
-            <span className="bg-[var(--bg-ordDet-home)] text-[var(--text-ordDet-home)] text-xs font-medium mr-2 px-2 py-2 rounded">
-              Адреса
-            </span>
-            <span className="text-[var(--text-ordDet)] text-sm ">
-              {formatAddress(myOrder.shippingInfo)}
-            </span>
-          </p>
-          <p className="text-[var(--text-ordDet)] text-md font-semibold">
-            Email: {userInfo.email}
-          </p>
-          {myOrder.comment && (
-            <p className="text-[var(--text-ordDet)] text-sm whitespace-pre-wrap">Коментар: {myOrder.comment}</p>
-          )}
-          {myOrder.buyer?.kind === "company" && (
-            <p className="text-[var(--text-ordDet)] text-sm">
-              Платник: {myOrder.buyer.companyName}, ЄДРПОУ {myOrder.buyer.edrpou}
-              {myOrder.buyer.ipn ? `, ІПН ${myOrder.buyer.ipn}` : ""}
-            </p>
-          )}
-        </div>
-
-        <div className="text-[var(--text-ordDet)]">
-          <h2 className="font-mono">Сума до сплати: ₴{myOrder.price}</h2>
-          {myOrder.order_discount?.amount > 0 && (
-            <p className="font-mono text-green-700">
-              Знижка за сумою: −₴{myOrder.order_discount.amount}
-            </p>
-          )}
-          {myOrder.coupon?.amount > 0 && (
-            <p className="font-mono text-green-700">
-              Купон {myOrder.coupon.code}: −₴{myOrder.coupon.amount}
-            </p>
-          )}
-          {myOrder.refunded_total > 0 && (
-            <p className="font-mono">Повернено: ₴{myOrder.refunded_total}</p>
-          )}
-          <p className="text-xs opacity-70">Доставка оплачується перевізнику при отриманні.</p>
-          <p className="font-mono">
-            Статус платежу:{" "}
-            <span
-              className={`py-[1px] text-xs px-3 ${
-                myOrder.payment_status === "paid"
-                  ? "bg-[var(--bg-ordDet-paid)] text-[var(--text-ordDet-paid)]"
-                  : "bg-[var(--bg-ordDet-NotPaid)] text-[var(--text-ordDet-NotPaid)]"
-              } rounded-md`}
-            >
-              {payLabel(myOrder.payment_status)}
-            </span>
-          </p>
-
-          <p className="font-mono">
-            Статус замовлення:{" "}
-            <span
-              className={`py-[1px] text-xs px-3 ${
-                myOrder.delivery_status === "paid"
-                  ? "bg-[var(--bg-ordDet-paid)] text-[var(--text-ordDet-paid)]"
-                  : "bg-[var(--bg-ordDet-NotPaid)] text-[var(--text-ordDet-NotPaid)]"
-              } rounded-md`}
-            >
-              {deliveryLabel(myOrder.delivery_status)}
-            </span>
-          </p>
+    <div className="bg-[var(--bg-ordDet)] p-5 rounded-md text-[var(--text-ordDet)] flex flex-col gap-5">
+      <div>
+        <Link to="/dashboard/my-orders" className="text-sm underline opacity-80">
+          ← Усі замовлення
+        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+          <div>
+            <h1 className="text-2xl font-bold">Замовлення {orderNo(o)}</h1>
+            <p className="text-sm opacity-70">від {formatDateTime(o.createdAt)}</p>
+          </div>
+          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${statusBadge(o.delivery_status)}`}>
+            {deliveryLabel(o.delivery_status)}
+          </span>
         </div>
       </div>
 
-      {myOrder.invoice?.number && (
-        <div className="mt-4 p-3 border border-slate-300 rounded text-[var(--text-ordDet)] text-sm flex flex-col gap-1">
-          <div className="font-semibold">Рахунок на оплату {myOrder.invoice.number}</div>
-          <div>{INVOICE_STATUS[myOrder.invoice.status] || ""}</div>
-          {["awaiting", "sent"].includes(myOrder.invoice.status) && myOrder.delivery_status !== "cancelled" && myOrder.invoice.dueAt && (
-            <div>Дійсний до: {new Date(myOrder.invoice.dueAt).toLocaleDateString("uk-UA")}</div>
+      {cancelled ? (
+        <div className="p-3 rounded-md bg-red-50 text-red-700 text-sm">
+          Замовлення скасовано.
+          {o.payment_status === "paid" && " Кошти буде повернено тим самим способом, яким здійснювалась оплата."}
+        </div>
+      ) : (
+        <ol className="flex items-start">
+          {STEPS.map((t, i) => (
+            <li key={t} className="flex-1 flex flex-col items-center text-center relative">
+              {i > 0 && (
+                <span className={`absolute top-3 right-1/2 w-full h-0.5 ${i <= step ? "bg-green-500" : "bg-slate-300"}`} />
+              )}
+              <span
+                className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-xs text-white ${
+                  i <= step ? "bg-green-500" : "bg-slate-300"
+                }`}
+              >
+                {i <= step ? "✓" : i + 1}
+              </span>
+              <span className={`text-xs mt-1 ${i <= step ? "font-semibold" : "opacity-60"}`}>{t}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      <div className="grid grid-cols-2 max-md:grid-cols-1 gap-3">
+        <Card title="Отримувач">
+          <p className="font-semibold">
+            {recipientText(o.shippingInfo) || `${o.shippingInfo?.name}, ${o.shippingInfo?.phone}`}
+          </p>
+          {recipientText(o.shippingInfo) && (
+            <p className="opacity-80">
+              Замовник: {o.shippingInfo?.name}, {o.shippingInfo?.phone}
+            </p>
           )}
-          {myOrder.invoice.sentTo && myOrder.invoice.status === "sent" && <div>Надіслано на: {myOrder.invoice.sentTo}</div>}
-          {myOrder.invoice.company &&
-            ["awaiting", "sent"].includes(myOrder.invoice.status) &&
-            myOrder.delivery_status !== "cancelled" && (
-            <div>
-              Реквізити для оплати: {myOrder.invoice.company.name}, IBAN {myOrder.invoice.company.iban}
-            </div>
+          {userInfo?.email && <p className="opacity-80">Email: {userInfo.email}</p>}
+          {o.buyer?.kind === "company" && (
+            <p className="opacity-80">
+              Платник: {o.buyer.companyName}, ЄДРПОУ {o.buyer.edrpou}
+              {o.buyer.ipn ? `, ІПН ${o.buyer.ipn}` : ""}
+            </p>
+          )}
+        </Card>
+
+        <Card title="Доставка">
+          <p className="font-semibold">{DELIVERY_TYPE[o.shippingInfo?.deliveryType] || "—"}</p>
+          <p>{formatAddress(o.shippingInfo)}</p>
+          {o.trackingNumber && <p>Накладна (ТТН): <span className="font-semibold">{o.trackingNumber}</span></p>}
+          <p className="opacity-70">Вартість доставки — за тарифами перевізника, оплачується при отриманні.</p>
+        </Card>
+
+        <Card title="Оплата">
+          <p className="font-semibold">{methodLabel(o.payment_method)}</p>
+          <p>
+            <span
+              className={`px-2 py-[1px] rounded text-xs ${
+                o.payment_status === "paid" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+              }`}
+            >
+              {payLabel(o.payment_status)}
+            </span>
+          </p>
+          {o.refunded_total > 0 && <p>Повернено: ₴{o.refunded_total}</p>}
+          {canPay && (
+            <button onClick={pay} className="self-start mt-2 px-4 py-2 bg-[var(--bg-card-processBtn)] text-[var(--text-card)] rounded">
+              Оплатити ₴{o.price}
+            </button>
+          )}
+        </Card>
+
+        {o.comment && (
+          <Card title="Коментар до замовлення">
+            <p className="whitespace-pre-wrap">{o.comment}</p>
+          </Card>
+        )}
+      </div>
+
+      {o.invoice?.number && (
+        <Card title={`Рахунок на оплату ${o.invoice.number}`}>
+          <p>{INVOICE_STATUS[o.invoice.status] || ""}</p>
+          {["awaiting", "sent"].includes(o.invoice.status) && !cancelled && o.invoice.dueAt && (
+            <p>Дійсний до: {new Date(o.invoice.dueAt).toLocaleDateString("uk-UA")}</p>
+          )}
+          {o.invoice.sentTo && o.invoice.status === "sent" && <p>Надіслано на: {o.invoice.sentTo}</p>}
+          {o.invoice.company && ["awaiting", "sent"].includes(o.invoice.status) && !cancelled && (
+            <p>
+              Реквізити для оплати: {o.invoice.company.name}, IBAN {o.invoice.company.iban}
+            </p>
           )}
           <button
-            onClick={() => downloadInvoice(orderId, myOrder.invoice.number)}
+            onClick={() => downloadInvoice(orderId, o.invoice.number)}
             className="self-start mt-1 px-3 py-1 bg-[var(--bg-card-processBtn)] text-[var(--text-card)] rounded"
           >
             Завантажити рахунок (PDF)
           </button>
-        </div>
+        </Card>
       )}
 
-      {el && el.enabled && (el.canCancel || el.canReturn) && (
-        <div className="mt-4">
-          <Link
-            to={`/dashboard/returns/new/${orderId}`}
-            className="inline-block px-4 py-2 bg-[var(--bg-card-processBtn)] text-[var(--text-card)] rounded"
-          >
-            {el.canCancel ? "Скасувати замовлення" : "Повернути товар"}
-          </Link>
-          {cabinetVisible && (
-            <Link to="/dashboard/returns" className="ml-4 text-sm underline text-[var(--text-ordDet)]">
-              Мої повернення
-            </Link>
-          )}
-        </div>
-      )}
-      {el && !el.canCancel && !el.canReturn && el.message && (
-        <p className="mt-3 text-sm text-[var(--text-ordDet)] opacity-80">{el.message}</p>
-      )}
-
-      <div className="mt-4 ">
-        <h2 className="text-[var(--text-ordDet)] text-lg pb-2 font-sans font-bold">
-          Замовлені товари
-        </h2>
-        <div className="flex gap-5 flex-col ">
-          {myOrder.products?.map((p, i) => {
-            const memoizedPrice = p.price;
+      <div>
+        <h2 className="text-lg font-bold pb-2">Товари в замовленні ({goodsCount})</h2>
+        <div className="border border-[var(--border-myOrders)] rounded-md divide-y divide-[var(--border-myOrders)]">
+          {o.products?.map((p, i) => {
+            const unit = unitPriceOf(p);
             return (
-              <div key={i}>
-                <div className="flex gap-5 justify-start items-center text-[var(--text-ordDet)] ">
-                  <div className="flex gap-2">
-                    <img
-                      className="w-[55px] h-[55px] object-cover"
-                      src={p.images[0]}
-                      alt=""
-                    />
-                    <div className="flex text-sm flex-col justify-start items-start">
-                      <Link>{p.name}</Link>
-                      <p>
-                        <span>Бренд: {p.brand}</span>
-                      </p>
-                      <p>
-                        <span>Кількість: {p.quantity}</span>
-                      </p>
-                    </div>
+              <div key={i} className="flex gap-3 p-3 items-center text-sm">
+                <img className="w-[56px] h-[56px] object-contain" src={p.images?.[0]} alt="" />
+                <div className="flex-1">
+                  <div className="font-semibold">{p.name}</div>
+                  {p.preorder && <div className="text-xs text-orange-600">Передзамовлення</div>}
+                </div>
+                <div className="text-right whitespace-nowrap">
+                  <div>
+                    {p.quantity} шт × ₴{unit}
+                    {p.discount > 0 && <span className="line-through opacity-50 ml-2">₴{p.price}</span>}
                   </div>
-
-                  <div className="pl-4 flex flex-col">
-                    {p.discount !== 0 ? (
-                      <>
-                        <h2 className="text-md text-[var(--text-ordDet-paid)]">
-                          ₴{memoizedPrice -
-                            Math.floor((memoizedPrice * p.discount) / 100)}
-                        </h2>
-                        <p className="line-through">{memoizedPrice}</p>
-                        <p>-{p.discount}%</p>
-                      </>
-                    ) : (
-                      <>
-                        <h2 className="text-md text-[var(--text-ordDet-paid)]">
-                          ₴{memoizedPrice}
-                        </h2>
-                      </>
-                    )}
-                  </div>
+                  <div className="font-semibold">₴{Math.round(unit * p.quantity * 100) / 100}</div>
                 </div>
               </div>
             );
           })}
         </div>
+
+        <div className="flex justify-end mt-3">
+          <div className="w-[320px] max-sm:w-full text-sm flex flex-col gap-1">
+            <div className="flex justify-between">
+              <span>Товарів на суму</span>
+              <span>₴{o.goods_total ?? o.price}</span>
+            </div>
+            {o.order_discount?.amount > 0 && (
+              <div className="flex justify-between text-green-700">
+                <span>Знижка за сумою (−{o.order_discount.percent}%)</span>
+                <span>−₴{o.order_discount.amount}</span>
+              </div>
+            )}
+            {o.coupon?.amount > 0 && (
+              <div className="flex justify-between text-green-700">
+                <span>Промокод {o.coupon.code}</span>
+                <span>−₴{o.coupon.amount}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span>Доставка</span>
+              <span>за тарифами перевізника</span>
+            </div>
+            <div className="flex justify-between text-lg font-bold border-t border-[var(--border-myOrders)] pt-2 mt-1">
+              <span>Разом до сплати</span>
+              <span>₴{o.price}</span>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {el && el.enabled && (el.canCancel || el.canReturn) && (
+        <div>
+          <Link
+            to={`/dashboard/returns/new/${orderId}`}
+            className="inline-block px-4 py-2 border border-[var(--border-myOrders)] rounded hover:bg-slate-100"
+          >
+            {el.canCancel ? "Скасувати замовлення" : "Повернути товар"}
+          </Link>
+          {cabinetVisible && (
+            <Link to="/dashboard/returns" className="ml-4 text-sm underline">
+              Мої повернення
+            </Link>
+          )}
+        </div>
+      )}
+      {el && !el.canCancel && !el.canReturn && el.message && <p className="text-sm opacity-80">{el.message}</p>}
     </div>
   );
 };

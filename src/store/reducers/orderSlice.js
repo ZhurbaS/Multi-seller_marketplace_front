@@ -6,7 +6,7 @@ import { startPayment } from "../../utils/startPayment";
 
 export const place_order = createAsyncThunk(
   "order/place_order",
-  async ({ products, items, shippingInfo, couponCode, buyer, comment, paymentMethod, navigate }, { rejectWithValue, dispatch }) => {
+  async ({ products, items, shippingInfo, couponCode, buyer, comment, acceptOferta, paymentMethod, navigate }, { rejectWithValue, dispatch }) => {
     try {
       // Суму, знижки й доставку (її в замовленні немає) рахує сервер;
       // клієнт надсилає лише товари й адресу.
@@ -16,6 +16,7 @@ export const place_order = createAsyncThunk(
         couponCode: couponCode || "",
         buyer,
         comment: comment || "",
+        acceptOferta: acceptOferta === true,
       });
       if (couponCode) dispatch(set_coupon_code("")); // купон використано
       const payState = {
@@ -47,17 +48,16 @@ export const place_order = createAsyncThunk(
 
 export const get_orders = createAsyncThunk(
   "order/get_orders",
-  async ({ customerId, status }, { rejectWithValue, fulfillWithValue }) => {
+  async ({ customerId, status, from, to, q }, { rejectWithValue, fulfillWithValue }) => {
     try {
       const { data } = await api.get(
-        `/home/customer/get-orders/${customerId}/${status}`
+        `/home/customer/get-orders/${customerId}/${status || "all"}`,
+        { params: { from: from || undefined, to: to || undefined, q: q || undefined } }
       );
-
-      // console.log(data);
       return fulfillWithValue(data);
     } catch (error) {
       console.error("💥 Error in orderSlice: get_orders:", error);
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data);
     }
   }
 );
