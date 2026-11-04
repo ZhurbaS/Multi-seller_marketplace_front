@@ -1,49 +1,34 @@
 import React from "react";
+import { Field, PageHeader } from "./Kit";
+import { btnPrimary, cardCls, fullMobile, inputCls } from "./ui";
 
 const ChangePassword = () => {
   return (
-    <div className="p-4 bg-[var(--bg-changePas)]">
-      <h2 className="text-xl text-[var(--text-changePas)] pb-5">
-        Змінити пароль
-      </h2>
-      <form>
-        <div className="flex flex-col gap-1 mb-2">
-          <label for="old_password">Старий пароль</label>
-          <input
-            type="password"
-            id="old_password"
-            name="old_password"
-            placeholder="Старий пароль"
-            className="outline-none px-3 py-1 border border-[var(--border-changePas)] rounded-md text-[var(--text-changePas)]"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1 mb-2">
-          <label for="new_password">Новий пароль</label>
-          <input
-            type="password"
-            id="new_password"
-            name="new_password"
-            placeholder="Новий пароль"
-            className="outline-none px-3 py-1 border border-[var(--border-changePas)] rounded-md text-[var(--text-changePas)]"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1 mb-2">
-          <label for="confirm_password">Підтвердіть пароль</label>
-          <input
-            type="password"
-            id="confirm_password"
-            name="confirm_password"
-            placeholder="Підтвердіть пароль"
-            className="outline-none px-3 py-1 border border-[var(--border-changePas)] rounded-md text-[var(--text-changePas)]"
-          />
-        </div>
-        <div>
-          <button className="px-8 py-2 bg-[var(--bg-changePasBtn)] shadow-lg hover:shadow-green-500/30 text-[var(--text-changePasBtn)] rounded-md">
-            Зберегти зміни
-          </button>
-        </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title="Змінити пароль" />
+      <form
+        className={`${cardCls} p-4 md:p-5 flex flex-col gap-4 md:max-w-[480px]`}
+        // Не відправляємо форму GET-запитом (пароль у URL)
+        onSubmit={(e) => e.preventDefault()}
+      >
+        {/* Підказка менеджерам паролів, для якого акаунта зміна */}
+        <input type="email" name="username" autoComplete="username" hidden readOnly />
+        <Field label="Старий пароль">
+          {(a) => (
+            <input {...a} type="password" name="old_password" autoComplete="current-password" className={inputCls} />
+          )}
+        </Field>
+        <Field label="Новий пароль">
+          {(a) => <input {...a} type="password" name="new_password" autoComplete="new-password" className={inputCls} />}
+        </Field>
+        <Field label="Підтвердіть пароль">
+          {(a) => (
+            <input {...a} type="password" name="confirm_password" autoComplete="new-password" className={inputCls} />
+          )}
+        </Field>
+        <button type="submit" className={`${btnPrimary} ${fullMobile} min-h-12 self-start`}>
+          Зберегти зміни
+        </button>
       </form>
     </div>
   );

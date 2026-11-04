@@ -41,6 +41,22 @@ const api = axios.create({
   withCredentials: true, // без цього браузер не надсилає customerToken cookie на бекенд
 });
 
+// Старі записи в БД мають http://res.cloudinary.com/... — на https-сайті браузер блокує такі
+// зображення (Mixed Content). Піднімаємо схему до https у всіх відповідях API.
+api.interceptors.response.use((res) => {
+  try {
+    if (res.data && typeof res.data === "object") {
+      const raw = JSON.stringify(res.data);
+      if (raw.includes("http://res.cloudinary.com")) {
+        res.data = JSON.parse(raw.replaceAll("http://res.cloudinary.com", "https://res.cloudinary.com"));
+      }
+    }
+  } catch {
+    /* залишаємо як є */
+  }
+  return res;
+});
+
 //   Функції для використання
 export const getApiUrl = (path = "") => `${apiBaseUrl}/api${path}`;
 export const getFrontendUrl = (path = "") => `${frontendBaseUrl}${path}`;

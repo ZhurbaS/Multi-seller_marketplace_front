@@ -5,9 +5,10 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
+import { LuLoaderCircle, LuLock, LuTriangleAlert } from "react-icons/lu";
 import { getFrontendUrl } from "../api/api";
 
-const CheckoutForm = ({ orderId }) => {
+const CheckoutForm = ({ orderId, price }) => {
   localStorage.setItem("orderId", orderId);
 
   const stripe = useStripe();
@@ -24,6 +25,7 @@ const CheckoutForm = ({ orderId }) => {
       return;
     }
     setIsLoading(true);
+    setMessage(null);
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
@@ -39,19 +41,37 @@ const CheckoutForm = ({ orderId }) => {
   };
 
   return (
-    <form onSubmit={submit} id="payment-form">
+    <form onSubmit={submit} id="payment-form" className="flex flex-col gap-4" aria-describedby="payment-message">
       <LinkAuthenticationElement id="link-authentication-element" />
       <PaymentElement id="payment-element" options={paymentElementOptions} />
-      <button
-        disabled={isLoading || !stripe || !elements}
-        id="submit"
-        className="px-10 py-[6px] rounded-sm hover:shadow-green-700/30 hover:shadow-lg bg-green-700 text-white cursor-pointer"
+      <div id="payment-message" aria-live="polite" role="alert" className="empty:hidden">
+        {message && (
+          <p className="flex items-start gap-2 text-sm text-(--danger)">
+            <LuTriangleAlert size={18} className="shrink-0 mt-0.5" aria-hidden="true" />
+            {message}
+          </p>
+        )}
+      </div>
+      <div
+        className="sticky bottom-0 -mx-4 px-4 pt-3 bg-(--surface) sm:static sm:mx-0 sm:px-0 sm:pt-0 sm:bg-transparent"
+        style={{ paddingBottom: "max(12px, var(--sab))" }}
       >
-        <span id="button-text">
-          {isLoading ? <div>Завантаження...</div> : "Оплатити"}
-        </span>
-      </button>
-      {message && <div>{message}</div>}
+        <button
+          disabled={isLoading || !stripe || !elements}
+          aria-busy={isLoading}
+          id="submit"
+          className="inline-flex items-center justify-center gap-2 h-12 px-6 w-full sm:w-auto rounded-(--r-md) bg-(--cta) hover:bg-(--cta-hover) text-(--on-cta) text-base font-semibold disabled:bg-(--cta-disabled) disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <LuLoaderCircle size={20} className="motion-safe:animate-spin" aria-hidden="true" />
+          ) : (
+            <LuLock size={18} aria-hidden="true" />
+          )}
+          <span id="button-text">
+            {isLoading ? "Завантаження..." : price ? `Сплатити ₴${price}` : "Оплатити"}
+          </span>
+        </button>
+      </div>
     </form>
   );
 };

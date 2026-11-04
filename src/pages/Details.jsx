@@ -1,26 +1,41 @@
 import useEnsureUser from "../hooks/useEnsureUser";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { IoIosArrowForward } from "react-icons/io";
-import "react-multi-carousel/lib/styles.css";
-import Carousel from "react-multi-carousel";
 import Rating from "../components/Rating";
 import { reviewsWord } from "../utils/pluralize";
-import { FaHeart } from "react-icons/fa6";
 import { AiFillTikTok } from "react-icons/ai";
 import { IoLogoFacebook } from "react-icons/io";
-import { FaSquareInstagram } from "react-icons/fa6";
-
-import { FaSquareTwitter } from "react-icons/fa6";
-import { FaLinkedin } from "react-icons/fa6";
+import { FaSquareInstagram, FaSquareTwitter, FaLinkedin } from "react-icons/fa6";
+import {
+  LuChevronRight,
+  LuHeart,
+  LuMessageCircle,
+  LuMinus,
+  LuPlus,
+  LuShoppingCart,
+  LuTruck,
+  LuWallet,
+  LuRotateCcw,
+  LuBell,
+  LuBellOff,
+  LuCircleCheck,
+  LuCircleX,
+  LuClock,
+  LuShare2,
+  LuStore,
+} from "react-icons/lu";
 import Reviews from "../components/Reviews";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
+import ProductGallery from "../components/ProductGallery";
+import StickyBuyBar from "../components/StickyBuyBar";
+import PlacementBanner from "../components/PlacementBanner";
+import Accordion from "../components/Accordion";
+import ProductTabs from "../components/ProductTabs";
+import ExpandableText from "../components/ExpandableText";
+import SpecsTable from "../components/SpecsTable";
+import RelatedCarousel from "../components/RelatedCarousel";
+import { jumpToSection } from "../components/sectionJump";
 import { useDispatch, useSelector } from "react-redux";
 import { product_details } from "../store/reducers/homeSlice";
 import toast from "react-hot-toast";
@@ -29,9 +44,20 @@ import {
   add_to_wishlist,
   messageClear,
 } from "../store/reducers/cardSlice";
-import useCarouselResizeKey from "../hooks/useCarouselResizeKey";
 import api from "../api/api";
 import { baseUnitPrice, unitPrice, restockText } from "../utils/pricing";
+
+// Кнопки «поділитись»: фірмові кольори — як є (fb — токен, інші — літерали-аліаси)
+const SHARE = [
+  { id: "fb", label: "Facebook", Icon: IoLogoFacebook, bg: "bg-(--social-facebook)", fg: "text-(--on-brand)", url: (u) => `https://www.facebook.com/sharer/sharer.php?u=${u}` },
+  { id: "tw", label: "X (Twitter)", Icon: FaSquareTwitter, bg: "bg-(--bg-tw)", fg: "text-(--on-brand)", url: (u, t) => `https://twitter.com/intent/tweet?url=${u}&text=${t}` },
+  { id: "li", label: "LinkedIn", Icon: FaLinkedin, bg: "bg-(--bg-li)", fg: "text-(--on-brand)", url: (u) => `https://www.linkedin.com/sharing/share-offsite/?url=${u}` },
+  { id: "tt", label: "TikTok", Icon: AiFillTikTok, bg: "bg-(--bg-tt)", fg: "text-(--ink)" },
+  { id: "in", label: "Instagram", Icon: FaSquareInstagram, bg: "bg-(--bg-in)", fg: "text-(--on-brand)" },
+];
+
+const secondaryBtn =
+  "min-h-12 px-4 inline-flex items-center justify-center gap-2 rounded-(--r-md) border border-(--line-strong) bg-(--surface) text-(--ink) text-base font-semibold hover:bg-(--surface-2)";
 
 const Details = () => {
   const navigate = useNavigate();
@@ -41,47 +67,13 @@ const Details = () => {
     useSelector((state) => state.home);
   const { userInfo } = useSelector((state) => state.auth);
   const ensureUser = useEnsureUser();
-  const { errorMessage, successMessage } = useSelector((state) => state.card);
-  const resizeKey = useCarouselResizeKey();
+  const { errorMessage, successMessage, wishlist } = useSelector(
+    (state) => state.card
+  );
 
   useEffect(() => {
-    setImage("");
     dispatch(product_details(slug));
-  }, [slug]);
-
-  const [image, setImage] = useState("");
-  const [state, setState] = useState("description");
-
-  const responsive = {
-    superLargeDesktop: {
-      breakpoint: { max: 4000, min: 3000 },
-      items: 5,
-    },
-    desktop: {
-      breakpoint: { max: 3000, min: 1024 },
-      items: 5,
-    },
-    tablet: {
-      breakpoint: { max: 1024, min: 464 },
-      items: 4,
-    },
-    mdtablet: {
-      breakpoint: { max: 991, min: 464 },
-      items: 4,
-    },
-    mobile: {
-      breakpoint: { max: 464, min: 0 },
-      items: 2,
-    },
-    smmobile: {
-      breakpoint: { max: 640, min: 0 },
-      items: 3,
-    },
-    xsmobile: {
-      breakpoint: { max: 440, min: 0 },
-      items: 1,
-    },
-  };
+  }, [slug, dispatch]);
 
   // Умови продажу: мінімальне замовлення і крок (комплекти/упаковки)
   const minQty = product.minOrderQty || 1;
@@ -91,15 +83,24 @@ const Details = () => {
   // Купити можна, якщо на складі не менше мінімального замовлення, або це передзамовлення
   const canBuy = isPreorder || (product.stock > 0 && product.stock >= minQty);
   const hasTiers = (product.priceTiers || []).length > 0;
+  const hasDiscount = !!product.discount && product.discount !== 0;
+  const finalPrice = product._id ? baseUnitPrice(product) : 0;
 
   const [quantity, setQuantity] = useState(1);
   const [subscribed, setSubscribed] = useState(false);
+  const [wished, setWished] = useState(false);
   const currentUnit = product._id ? unitPrice(product, quantity) : 0;
+
+  const inWishlist =
+    wished ||
+    (Array.isArray(wishlist) &&
+      wishlist.some((w) => w.productId === product._id || w.slug === product.slug));
 
   // Коли товар завантажився — ставимо мінімальну кількість
   useEffect(() => {
     if (product._id) setQuantity(product.minOrderQty || 1);
-  }, [product._id]);
+    setWished(false);
+  }, [product._id, product.minOrderQty]);
 
   // Чи підписаний покупець на повідомлення про наявність
   useEffect(() => {
@@ -171,12 +172,12 @@ const Details = () => {
       toast.error(errorMessage);
       dispatch(messageClear());
     }
-  }, [successMessage, errorMessage]);
+  }, [successMessage, errorMessage, dispatch]);
 
   const add_wishlist = async () => {
     const uid = await ensureUser();
     if (uid) {
-      dispatch(
+      const res = await dispatch(
         add_to_wishlist({
           userId: uid,
           productId: product._id,
@@ -189,6 +190,7 @@ const Details = () => {
           slugBase: product.slugBase,
         })
       );
+      if (add_to_wishlist.fulfilled.match(res)) setWished(true);
     }
   };
 
@@ -226,524 +228,588 @@ const Details = () => {
     });
   };
 
+  // Поділитися: системне меню (якщо є) або копіювання посилання
+  const shareNative = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: product.name, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Посилання скопійовано");
+      }
+    } catch {
+      /* користувач скасував */
+    }
+  };
+
+  // Липка панель: з'являється, коли основна кнопка пішла за верхній край екрана
+  const ctaRef = useRef(null);
+  const [showSticky, setShowSticky] = useState(false);
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setShowSticky(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      },
+      { threshold: 0 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [product._id]);
+
+  const stickyVariant = canBuy ? "cart" : noStock ? "notify" : null;
+
+  const specs = Array.isArray(product.specifications)
+    ? product.specifications.filter((s) => s && (s.key || s.value))
+    : [];
+  const keySpecs = specs.slice(0, 5);
+
+  const hasRating = Number(product.rating) > 0;
+  const ratingText = Number(product.rating || 0).toFixed(1).replace(".", ",");
+  // Підсумок відгуків у заголовку секції (видно й у згорнутому акордеоні)
+  const reviewsBadge = (
+    <span className="inline-flex items-center gap-1 tabular-nums">
+      {hasRating && (
+        <>
+          <span aria-hidden="true" className="text-(--star)">★</span>
+          <span aria-hidden="true">{ratingText} ·</span>
+        </>
+      )}
+      <span aria-hidden="true">{totalReview}</span>
+      <span className="sr-only">
+        {hasRating ? `: рейтинг ${ratingText} з 5, ` : ": "}
+        {totalReview} {reviewsWord(totalReview)}
+      </span>
+    </span>
+  );
+  const tabs = [
+    { id: "description", label: "Опис" },
+    { id: "specs", label: "Характеристики", meta: specs.length ? `(${specs.length})` : null },
+    { id: "reviews", label: "Відгуки", meta: `(${totalReview})` },
+  ];
+
+  const shareUrl =
+    typeof window !== "undefined" ? encodeURIComponent(window.location.href) : "";
+  const shareText = encodeURIComponent(product.name || "");
+
   return (
     <div>
       <Header />
-      <section
-        style={{
-          backgroundImage: `url(/images/banner/shop.png)`,
-        }}
-        className="h-[220px] mt-6 bg-cover bg-no-repeat relative bg-left"
+
+      <main
+        id="main"
+        className="container-x pt-3 pb-[calc(80px+var(--sab))] lg:pt-5 lg:pb-12 [--secnav-h:60px]"
       >
-        <div className="absolute left-0 top-0 w-full h-full bg-[var(--bg-section)]">
-          <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto ">
-            <div className="flex flex-col justify-center gap-1 items-center h-full w-full text-[var(--text-section)]">
-              <h2 className="text-3xl font-bold">Опис товару</h2>
-              <div className="flex justify-center items-center gap-2 text-2xl w-full">
-                <Link to="/">Головна</Link>
-                <span className="pt-1">
-                  <IoIosArrowForward />
-                </span>
-                <span>Опис товару</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div className="bg-[var(--bg-deatails-road)] py-5 mb-5">
-          <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto">
-            <div className="flex justify-start items-center text-md text-[var(--text-deatails)] w-full">
-              <Link to="/">Головна</Link>
-              <span className="pt-1 ">
-                <IoIosArrowForward />
-              </span>
-              <Link to="/">{category.name}</Link>
-              <span className="pt-1 ">
-                <IoIosArrowForward />
-              </span>
-              <span>{product.name}</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto pb-16">
-          <div className="grid grid-cols-2 max-mdlg:grid-cols-1 gap-8">
-            <div className="">
-              <div className="p-5 border border-[var(--border-deatails)] aspect-square">
-                <img
-                  className="w-full h-full object-contain"
-                  src={image ? image : product.images?.[0]}
-                  alt=""
-                />
-              </div>
-              <div className="py-3">
-                {product.images && (
-                  <Carousel
-                    key={resizeKey}
-                    autoPlay={true}
-                    infinite={true}
-                    arrows={true}
-                    responsive={responsive}
-                    transitionDuration={500}
+        {/* Хлібні крихти */}
+        <nav aria-label="Хлібні крихти" className="mb-3 lg:mb-5">
+          <ol className="flex items-center gap-1 text-sm text-(--ink-2) min-w-0">
+            <li className="shrink-0">
+              <Link to="/" className="inline-flex min-h-8 items-center hover:text-(--brand-ink) hover:underline">
+                Головна
+              </Link>
+            </li>
+            {category?.name && (
+              <>
+                <li aria-hidden="true" className="shrink-0">
+                  <LuChevronRight className="size-4" />
+                </li>
+                <li className="min-w-0 shrink truncate">
+                  <Link
+                    to={`/products?category=${encodeURIComponent(category.name)}`}
+                    className="inline-flex min-h-8 items-center hover:text-(--brand-ink) hover:underline"
                   >
-                    {product.images.map((img, i) => {
-                      return (
-                        <div
-                          onClick={() => setImage(img)}
-                          className="px-1"
-                          key={i}
-                        >
-                          <img
-                            className="aspect-square w-full object-cover cursor-pointer rounded-sm"
-                            src={img}
-                            alt=""
-                          />
-                        </div>
-                      );
-                    })}
-                  </Carousel>
-                )}
-              </div>
+                    {category.name}
+                  </Link>
+                </li>
+              </>
+            )}
+            <li aria-hidden="true" className="shrink-0 hidden sm:block">
+              <LuChevronRight className="size-4" />
+            </li>
+            <li className="min-w-0 flex-1 truncate hidden sm:block" aria-current="page">
+              {product.name}
+            </li>
+          </ol>
+        </nav>
+
+        {/* Основний блок: галерея + купівля */}
+        <div className="grid gap-5 md:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,7fr)_minmax(0,6fr)] xl:gap-12">
+          <div className="min-w-0 lg:sticky lg:top-[calc(var(--header-h)+16px)] lg:self-start">
+            <div className="mx-auto w-full max-w-[640px]">
+              <ProductGallery
+                images={product.images || []}
+                name={product.name}
+                discount={product.discount}
+              />
+            </div>
+          </div>
+
+          <div className="min-w-0 flex flex-col gap-5">
+            {/* Назва + рейтинг */}
+            <div className="flex flex-col gap-2">
+              <h1 className="text-[1.375rem] leading-7 md:text-[1.75rem] md:leading-9 font-bold text-(--ink) break-words">
+                {product.name}
+              </h1>
+              {/* Якір до відгуків: плавна прокрутка + розкриття секції на мобільних */}
+              <a
+                href="#reviews"
+                onClick={(e) => {
+                  e.preventDefault();
+                  jumpToSection("reviews");
+                }}
+                className="inline-flex items-center gap-2 self-start min-h-11 text-[0.9375rem] text-(--ink-2) hover:text-(--brand-ink)"
+              >
+                <span className="flex text-base" aria-hidden="true">
+                  <Rating ratings={product.rating} />
+                </span>
+                <span className="tabular-nums">
+                  {hasRating && (
+                    <b className="font-semibold text-(--ink)">
+                      <span className="sr-only">Рейтинг </span>
+                      {ratingText}
+                      <span className="sr-only"> з 5</span>
+                    </b>
+                  )}
+                  {hasRating ? " · " : ""}
+                  <span className="underline underline-offset-2">
+                    {totalReview > 0
+                      ? `${totalReview} ${reviewsWord(totalReview)}`
+                      : "Ще немає відгуків"}
+                  </span>
+                </span>
+              </a>
             </div>
 
-            <div className="flex flex-col gap-5">
-              <div className="text-3xl text-[var(--text-deatails)] font-bold">
-                <h3>{product.name}</h3>
-              </div>
-              <div className="flex justify-start items-center gap-4">
-                <div className="flex text-xl">
-                  <Rating ratings={product.rating} />
-                </div>
-                <span className="text-[var(--text-deatailsRaiting)]">
-                  ({totalReview} {reviewsWord(totalReview)})
+            {/* Ціна + наявність */}
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="price text-[1.625rem] leading-8 md:text-[2rem] md:leading-10 font-bold text-(--price)">
+                  ₴{finalPrice}
                 </span>
-              </div>
-              <div className="text-2xl text-[var(--text-deatailsPrice)] font-bold flex gap-3">
-                {product.discount !== 0 ? (
+                {hasDiscount && (
                   <>
-                    Ціна: <h2 className="line-through">₴{product.price}</h2>
-                    <h2 className="text-[var(--text-ordDet-paid)]">
-                      ₴
-                      {product.price -
-                        Math.floor(
-                          (product.price * product.discount) / 100
-                        )}{" "}
-                      (-{product.discount}%)
-                    </h2>
+                    <s className="price text-lg text-(--ink-2)">
+                      <span className="sr-only">Стара ціна: </span>₴{product.price}
+                    </s>
+                    <span className="rounded-full bg-(--sale) text-(--on-sale) px-2.5 py-0.5 text-sm font-bold tabular-nums">
+                      −{product.discount}%
+                    </span>
                   </>
-                ) : (
-                  <h2 className="text-[var(--text-ordDet-paid)]">
-                    Ціна: ₴{product.price}
-                  </h2>
                 )}
               </div>
 
-              {/* Умови продажу: упаковка/мінімум, ціна при вибраній кількості, знижки за кількість */}
-              {(minQty > 1 || step > 1 || product.packLabel) && (
-                <div className="text-[var(--text-deatails)] text-sm bg-[var(--bg-detailsDescr)] px-3 py-2 rounded-sm">
-                  {product.packLabel && (
-                    <p className="font-semibold">{product.packLabel}</p>
-                  )}
-                  <p>
-                    Мінімальне замовлення: {minQty} шт
-                    {step > 1 ? `, кратно ${step}` : ""}
-                  </p>
-                </div>
+              <p
+                className={`flex items-center gap-1.5 font-semibold ${
+                  product.stock > 0
+                    ? "text-(--success)"
+                    : isPreorder
+                    ? "text-(--warning)"
+                    : "text-(--danger)"
+                }`}
+              >
+                {product.stock > 0 ? (
+                  <LuCircleCheck className="size-5" aria-hidden="true" />
+                ) : isPreorder ? (
+                  <LuClock className="size-5" aria-hidden="true" />
+                ) : (
+                  <LuCircleX className="size-5" aria-hidden="true" />
+                )}
+                {product.stock > 0
+                  ? `Є в наявності ${product.stock} шт`
+                  : isPreorder
+                  ? "Передзамовлення"
+                  : "Немає в наявності"}
+              </p>
+              {noStock && restockText(product) && (
+                <p className="text-sm text-(--ink-2)">
+                  Очікується через {restockText(product)}
+                </p>
               )}
-              {hasTiers && (
-                <div className="text-[var(--text-deatails)]">
-                  <p className="font-semibold mb-1">Знижки за кількість</p>
-                  <table className="text-sm border border-[var(--border-deatails)]">
-                    <tbody>
-                      <tr>
-                        <td className="px-3 py-1 border-b border-[var(--border-deatails)]">
-                          від {minQty} шт
-                        </td>
-                        <td className="px-3 py-1 border-b border-[var(--border-deatails)]">
-                          ₴{baseUnitPrice(product)} / шт
+            </div>
+
+            {/* Умови продажу: упаковка/мінімум, знижки за кількість */}
+            {(minQty > 1 || step > 1 || product.packLabel) && (
+              <div className="text-sm text-(--ink-2) bg-(--surface-2) px-3 py-2 rounded-(--r-md)">
+                {product.packLabel && (
+                  <p className="font-semibold text-(--ink)">{product.packLabel}</p>
+                )}
+                <p>
+                  Мінімальне замовлення: {minQty} шт
+                  {step > 1 ? `, кратно ${step}` : ""}
+                </p>
+              </div>
+            )}
+            {hasTiers && (
+              <div className="text-(--ink)">
+                <p className="font-semibold mb-1">Знижки за кількість</p>
+                <table className="w-full sm:w-auto text-sm border border-(--line) rounded-(--r-md)">
+                  <tbody>
+                    <tr className="border-b border-(--line)">
+                      <td className="px-3 py-2">від {minQty} шт</td>
+                      <td className="px-3 py-2 price">
+                        ₴{baseUnitPrice(product)} / шт
+                      </td>
+                    </tr>
+                    {product.priceTiers.map((t) => (
+                      <tr key={t.minQty} className="border-b border-(--line) last:border-b-0">
+                        <td className="px-3 py-2">від {t.minQty} шт</td>
+                        <td className="px-3 py-2 price">
+                          ₴{unitPrice(product, t.minQty)} / шт (−{t.percent}%)
                         </td>
                       </tr>
-                      {product.priceTiers.map((t) => (
-                        <tr key={t.minQty}>
-                          <td className="px-3 py-1 border-b border-[var(--border-deatails)]">
-                            від {t.minQty} шт
-                          </td>
-                          <td className="px-3 py-1 border-b border-[var(--border-deatails)]">
-                            ₴{unitPrice(product, t.minQty)} / шт (−{t.percent}%)
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              {canBuy && (hasTiers || quantity > 1) && (
-                <p className="text-[var(--text-deatails)]">
-                  Ваше замовлення: {quantity} шт × ₴{currentUnit} ={" "}
-                  <b>₴{currentUnit * quantity}</b>
-                </p>
-              )}
-
-              <div className="text-[var(--text-deatails)] ">
-                <p>
-                  {product.description
-                    ? product.description.substring(0, 230) + "..."
-                    : ""}
-                </p>
-                <p className="text-[var(--text-deatails)] py-1 font-bold">
-                  Продавець: {product.shopName}
-                </p>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div className="flex gap-3 pb-10 border-b border-[var(--border-deatails)]">
-                {canBuy ? (
-                  <>
-                    <div className="flex bg-[var(--bg-detailsDescr)] h-[50px] justify-center items-center text-xl">
-                      <div onClick={dec} className="px-6 cursor-pointer">
-                        -
-                      </div>
-                      <div className="px-6">{quantity}</div>
-                      <div onClick={inc} className="px-6 cursor-pointer">
-                        +
-                      </div>
-                    </div>
-                    <div className="">
-                      <button
-                        onClick={add_card}
-                        className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-green-500/40 bg-[var(--bg-detailsAddBtn)] text-[var(--text-detailsAddBtn)]"
-                      >
-                        {isPreorder ? "Передзамовити" : "Додати до кошика"}
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <button
-                    onClick={toggleSubscribe}
-                    disabled={!noStock}
-                    className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-green-500/40 bg-[var(--bg-detailsAddBtn)] text-[var(--text-detailsAddBtn)] disabled:opacity-60"
-                  >
-                    {!noStock
-                      ? `Доступно лише ${product.stock} шт (мін. ${minQty})`
-                      : subscribed
-                      ? "Скасувати сповіщення"
-                      : "Повідомити про наявність"}
-                  </button>
-                )}
-                <div className="">
+            )}
+            {canBuy && (hasTiers || quantity > 1) && (
+              <p className="text-(--ink)" aria-live="polite">
+                Ваше замовлення: {quantity} шт × ₴{currentUnit} ={" "}
+                <b className="price">₴{currentUnit * quantity}</b>
+              </p>
+            )}
+
+            {/* Дії */}
+            <div ref={ctaRef} className="flex flex-col gap-3">
+              {canBuy ? (
+                <div className="flex gap-3">
                   <div
-                    onClick={add_wishlist}
-                    className="h-[50px] w-[50px] flex justify-center items-center cursor-pointer hover:shadow-lg hover:shadow-cyan-500/40 bg-[var(--bg-detailsHeart)] text-[var(--text-detailsAddBtn)]"
+                    className="flex items-center shrink-0 rounded-(--r-md) border border-(--line-strong) bg-(--surface)"
+                    role="group"
+                    aria-label="Кількість"
                   >
-                    <FaHeart />
+                    <button
+                      type="button"
+                      onClick={dec}
+                      aria-label="Зменшити кількість"
+                      className="size-12 inline-flex items-center justify-center text-(--ink) hover:bg-(--surface-2) rounded-l-(--r-md)"
+                    >
+                      <LuMinus className="size-5" aria-hidden="true" />
+                    </button>
+                    <output
+                      aria-live="polite"
+                      className="min-w-10 text-center text-lg font-semibold tabular-nums text-(--ink)"
+                    >
+                      {quantity}
+                    </output>
+                    <button
+                      type="button"
+                      onClick={inc}
+                      aria-label="Збільшити кількість"
+                      className="size-12 inline-flex items-center justify-center text-(--ink) hover:bg-(--surface-2) rounded-r-(--r-md)"
+                    >
+                      <LuPlus className="size-5" aria-hidden="true" />
+                    </button>
                   </div>
-                </div>
-              </div>
-
-              <div className="flex py-5 gap-5">
-                <div className="w-[150px] text-[var(--text-detailsAvail)] font-bold text-xl flex flex-col gap-5">
-                  <span>Наявність</span>
-                  <span>Поділитися</span>
-                </div>
-                <div className="flex flex-col gap-5">
-                  <span
-                    className={`${
-                      product.stock
-                        ? "text-[var(--text-detailsOnStock)]"
-                        : "text-[var(--text-detailsOutOfStock)]"
-                    }`}
-                  >
-                    {product.stock > 0
-                      ? `Є в наявності ${product.stock} шт`
-                      : isPreorder
-                      ? "Передзамовлення"
-                      : "Немає в наявності"}
-                  </span>
-                  {noStock && restockText(product) && (
-                    <span className="text-[var(--text-deatails)] text-sm">
-                      Очікується через {restockText(product)}
-                    </span>
-                  )}
-
-                  <ul className="flex justify-start items-center gap-3">
-                    <li>
-                      <a
-                        className="w-[38px] h-[38px] hover:bg-[var(--bg-detailsAddBtn)] hover:text-[var(--text-detailsAddBtn)] flex justify-center items-center bg-[var(--bg-fb)] rounded-full text-[var(--text-detailsAddBtn)]"
-                        href="#"
-                      >
-                        <IoLogoFacebook />
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        className="w-[38px] h-[38px] hover:bg-[var(--bg-detailsAddBtn)] hover:text-[var(--text-detailsAddBtn)] flex justify-center items-center bg-[var(--bg-tw)] rounded-full text-[var(--text-detailsAddBtn)]"
-                        href="#"
-                      >
-                        <FaSquareTwitter />
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        className="w-[38px] h-[38px] hover:bg-[var(--bg-detailsAddBtn)] hover:text-[var(--text-detailsAddBtn)] flex justify-center items-center bg-[var(--bg-li)] rounded-full text-[var(--text-detailsAddBtn)]"
-                        href="#"
-                      >
-                        <FaLinkedin />
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        className="w-[38px] h-[38px] hover:bg-[var(--bg-detailsAddBtn)] hover:text-[var(--text-detailsAddBtn)] flex justify-center items-center bg-[var(--bg-tt)] rounded-full text-[var(--text-detailsAddBtn)]"
-                        href="#"
-                      >
-                        <AiFillTikTok />
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        className="w-[38px] h-[38px] hover:bg-[var(--bg-detailsAddBtn)] hover:text-[var(--text-detailsAddBtn)] flex justify-center items-center bg-[var(--bg-in)] rounded-full text-[var(--text-detailsAddBtn)]"
-                        href="#"
-                      >
-                        <FaSquareInstagram />
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                {canBuy ? (
                   <button
-                    onClick={buynow}
-                    className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-green-500/40 bg-[var(--bg-detailsBuyBtn)] text-[var(--text-detailsAddBtn)]"
+                    type="button"
+                    onClick={add_card}
+                    className="flex-1 min-h-12 px-5 inline-flex items-center justify-center gap-2 rounded-(--r-md) bg-(--cta) hover:bg-(--cta-hover) text-(--on-cta) text-base font-semibold shadow-(--shadow-1)"
                   >
+                    <LuShoppingCart className="size-5" aria-hidden="true" />
+                    {isPreorder ? "Передзамовити" : "У кошик"}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={toggleSubscribe}
+                  disabled={!noStock}
+                  className="min-h-12 px-5 inline-flex items-center justify-center gap-2 rounded-(--r-md) bg-(--brand) hover:bg-(--brand-hover) text-(--on-brand) text-base font-semibold disabled:bg-(--surface-2) disabled:text-(--ink-2) disabled:cursor-not-allowed"
+                >
+                  {noStock &&
+                    (subscribed ? (
+                      <LuBellOff className="size-5" aria-hidden="true" />
+                    ) : (
+                      <LuBell className="size-5" aria-hidden="true" />
+                    ))}
+                  {!noStock
+                    ? `Доступно лише ${product.stock} шт (мін. ${minQty})`
+                    : subscribed
+                    ? "Скасувати сповіщення"
+                    : "Повідомити про наявність"}
+                </button>
+              )}
+
+              <div className="grid grid-cols-[1fr_1fr_auto] gap-2 sm:gap-3">
+                {canBuy ? (
+                  <button type="button" onClick={buynow} className={secondaryBtn}>
                     {isPreorder ? "Передзамовити зараз" : "Купити зараз"}
                   </button>
-                ) : (
-                  ""
-                )}
+                ) : null}
                 <Link
                   to={`/dashboard/chat/${product.sellerId}`}
-                  className="px-8 py-3 h-[50px] cursor-pointer hover:shadow-lg hover:shadow-red-500/40 bg-[var(--bg-detailsChatBtn)] text-[var(--text-detailsAddBtn)]"
+                  className={`${secondaryBtn} ${canBuy ? "" : "col-span-2"}`}
                 >
-                  Запитати
+                  <LuMessageCircle className="size-5 shrink-0" aria-hidden="true" />
+                  <span className="truncate">Запитати</span>
                 </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto pb-16">
-          <div className="flex flex-wrap">
-            <div className="w-[72%] max-mdlg:w-full">
-              <div className="pr-4 max-mdlg:pr-0">
-                <div className="grid grid-cols-3">
-                  <button
-                    onClick={() => setState("description")}
-                    className={` py-1 hover:text-[var(--text-detailsAddBtn)] px-5 hover:bg-[var(--bg-detailsAddBtn)] ${
-                      state === "description"
-                        ? "bg-[var(--bg-detailsAddBtn)] text-[var(--text-detailsAddBtn)]"
-                        : "bg-[var(--bg-detailsDescr)] text-[var(--bg-detailsNonActBtn)]"
-                    } rounded-sm`}
-                  >
-                    Опис
-                  </button>
-                  <button
-                    onClick={() => setState("specifications")}
-                    className={` py-1 hover:text-[var(--text-detailsAddBtn)] px-5 hover:bg-[var(--bg-detailsAddBtn)] ${
-                      state === "specifications"
-                        ? "bg-[var(--bg-detailsAddBtn)] text-[var(--text-detailsAddBtn)]"
-                        : "bg-[var(--bg-detailsDescr)] text-[var(--bg-detailsNonActBtn)]"
-                    } rounded-sm`}
-                  >
-                    Характеристики
-                  </button>
-                  <button
-                    onClick={() => setState("reviews")}
-                    className={` py-1 hover:text-[var(--text-detailsAddBtn)] px-5 hover:bg-[var(--bg-detailsAddBtn)] ${
-                      state === "reviews"
-                        ? "bg-[var(--bg-detailsAddBtn)] text-[var(--text-detailsAddBtn)]"
-                        : "bg-[var(--bg-detailsDescr)] text-[var(--bg-detailsNonActBtn)]"
-                    } rounded-sm`}
-                  >
-                    Відгуки ({totalReview})
-                  </button>
-                </div>
-
-                <div className="">
-                  {state === "reviews" ? (
-                    <Reviews product={product} />
-                  ) : state === "specifications" ? (
-                    Array.isArray(product.specifications) &&
-                    product.specifications.length > 0 ? (
-                      <table className="w-full py-5 text-[var(--text-deatails)]">
-                        <tbody>
-                          {product.specifications.map((spec, i) => (
-                            <tr
-                              key={i}
-                              className={
-                                i % 2 === 1
-                                  ? "bg-[var(--bg-detailsDescr)]"
-                                  : ""
-                              }
-                            >
-                              <td className="py-2 px-4 font-medium w-[45%] align-top break-words">
-                                {spec.key}
-                              </td>
-                              <td className="py-2 px-4 align-top break-words">
-                                {spec.value}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <p className="py-5 text-[var(--text-deatails)]">
-                        Для цього товару ще не додано характеристик.
-                      </p>
-                    )
-                  ) : (
-                    <p className="py-5 text-[var(--text-deatails)]">
-                      {product.description}
-                    </p>
-                  )}
-                </div>
+                <button
+                  type="button"
+                  onClick={add_wishlist}
+                  aria-pressed={inWishlist}
+                  aria-label={inWishlist ? "У списку бажань" : "Додати до списку бажань"}
+                  title={inWishlist ? "У списку бажань" : "Додати до списку бажань"}
+                  className={`size-12 inline-flex items-center justify-center rounded-(--r-md) border ${
+                    inWishlist
+                      ? "border-(--sale) bg-(--danger-soft) text-(--sale)"
+                      : "border-(--line-strong) bg-(--surface) text-(--ink-2) hover:text-(--brand-ink) hover:border-(--brand)"
+                  }`}
+                >
+                  <LuHeart
+                    className={`size-6 ${inWishlist ? "fill-current" : ""}`}
+                    aria-hidden="true"
+                  />
+                </button>
               </div>
             </div>
 
-            <div className="w-[28%] max-mdlg:w-full">
-              <div className="pl-4 max-mdlg:pl-0">
-                <div className="px-3 py-2 text-[var(--text-deatails)] bg-[var(--bg-detailsDescr)]">
-                  <h2 className="font-bold">Від {product.shopName}</h2>
+            {/* Промо-банер — під блоком купівлі (поза ctaRef, щоб не впливати на липку панель) */}
+            <PlacementBanner placement="product_promo" />
+
+            {/* Доставка й оплата — стисло */}
+            <ul className="flex flex-col divide-y divide-(--line) rounded-(--r-lg) border border-(--line) bg-(--surface) text-sm">
+              <li className="flex gap-3 p-3">
+                <LuTruck className="size-5 shrink-0 text-(--brand-ink) mt-0.5" aria-hidden="true" />
+                <div>
+                  <p className="font-semibold text-(--ink)">Доставка Новою поштою</p>
+                  <p className="text-(--ink-2)">
+                    У відділення, поштомат або кур’єром. Вартість — за тарифами
+                    перевізника, оплачується при отриманні.
+                  </p>
                 </div>
-                <div className="flex flex-col gap-5 mt-3 border border-[var(--border-deatails)] p-3">
-                  {moreProducts.map((p, i) => {
-                    return (
-                      <Link
-                        key={i}
-                        to={`/product/details/${p.slug}`}
-                        className="block"
+              </li>
+              <li className="flex gap-3 p-3">
+                <LuWallet className="size-5 shrink-0 text-(--brand-ink) mt-0.5" aria-hidden="true" />
+                <div>
+                  <p className="font-semibold text-(--ink)">Оплата</p>
+                  <p className="text-(--ink-2)">
+                    Спосіб оплати оберете під час оформлення.{" "}
+                    <Link to="/delivery" className="text-(--brand-ink) underline underline-offset-2">
+                      Доставка й оплата
+                    </Link>
+                  </p>
+                </div>
+              </li>
+              <li className="flex gap-3 p-3">
+                <LuRotateCcw className="size-5 shrink-0 text-(--brand-ink) mt-0.5" aria-hidden="true" />
+                <p className="text-(--ink-2)">
+                  <Link to="/returns" className="text-(--brand-ink) underline underline-offset-2">
+                    Повернення
+                  </Link>{" "}
+                  ·{" "}
+                  <Link to="/warranty" className="text-(--brand-ink) underline underline-offset-2">
+                    Гарантія
+                  </Link>
+                </p>
+              </li>
+              {product.shopName && (
+                <li className="flex gap-3 p-3">
+                  <LuStore className="size-5 shrink-0 text-(--brand-ink) mt-0.5" aria-hidden="true" />
+                  <p className="text-(--ink-2)">
+                    Продавець: <b className="text-(--ink)">{product.shopName}</b>
+                  </p>
+                </li>
+              )}
+            </ul>
+
+            {/* Ключові характеристики */}
+            {keySpecs.length > 0 && (
+              <div>
+                <h2 className="text-lg font-bold text-(--ink) mb-2">
+                  Ключові характеристики
+                </h2>
+                <dl className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-4 gap-y-2 text-sm">
+                  {keySpecs.map((s, i) => (
+                    <React.Fragment key={i}>
+                      <dt className="text-(--ink-2) break-words">{s.key}</dt>
+                      <dd className="text-(--ink) break-words">{s.value}</dd>
+                    </React.Fragment>
+                  ))}
+                </dl>
+                {specs.length > keySpecs.length && (
+                  <a
+                    href="#specs"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      jumpToSection("specs", { expand: true });
+                    }}
+                    className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-(--brand-ink) hover:underline"
+                  >
+                    Усі характеристики ({specs.length})
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Короткий опис — лише на широких екранах, повний — нижче */}
+            {product.description && (
+              <p className="hidden lg:block text-(--ink-2) max-w-[70ch]">
+                {product.description.length > 230
+                  ? product.description.substring(0, 230) + "…"
+                  : product.description}{" "}
+                <a
+                  href="#description"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    jumpToSection("description");
+                  }}
+                  className="text-(--brand-ink) font-semibold hover:underline"
+                >
+                  Детальніше
+                </a>
+              </p>
+            )}
+
+            {/* Поділитися */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-(--ink) mr-1">Поділитися:</span>
+              <ul className="flex flex-wrap items-center gap-2">
+                {SHARE.map((sh) => {
+                  const { id, label, bg, fg, url } = sh;
+                  return (
+                  <li key={id}>
+                    {url ? (
+                      <a
+                        href={url(shareUrl, shareText)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Поділитися в ${label}`}
+                        className={`tap rounded-full text-xl ${bg} ${fg} hover:opacity-90`}
                       >
-                        <div className="relative aspect-square">
-                          <img
-                            className="w-full h-full object-cover"
-                            src={p.images[0]}
-                            alt=""
-                          />
-                          {p.discount !== 0 && (
-                            <div className="flex justify-center items-center absolute text-[var(--text-featured-disc)] w-[38px] h-[38px] rounded-full bg-[var(--bg-featured-disc)] font-semibold text-xs left-2 top-2">
-                              {p.discount}%
-                            </div>
-                          )}
-                        </div>
-
-                        <h2 className="text-[var(--text-deatails)] py-1 font-bold">
-                          {p.name}
-                        </h2>
-                        <div className="flex gap-2">
-                          <h2 className="text-lg font-bold text-[var(--text-deatails)]">
-                            ₴{p.price}
-                          </h2>
-                          <div className="flex items-center gap-2">
-                            <Rating ratings={p.rating} />
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
+                        <sh.Icon aria-hidden="true" />
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={shareNative}
+                        aria-label={`Поділитися в ${label}`}
+                        className={`tap rounded-full text-xl ${bg} ${fg} hover:opacity-90`}
+                      >
+                        <sh.Icon aria-hidden="true" />
+                      </button>
+                    )}
+                  </li>
+                  );
+                })}
+                <li>
+                  <button
+                    type="button"
+                    onClick={shareNative}
+                    aria-label="Поділитися посиланням"
+                    className="tap rounded-full border border-(--line-strong) bg-(--surface) text-(--ink) hover:bg-(--surface-2)"
+                  >
+                    <LuShare2 className="size-5" aria-hidden="true" />
+                  </button>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
-      </section>
 
-      <section>
-        <div className="w-[85%] max-md:w-[80%] max-sm:w-[90%] max-lg:w-[90%] h-full mx-auto">
-          <h2 className="text-2xl py-8 text-[var(--text-deatails)]">
-            Вам також може сподобатись
-          </h2>
-          <div className="relative">
-            <Swiper
-              slidesPerView="auto"
-              spaceBetween={25}
-              loop={true}
-              pagination={{
-                clickable: true,
-                el: ".custom_bullet",
-              }}
-              navigation={{
-                nextEl: ".swiper-button-next",
-                prevEl: ".swiper-button-prev",
-              }}
-              breakpoints={{
-                1280: {
-                  slidesPerView: 3,
-                },
-                565: {
-                  slidesPerView: 2,
-                },
-              }}
-              modules={[Pagination, Navigation]}
-              className="mySwiper"
-            >
-              {relatedProducts.map((p, i) => {
-                return (
-                  <SwiperSlide key={i}>
+        {/* Опис / характеристики / відгуки + «Від продавця».
+            Липка навігація по розділах (scroll-spy) + скорочені довгі блоки,
+            щоб відгуки були в 1–2 екранах від початку опису. */}
+        <div className="mt-8 lg:mt-12">
+          <ProductTabs sections={tabs} />
+        <div className="mt-4 lg:mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-12">
+          <div className="min-w-0 flex flex-col border-t border-(--line) md:gap-10 md:rounded-(--r-lg) md:bg-(--surface) md:border md:p-6 lg:p-8">
+            <Accordion id="description" title="Опис" defaultOpen>
+              {product.description ? (
+                <ExpandableText key={product._id} lines={9} className="text-(--ink) max-w-[70ch]">
+                  <p className="whitespace-pre-line break-words">{product.description}</p>
+                </ExpandableText>
+              ) : (
+                <p className="text-(--ink-2)">Опис товару ще не додано.</p>
+              )}
+            </Accordion>
+
+            <Accordion id="specs" title="Характеристики" badge={specs.length ? `(${specs.length})` : null}>
+              {specs.length > 0 ? (
+                <SpecsTable key={product._id} specs={specs} limit={8} />
+              ) : (
+                <p className="text-(--ink-2)">
+                  Для цього товару ще не додано характеристик.
+                </p>
+              )}
+            </Accordion>
+
+            <Accordion id="reviews" title="Відгуки" badge={reviewsBadge} defaultOpen>
+              <Reviews product={product} />
+            </Accordion>
+          </div>
+
+          {moreProducts?.length > 0 && (
+            <aside aria-labelledby="more-from-shop" className="min-w-0">
+              <h2 id="more-from-shop" className="text-lg md:text-[1.375rem] font-bold text-(--ink) mb-3">
+                Від {product.shopName}
+              </h2>
+              <ul className="snap-row no-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-1 lg:gap-3 lg:overflow-visible">
+                {moreProducts.map((p, i) => (
+                  <li key={i} className="w-40 sm:w-48 lg:w-auto">
                     <Link
-                      key={i}
                       to={`/product/details/${p.slug}`}
-                      className="block"
+                      className="flex flex-col lg:flex-row gap-2 lg:gap-3 h-full rounded-(--r-lg) border border-(--line) bg-(--surface) p-2 lg:p-3 hover:shadow-(--shadow-2)"
                     >
-                      <div className="relative aspect-square">
-                        <div className="w-full h-full">
-                          <img
-                            className="w-full h-full object-cover"
-                            src={p.images[0]}
-                            alt=""
-                          />
-                          <div className="absolute h-full w-full top-0 left-0 bg-[var(--bg-swipper)] opacity-25 hover:opacity-50 transition-all duration-500"></div>
-                        </div>
-
+                      <div className="relative aspect-square lg:w-20 lg:shrink-0 rounded-(--r-md) bg-(--surface-2) overflow-hidden">
+                        <img
+                          className="w-full h-full object-contain"
+                          src={p.images?.[0]}
+                          alt={p.name}
+                          width={160}
+                          height={160}
+                          loading="lazy"
+                        />
                         {p.discount !== 0 && (
-                          <div className="flex justify-center items-center absolute text-[var(--text-featured-disc)] w-[38px] h-[38px] rounded-full bg-[var(--bg-featured-disc)] font-semibold text-xs left-2 top-2">
-                            {p.discount}%
-                          </div>
+                          <span className="absolute left-1 top-1 rounded-full bg-(--sale) text-(--on-sale) px-1.5 py-0.5 text-xs font-bold">
+                            −{p.discount}%
+                          </span>
                         )}
                       </div>
-
-                      <div className="p-4 flex flex-col gap-1">
-                        <h2 className="text-[var(--text-deatails)] text-lg font-bold">
+                      <div className="min-w-0 flex flex-col gap-1">
+                        <h3 className="text-sm leading-5 font-medium text-(--ink) line-clamp-2">
                           {p.name}
-                        </h2>
-                        <div className="flex justify-start items-center gap-3">
-                          <h2 className="text-lg font-bold text-[var(--text-deatails)]">
-                            ₴{p.price}
-                          </h2>
-                          <div className="flex">
-                            <Rating ratings={p.rating} />
-                          </div>
-                        </div>
+                        </h3>
+                        <span className="flex text-xs" aria-hidden="true">
+                          <Rating ratings={p.rating} />
+                        </span>
+                        <span className="price font-bold text-(--price)">₴{p.price}</span>
                       </div>
                     </Link>
-                  </SwiperSlide>
-                );
-              })}
-            </Swiper>
-            {/* Стрілки для Swiper */}
-            <div className="swiper-button-prev absolute top-1/2 left-0 z-10 text-white flex items-center justify-center cursor-pointer -translate-y-1/2 rounded-full"></div>
-            <div className="swiper-button-next absolute top-1/2 right-0 z-10 text-white flex items-center justify-center cursor-pointer -translate-y-1/2 rounded-full"></div>
-          </div>
-
-          {/* Пагінація */}
-          <div className="w-full flex justify-center items-center py-8">
-            <div className="custom_bullet justify-center gap-3 !w-auto"></div>
-          </div>
+                  </li>
+                ))}
+              </ul>
+            </aside>
+          )}
         </div>
-      </section>
+        </div>
+
+        {/* Рекомендації */}
+        {relatedProducts?.length > 0 && <RelatedCarousel products={relatedProducts} />}
+      </main>
+
+      {stickyVariant && product._id && (
+        <StickyBuyBar
+          visible={showSticky}
+          name={product.name}
+          price={canBuy ? currentUnit : finalPrice}
+          oldPrice={hasDiscount ? product.price : null}
+          variant={stickyVariant}
+          label={
+            stickyVariant === "cart"
+              ? isPreorder
+                ? "Передзамовити"
+                : "У кошик"
+              : subscribed
+              ? "Скасувати"
+              : "Повідомити"
+          }
+          onAction={stickyVariant === "cart" ? add_card : toggleSubscribe}
+        />
+      )}
+
       <Footer />
     </div>
   );

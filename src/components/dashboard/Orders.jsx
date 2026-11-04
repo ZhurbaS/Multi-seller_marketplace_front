@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
+import { LuSearch } from "react-icons/lu";
 import { get_orders } from "../../store/reducers/orderSlice";
 import { INVOICE_STATUS } from "../../utils/invoice";
-import { payLabel, deliveryLabel, orderNo, formatDate, statusBadge } from "../../utils/statusLabels";
+import { payLabel, deliveryLabel, orderNo, formatDate } from "../../utils/statusLabels";
+import { Badge, PageHeader } from "./Kit";
+import OrderCard from "./OrderCard";
+import { btnCta, btnSecondary, canPayOrder, cardCls, chipCls, deliveryTone, inputCls } from "./ui";
 
 const STATUSES = [
   ["all", "Усі статуси"],
@@ -18,17 +22,28 @@ const STATUSES = [
 
 const PERIODS = [
   ["all", "Увесь час"],
-  ["7", "Останні 7 днів"],
-  ["14", "Останні 14 днів"],
-  ["30", "Останні 30 днів"],
-  ["90", "Останні 3 місяці"],
-  ["365", "Останній рік"],
+  ["7", "7 днів"],
+  ["14", "14 днів"],
+  ["30", "30 днів"],
+  ["90", "3 місяці"],
+  ["365", "Рік"],
 ];
 
 const ymd = (d) => d.toISOString().slice(0, 10);
 
-const selectCls =
-  "outline-none px-3 py-2 border border-[var(--border-myOrders)] rounded-md text-[var(--text-myOrders)] bg-transparent text-sm";
+const ChipGroup = ({ label, options, value, onChange }) => (
+  <div role="group" aria-label={label} className="flex flex-col gap-1 min-w-0">
+    <span className="text-sm font-medium text-(--ink)">{label}</span>
+    {/* Мобільні — рядок зі скролом (лише всередині рядка), від md — перенос */}
+    <div className="no-scrollbar flex gap-2 overflow-x-auto snap-x snap-proximity overscroll-x-contain *:shrink-0 *:snap-start -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible">
+      {options.map(([v, t]) => (
+        <button key={v} type="button" aria-pressed={value === v} onClick={() => onChange(v)} className={chipCls(value === v)}>
+          {t}
+        </button>
+      ))}
+    </div>
+  </div>
+);
 
 const Orders = () => {
   const [status, setStatus] = useState("all");
@@ -62,111 +77,114 @@ const Orders = () => {
   const filtered = status !== "all" || period !== "all" || qDebounced;
 
   return (
-    <div className="bg-[var(--bg-myOrders)] p-4 rounded-md">
-      <h2 className="text-xl font-semibold text-[var(--text-myOrders)] mb-3">Мої замовлення</h2>
+    <div className="flex flex-col gap-4">
+      <PageHeader title="Мої замовлення" />
 
-      <div className="flex flex-wrap gap-2 items-center">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          inputMode="numeric"
-          placeholder="Пошук за номером"
-          className={`${selectCls} w-[180px]`}
-        />
-        <select className={selectCls} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Статус">
-          {STATUSES.map(([v, t]) => (
-            <option key={v} value={v}>
-              {t}
-            </option>
-          ))}
-        </select>
-        <select className={selectCls} value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="Період">
-          {PERIODS.map(([v, t]) => (
-            <option key={v} value={v}>
-              {t}
-            </option>
-          ))}
-        </select>
+      <div className={`${cardCls} p-4 flex flex-col gap-4`}>
+        <div className="flex flex-col gap-1 md:max-w-[320px]">
+          <label htmlFor="orders-q" className="text-sm font-medium text-(--ink)">
+            Пошук за номером
+          </label>
+          <div className="relative">
+            <LuSearch aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-xl text-(--ink-2)" />
+            <input
+              id="orders-q"
+              type="search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              inputMode="numeric"
+              enterKeyHint="search"
+              autoComplete="off"
+              placeholder="Наприклад, 10234"
+              className={`${inputCls} pl-10`}
+            />
+          </div>
+        </div>
+        <ChipGroup label="Період" options={PERIODS} value={period} onChange={setPeriod} />
+        <ChipGroup label="Статус" options={STATUSES} value={status} onChange={setStatus} />
         {filtered && (
           <button
+            type="button"
             onClick={() => {
               setStatus("all");
               setPeriod("all");
               setQ("");
             }}
-            className="text-sm underline text-[var(--text-myOrders)]"
+            className="tap self-start -ml-3 px-3 text-sm font-semibold text-(--brand-ink) underline"
           >
-            Скинути
+            Скинути фільтри
           </button>
         )}
       </div>
 
       {myOrders.length === 0 && !loading && !errorMessage && (
-        <div className="mt-6 text-center text-[var(--text-myOrders)]">
+        <div className={`${cardCls} p-6 text-center text-(--ink-2)`}>
           {filtered ? "За вибраними умовами замовлень не знайдено." : "У вас ще немає замовлень."}
         </div>
       )}
 
       {myOrders.length > 0 && (
-        <div className="pt-4">
-          <div className="relative overflow-x-auto rounded-md">
-            <table className="w-full text-sm text-left text-[var(--text-indexTable)]">
-              <thead className="text-xs text-[var(--text-indexTableSec)] uppercase bg-[var(--bg-indexTable)]">
+        <>
+          {/* Мобільні: картки */}
+          <ul className="md:hidden flex flex-col gap-3">
+            {myOrders.map((o) => (
+              <li key={o._id}>
+                <OrderCard o={o} canPay={canPayOrder(o)} onPay={redirect} />
+              </li>
+            ))}
+          </ul>
+
+          {/* Від md: таблиця */}
+          <div className={`hidden md:block ${cardCls} overflow-hidden`}>
+            <table className="w-full text-sm text-left text-(--ink)">
+              <thead className="text-xs uppercase text-(--ink-2) bg-(--surface-2)">
                 <tr>
-                  <th className="px-4 py-3">Замовлення</th>
-                  <th className="px-4 py-3">Сума</th>
-                  <th className="px-4 py-3">Оплата</th>
-                  <th className="px-4 py-3">Статус</th>
-                  <th className="px-4 py-3"></th>
+                  <th scope="col" className="px-4 py-3">Замовлення</th>
+                  <th scope="col" className="px-4 py-3">Сума</th>
+                  <th scope="col" className="px-4 py-3">Оплата</th>
+                  <th scope="col" className="px-4 py-3">Статус</th>
+                  <th scope="col" className="px-4 py-3"><span className="sr-only">Дії</span></th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-(--line)">
                 {myOrders.map((o) => (
-                  <tr key={o._id} className="bg-[var(--bg-indexTableSec)] border-b border-[var(--border-indexTable)]">
+                  <tr key={o._id} className="bg-(--surface)">
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <Link to={`/dashboard/order/details/${o._id}`} className="font-semibold underline">
+                      <Link to={`/dashboard/order/details/${o._id}`} className="font-semibold text-(--brand-ink) hover:underline">
                         {orderNo(o)}
                       </Link>
-                      <div className="text-xs opacity-70">{formatDate(o.createdAt)}</div>
+                      <div className="text-xs text-(--ink-2)">{formatDate(o.createdAt)}</div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap font-semibold">₴{o.price}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap font-semibold price">₴{o.price}</td>
+                    <td className="px-4 py-3">
                       {payLabel(o.payment_status)}
                       {o.invoice?.number && (
-                        <div className="text-xs opacity-80">
+                        <div className="text-xs text-(--ink-2)">
                           Рахунок {o.invoice.number}: {INVOICE_STATUS[o.invoice.status] || ""}
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`px-2 py-[2px] rounded-full text-xs font-semibold ${statusBadge(o.delivery_status)}`}>
-                        {deliveryLabel(o.delivery_status)}
-                      </span>
+                    <td className="px-4 py-3">
+                      <Badge tone={deliveryTone(o.delivery_status)}>{deliveryLabel(o.delivery_status)}</Badge>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-right">
-                      <Link to={`/dashboard/order/details/${o._id}`}>
-                        <span className="bg-[var(--bg-indexViewBtn)] text-[var(--text-index)] font-semibold mr-2 px-3 py-[2px] rounded">
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end flex-wrap gap-2">
+                        <Link to={`/dashboard/order/details/${o._id}`} className={`${btnSecondary} px-3`}>
                           Переглянути
-                        </span>
-                      </Link>
-                      {o.payment_status !== "paid" &&
-                        o.payment_method !== "cod" &&
-                        o.payment_method !== "invoice" &&
-                        o.delivery_status !== "cancelled" && (
-                          <span
-                            onClick={() => redirect(o)}
-                            className="bg-[var(--bg-indexViewBtn)] text-[var(--text-index)] font-semibold px-3 py-[2px] rounded cursor-pointer"
-                          >
+                        </Link>
+                        {canPayOrder(o) && (
+                          <button type="button" onClick={() => redirect(o)} className={`${btnCta} px-3`}>
                             Оплатити
-                          </span>
+                          </button>
                         )}
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

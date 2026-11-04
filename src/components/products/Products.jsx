@@ -1,31 +1,28 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import Rating from "../Rating";
+import { baseUnitPrice } from "../../utils/pricing";
 import { Swiper, SwiperSlide, useSwiper } from "swiper/react";
 import "swiper/css";
 
+const formatUah = (n) =>
+  `₴${(Number(n) || 0).toLocaleString("uk-UA", { maximumFractionDigits: 2 })}`;
+
 const NavButtons = ({ title }) => {
   const swiper = useSwiper();
+  const btn =
+    "w-11 h-11 grid place-items-center rounded-full border border-(--line) bg-(--surface) text-(--ink) text-xl motion-safe:active:scale-95 motion-safe:transition-transform [@media(hover:hover)]:hover:bg-(--surface-2)";
 
   return (
-    <div className="flex justify-between items-center pb-3">
-      <div className="text-xl font-bold text-[var(var(--text-latest))]">
-        {title}
-      </div>
-      <div className="flex justify-center items-center gap-3 text-[var(var(--text-latest))]">
-        <button
-          type="button"
-          onClick={() => swiper.slidePrev()}
-          className="w-[30px] h-[30px] flex justify-center items-center bg-[var(--bg-latest-leftArrow)] border border-[var(--border-latest-leftArrow)] outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[var(--border-latest-leftArrow)] active:scale-90 transition-transform"
-        >
-          <FiChevronLeft />
+    <div className="flex justify-between items-center gap-2 pb-3">
+      <h2 className="text-lg/6 font-bold text-(--ink)">{title}</h2>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={() => swiper.slidePrev()} className={btn} aria-label="Попередні товари">
+          <LuChevronLeft aria-hidden="true" />
         </button>
-        <button
-          type="button"
-          onClick={() => swiper.slideNext()}
-          className="w-[30px] h-[30px] flex justify-center items-center bg-[var(--bg-latest-leftArrow)] border border-[var(--border-latest-leftArrow)] outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[var(--border-latest-leftArrow)] active:scale-90 transition-transform"
-        >
-          <FiChevronRight />
+        <button type="button" onClick={() => swiper.slideNext()} className={btn} aria-label="Наступні товари">
+          <LuChevronRight aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -58,11 +55,12 @@ const useIntegerWidth = () => {
   return { containerRef, width };
 };
 
-const Products = ({ title, products }) => {
+// Компактний список товарів (бічні колонки каталогу): products — масив «сторінок» по 3 товари.
+const Products = ({ title, products = [] }) => {
   const { containerRef, width } = useIntegerWidth();
 
   return (
-    <div ref={containerRef} className="w-full overflow-hidden">
+    <section ref={containerRef} className="w-full overflow-hidden">
       <div style={width ? { width } : undefined}>
         <Swiper slidesPerView={1} spaceBetween={0}>
           <div slot="container-start">
@@ -70,32 +68,61 @@ const Products = ({ title, products }) => {
           </div>
           {products.map((p, i) => (
             <SwiperSlide key={i}>
-              <div className="flex flex-col justify-start gap-2 w-full">
-                {p.map((pl, j) => (
-                  <Link
-                    className="flex justify-start items-start w-full"
-                    to={`/product/details/${pl.slug}`}
-                    key={j}
-                  >
-                    <img
-                      className="w-[110px] h-[110px] object-cover shrink-0"
-                      src={pl.images[0]}
-                      alt=""
-                    />
-                    <div className="px-3 flex justify-start items-start gap-1 flex-col text-[var(--text-latest)] min-w-0 flex-1">
-                      <h2 className="w-full line-clamp-2 break-words">
-                        {pl.name}
-                      </h2>
-                      <span className="text-lg font-bold">₴{pl.price}</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              <ul className="flex flex-col gap-2 w-full">
+                {p.map((pl, j) => {
+                  const d = Number(pl.discount) || 0;
+                  return (
+                    <li key={pl._id || j}>
+                      <Link
+                        className="flex items-start gap-3 w-full p-2 rounded-(--r-md) bg-(--surface) border border-(--line) motion-safe:transition-shadow [@media(hover:hover)]:hover:shadow-(--shadow-2)"
+                        to={`/product/details/${pl.slug}`}
+                      >
+                        <span className="relative shrink-0 w-[88px] aspect-square">
+                          <img
+                            className="w-full h-full object-contain"
+                            src={pl.images?.[0]}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            width="88"
+                            height="88"
+                          />
+                          {d > 0 && (
+                            <span className="absolute left-0 top-0 rounded-(--r-sm) bg-(--sale) text-(--on-sale) text-xs font-bold px-1 tabular-nums">
+                              −{d}%
+                            </span>
+                          )}
+                        </span>
+                        <span className="flex flex-col gap-1 min-w-0 flex-1">
+                          <span className="text-sm/5 text-(--ink) line-clamp-2 break-words">
+                            {pl.name}
+                          </span>
+                          <span className="text-sm">
+                            <Rating ratings={pl.rating} showValue />
+                          </span>
+                          <span className="flex flex-wrap items-baseline gap-x-2">
+                            <span className={`price text-base font-bold ${d > 0 ? "text-(--sale)" : "text-(--price)"}`}>
+                              <span className="sr-only">Ціна: </span>
+                              {formatUah(baseUnitPrice(pl))}
+                            </span>
+                            {d > 0 && (
+                              <s className="text-xs text-(--ink-2) tabular-nums">
+                                <span className="sr-only">Стара ціна: </span>
+                                {formatUah(pl.price)}
+                              </s>
+                            )}
+                          </span>
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
             </SwiperSlide>
           ))}
         </Swiper>
       </div>
-    </div>
+    </section>
   );
 };
 

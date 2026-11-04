@@ -4,10 +4,11 @@ import api from "../../api/api";
 import DeliveryFields from "../DeliveryFields";
 import { DELIVERY_TYPES, emptyDelivery, deliveryError, fromSaved, toPayload, savedAddressTitle } from "../../utils/delivery";
 import { isValidPhone, maskPhone, nextPhone } from "../../utils/phone";
+import { Field, FieldError, Sheet } from "./Kit";
+import { btnPrimary, btnSecondary, fullMobile, inputCls } from "./ui";
 
-const inputCls = "w-full px-3 py-2 border border-[var(--border-myOrders)] outline-none rounded-md bg-transparent";
-const chipCls = (on) =>
-  `px-3 py-2 rounded-md border text-sm text-left ${on ? "border-[var(--border-ship-foc)] bg-[var(--bg-stripe)] font-semibold" : "border-[var(--border-myOrders)]"}`;
+const pickCls =
+  "min-h-11 px-3 py-2 rounded-(--r-md) border border-(--line) bg-(--surface) text-sm text-left hover:bg-(--surface-2) focus:border-(--brand)";
 
 // Зміна отримувача й доставки в замовленні, поки його не відправлено.
 const EditShipping = ({ order, onClose, onSaved }) => {
@@ -28,6 +29,7 @@ const EditShipping = ({ order, onClose, onSaved }) => {
   const [saved, setSaved] = useState({ addresses: [], recipients: [] });
   const [npOn, setNpOn] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [errs, setErrs] = useState({}); // інлайн-помилки { поле: текст }
 
   useEffect(() => {
     api
@@ -39,20 +41,26 @@ const EditShipping = ({ order, onClose, onSaved }) => {
       .catch(() => {});
   }, []);
 
+  // Перша помилка: [поле, текст]
   const error = () => {
-    if (name.trim().length < 2) return "Вкажіть ім'я замовника";
-    if (!isValidPhone(phone)) return "Вкажіть коректний телефон замовника";
+    if (name.trim().length < 2) return ["name", "Вкажіть ім'я замовника"];
+    if (!isValidPhone(phone)) return ["phone", "Вкажіть коректний телефон замовника"];
     if (other) {
-      if (!rec.lastName.trim()) return "Вкажіть прізвище отримувача";
-      if (!rec.firstName.trim()) return "Вкажіть ім'я отримувача";
-      if (!isValidPhone(rec.phone)) return "Вкажіть коректний телефон отримувача";
+      if (!rec.lastName.trim()) return ["recLast", "Вкажіть прізвище отримувача"];
+      if (!rec.firstName.trim()) return ["recFirst", "Вкажіть ім'я отримувача"];
+      if (!isValidPhone(rec.phone)) return ["recPhone", "Вкажіть коректний телефон отримувача"];
     }
-    return deliveryError(del, npOn);
+    const d = deliveryError(del, npOn);
+    return d ? ["delivery", d] : null;
   };
 
   const save = async () => {
     const err = error();
-    if (err) return toast.error(err);
+    if (err) {
+      setErrs({ [err[0]]: err[1] });
+      return toast.error(err[1]);
+    }
+    setErrs({});
     setBusy(true);
     try {
       const { data } = await api.put(`/home/customer/orders/${order._id}/shipping`, {
@@ -66,98 +74,177 @@ const EditShipping = ({ order, onClose, onSaved }) => {
     }
   };
 
+  const clr = (k) => errs[k] && setErrs({ ...errs, [k]: "" });
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center overflow-y-auto p-4" onClick={onClose}>
-      <div
-        className="bg-[var(--bg-myOrders,#fff)] text-[var(--text-myOrders)] rounded-md w-full max-w-[640px] p-5 flex flex-col gap-4 my-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="text-lg font-semibold">Змінити отримувача та доставку</h3>
-        <p className="text-sm bg-amber-50 text-amber-800 rounded-md p-3">
-          Зміну можна зробити, поки замовлення не відправлено. Вона може потребувати додаткового часу на опрацювання — ми повідомимо вас листом.
-        </p>
-
-        <section className="flex flex-col gap-3">
-          <h4 className="font-semibold">Замовник</h4>
-          <div className="flex max-md:flex-col gap-3">
-            <input className={inputCls} placeholder="Ім'я *" value={name} onChange={(e) => setName(e.target.value)} />
-            <input
-              className={inputCls}
-              type="tel"
-              placeholder="+38(067)-323-57-85 *"
-              value={phone}
-              onChange={(e) => setPhone(nextPhone(phone, e.target.value))}
-            />
-          </div>
-          <label className="flex items-center gap-2 cursor-pointer text-sm">
-            <input type="checkbox" checked={other} onChange={(e) => setOther(e.target.checked)} />
-            Інший отримувач замовлення
-          </label>
-          {other && (
-            <div className="flex flex-col gap-3">
-              {saved.recipients.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {saved.recipients.map((r) => (
-                    <button
-                      type="button"
-                      key={r._id}
-                      className={chipCls(false)}
-                      onClick={() => setRec({ lastName: r.lastName, firstName: r.firstName, middleName: r.middleName || "", phone: maskPhone(r.phone) })}
-                    >
-                      {r.lastName} {r.firstName}
-                      <span className="block text-xs opacity-70 font-normal">{r.phone}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div className="grid grid-cols-2 max-md:grid-cols-1 gap-3">
-                <input className={inputCls} placeholder="Прізвище *" value={rec.lastName} onChange={(e) => setRec({ ...rec, lastName: e.target.value })} />
-                <input className={inputCls} placeholder="Ім'я *" value={rec.firstName} onChange={(e) => setRec({ ...rec, firstName: e.target.value })} />
-                <input className={inputCls} placeholder="По батькові" value={rec.middleName} onChange={(e) => setRec({ ...rec, middleName: e.target.value })} />
-                <input
-                  className={inputCls}
-                  type="tel"
-                  placeholder="Телефон отримувача *"
-                  value={rec.phone}
-                  onChange={(e) => setRec({ ...rec, phone: nextPhone(rec.phone, e.target.value) })}
-                />
-              </div>
-            </div>
-          )}
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <h4 className="font-semibold">Доставка</h4>
-          {saved.addresses.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {saved.addresses.map((a) => {
-                const t = savedAddressTitle(a);
-                return (
-                  <button type="button" key={a._id} className={chipCls(false)} onClick={() => setDel(fromSaved(a))}>
-                    {t.head}
-                    <span className="block text-xs opacity-70 font-normal">{t.sub}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          <DeliveryFields form={del} setForm={setDel} npOn={npOn} onNpOff={() => setNpOn(false)} />
-        </section>
-
-        <div className="flex gap-2">
-          <button
-            onClick={save}
-            disabled={busy}
-            className="px-5 py-2 rounded-md bg-[var(--bg-card-processBtn)] text-[var(--text-card)] disabled:opacity-60"
-          >
-            {busy ? "Зачекайте..." : "Зберегти зміни"}
-          </button>
-          <button onClick={onClose} className="px-4 py-2 rounded-md border border-[var(--border-myOrders)]">
+    <Sheet
+      title="Змінити отримувача та доставку"
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" onClick={onClose} className={`${btnSecondary} ${fullMobile}`}>
             Скасувати
           </button>
+          <button type="button" onClick={save} disabled={busy} className={`${btnPrimary} ${fullMobile} min-h-12`}>
+            {busy ? "Зачекайте..." : "Зберегти зміни"}
+          </button>
+        </>
+      }
+    >
+      <p className="text-sm bg-(--brand-soft) text-(--ink) rounded-(--r-md) p-3">
+        Зміну можна зробити, поки замовлення не відправлено. Вона може потребувати додаткового часу на опрацювання — ми повідомимо вас листом.
+      </p>
+
+      <section className="flex flex-col gap-3">
+        <h3 className="font-semibold">Замовник</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Field label="Ім'я" required error={errs.name}>
+            {(a) => (
+              <input
+                {...a}
+                className={inputCls}
+                autoComplete="name"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  clr("name");
+                }}
+              />
+            )}
+          </Field>
+          <Field label="Телефон" required error={errs.phone}>
+            {(a) => (
+              <input
+                {...a}
+                className={inputCls}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="+38(067)-323-57-85"
+                value={phone}
+                onChange={(e) => {
+                  setPhone(nextPhone(phone, e.target.value));
+                  clr("phone");
+                }}
+              />
+            )}
+          </Field>
         </div>
-      </div>
-    </div>
+        <label className="flex items-center gap-3 min-h-11 cursor-pointer text-[0.9375rem]">
+          <input
+            type="checkbox"
+            className="w-5 h-5 accent-(--brand)"
+            checked={other}
+            onChange={(e) => setOther(e.target.checked)}
+          />
+          Інший отримувач замовлення
+        </label>
+        {other && (
+          <div className="flex flex-col gap-3">
+            {saved.recipients.length > 0 && (
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Збережені отримувачі">
+                {saved.recipients.map((r) => (
+                  <button
+                    type="button"
+                    key={r._id}
+                    className={pickCls}
+                    onClick={() => setRec({ lastName: r.lastName, firstName: r.firstName, middleName: r.middleName || "", phone: maskPhone(r.phone) })}
+                  >
+                    {r.lastName} {r.firstName}
+                    <span className="block text-xs text-(--ink-2) font-normal">{r.phone}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Field label="Прізвище" required error={errs.recLast}>
+                {(a) => (
+                  <input
+                    {...a}
+                    className={inputCls}
+                    autoComplete="family-name"
+                    value={rec.lastName}
+                    onChange={(e) => {
+                      setRec({ ...rec, lastName: e.target.value });
+                      clr("recLast");
+                    }}
+                  />
+                )}
+              </Field>
+              <Field label="Ім'я" required error={errs.recFirst}>
+                {(a) => (
+                  <input
+                    {...a}
+                    className={inputCls}
+                    autoComplete="given-name"
+                    value={rec.firstName}
+                    onChange={(e) => {
+                      setRec({ ...rec, firstName: e.target.value });
+                      clr("recFirst");
+                    }}
+                  />
+                )}
+              </Field>
+              <Field label="По батькові">
+                {(a) => (
+                  <input
+                    {...a}
+                    className={inputCls}
+                    autoComplete="additional-name"
+                    value={rec.middleName}
+                    onChange={(e) => setRec({ ...rec, middleName: e.target.value })}
+                  />
+                )}
+              </Field>
+              <Field label="Телефон отримувача" required error={errs.recPhone}>
+                {(a) => (
+                  <input
+                    {...a}
+                    className={inputCls}
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="+38(067)-323-57-85"
+                    value={rec.phone}
+                    onChange={(e) => {
+                      setRec({ ...rec, phone: nextPhone(rec.phone, e.target.value) });
+                      clr("recPhone");
+                    }}
+                  />
+                )}
+              </Field>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h3 className="font-semibold">Доставка</h3>
+        {saved.addresses.length > 0 && (
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Збережені адреси">
+            {saved.addresses.map((a) => {
+              const t = savedAddressTitle(a);
+              return (
+                <button type="button" key={a._id} className={pickCls} onClick={() => setDel(fromSaved(a))}>
+                  {t.head}
+                  <span className="block text-xs text-(--ink-2) font-normal">{t.sub}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <DeliveryFields
+          form={del}
+          setForm={(v) => {
+            setDel(v);
+            clr("delivery");
+          }}
+          npOn={npOn}
+          onNpOff={() => setNpOn(false)}
+        />
+        {errs.delivery && <FieldError>{errs.delivery}</FieldError>}
+      </section>
+    </Sheet>
   );
 };
 

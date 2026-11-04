@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import Home from "./pages/Home";
 import { Route, Routes } from "react-router-dom";
 import Shops from "./pages/Shops";
+import Stores from "./pages/Stores";
 import Card from "./pages/Card";
 import Shipping from "./pages/Shipping";
 import Details from "./pages/Details";
@@ -29,22 +30,30 @@ import ReturnNew from "./components/dashboard/ReturnNew";
 import ReturnsPolicy from "./pages/ReturnsPolicy";
 import Oferta from "./pages/Oferta";
 import LegalPage from "./pages/LegalPage";
+import SubscribeConfirm from "./pages/SubscribeConfirm";
+import Preferences from "./pages/Preferences";
+import Unsubscribe from "./pages/Unsubscribe";
 import CookieBanner from "./components/CookieBanner";
+import BottomNav from "./components/BottomNav";
+import MobileMenu from "./components/MobileMenu";
 
 function App() {
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(get_category());
-  }, []);
+  }, [dispatch]);
 
   return (
     <>
       <ScrollToTop />
+      {/* Ціль скіп-лінка «Перейти до змісту» (сторінки не мають власного <main>) */}
+      <div id="main" tabIndex={-1} className="outline-none">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/shops" element={<Shops />} />
+        <Route path="/stores" element={<Stores />} />
         <Route path="/card" element={<Card />} />
         <Route path="/shipping" element={<Shipping />} />
         <Route path="/payment" element={<Payment />} />
@@ -60,6 +69,9 @@ function App() {
         <Route path="/warranty" element={<LegalPage slug="warranty" />} />
         <Route path="/privacy" element={<LegalPage slug="privacy" />} />
         <Route path="/cookies" element={<LegalPage slug="cookies" />} />
+        <Route path="/subscribe/confirm" element={<SubscribeConfirm />} />
+        <Route path="/preferences" element={<Preferences />} />
+        <Route path="/unsubscribe" element={<Unsubscribe />} />
 
         <Route path="/dashboard" element={<ProtectUser />}>
           <Route path="" element={<Dashboard />}>
@@ -76,6 +88,9 @@ function App() {
           </Route>
         </Route>
       </Routes>
+      </div>
+      <MobileMenu />
+      <BottomNav />
       <CookieBanner />
     </>
   );

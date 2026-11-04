@@ -1,145 +1,150 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { FaList } from "react-icons/fa";
-import { Link, Outlet, useNavigate } from "react-router-dom";
-import { IoHome } from "react-icons/io5";
-import { BsFillCartCheckFill } from "react-icons/bs";
-import { IoHeart } from "react-icons/io5";
-import { IoMdChatbubbles } from "react-icons/io";
-import { RiLogoutBoxFill } from "react-icons/ri";
-import { RiLockPasswordFill } from "react-icons/ri";
-import { IoSettingsSharp } from "react-icons/io5";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  LuHeart,
+  LuHouse,
+  LuLock,
+  LuLogOut,
+  LuMessageCircle,
+  LuPackage,
+  LuSettings,
+  LuUndo2,
+} from "react-icons/lu";
 import api from "../api/api";
 import { useDispatch, useSelector } from "react-redux";
-import { MdAssignmentReturn } from "react-icons/md";
 import { get_return_policy } from "../store/reducers/returnSlice";
 import { user_reset } from "../store/reducers/authSlice";
 import { reset_count } from "../store/reducers/cardSlice";
 
-const Dashboard = () => {
-  const [filterShow, setFilterShow] = useState(false);
+// Вкладені екрани (з кнопкою «Назад») — на мобільних без рядка вкладок
+const NESTED = [/^\/dashboard\/order\/details\//, /^\/dashboard\/returns\/new\//, /^\/dashboard\/chat\/.+/];
 
+const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { pathname } = useLocation();
   const cabinetVisible = useSelector((s) => s.returns.cabinetVisible);
   useEffect(() => {
     dispatch(get_return_policy());
-  }, []);
+  }, [dispatch]);
 
   const logout = async () => {
     try {
-      const { data } = await api.get("/customer/logout");
+      await api.get("/customer/logout");
       localStorage.removeItem("customerToken");
       dispatch(user_reset());
       dispatch(reset_count());
       navigate("/login");
     } catch (error) {
-      console.log(error.response.data);
+      console.log(error.response?.data);
     }
   };
 
-  return (
-    <div>
-      <Header />
-      <div className="bg-[var(--bg-dash)] mt-5">
-        <div className="w-[90%] mx-auto max-mdlg:block hidden">
-          <div className="">
-            <button
-              onClick={() => setFilterShow(!filterShow)}
-              className="text-center py-3 px-3 bg-[var(--bg-dashListBtn)] text-[var(--text-dashListBtn)]"
-            >
-              <FaList />
-            </button>
-          </div>
-        </div>
+  const nav = [
+    { to: "/dashboard", end: true, label: "Особистий кабінет", short: "Огляд", icon: LuHouse },
+    { to: "/dashboard/my-orders", label: "Мої замовлення", short: "Замовлення", icon: LuPackage },
+    cabinetVisible && { to: "/dashboard/returns", label: "Мої повернення", short: "Повернення", icon: LuUndo2 },
+    { to: "/dashboard/my-wishlist", label: "Список бажань", short: "Обране", icon: LuHeart },
+    { to: "/dashboard/chat", label: "Чат", short: "Чат", icon: LuMessageCircle },
+    { to: "/dashboard/settings", label: "Налаштування", short: "Налаштування", icon: LuSettings },
+    { to: "/dashboard/change-password", label: "Змінити пароль", short: "Пароль", icon: LuLock },
+  ].filter(Boolean);
 
-        <div className="h-full mx-auto">
-          <div className="py-5 flex max-mdlg:w-[90%] mx-auto relative">
-            <div
-              className={`rounded-md z-50 max-mdlg:absolute ${
-                filterShow ? "-left-4" : "-left-[360px]"
-              } w-[270px] ml-4 bg-[var(--bg-dashSec)]`}
-            >
-              <ul className="py-2 text-[var(--text-dash)] px-4">
-                <li className="flex justify-start items-center gap-2 py-2">
-                  <span className="text-xl">
-                    <IoHome />
-                  </span>
-                  <Link to="/dashboard" className="block">
-                    Особистий кабінет
-                  </Link>
-                </li>
-                <li className="flex justify-start items-center gap-2 py-2">
-                  <span className="text-xl">
-                    <BsFillCartCheckFill />
-                  </span>
-                  <Link to="/dashboard/my-orders" className="block">
-                    Мої замовлення
-                  </Link>
-                </li>
-                {cabinetVisible && (
-                  <li className="flex justify-start items-center gap-2 py-2">
-                    <span className="text-xl">
-                      <MdAssignmentReturn />
-                    </span>
-                    <Link to="/dashboard/returns" className="block">
-                      Мої повернення
-                    </Link>
-                  </li>
-                )}
-                <li className="flex justify-start items-center gap-2 py-2">
-                  <span className="text-xl">
-                    <IoHeart />
-                  </span>
-                  <Link to="/dashboard/my-wishlist" className="block">
-                    Список бажань
-                  </Link>
-                </li>
-                <li className="flex justify-start items-center gap-2 py-2">
-                  <span className="text-xl">
-                    <IoMdChatbubbles />
-                  </span>
-                  <Link to="/dashboard/chat" className="block">
-                    Чат
-                  </Link>
-                </li>
-                <li className="flex justify-start items-center gap-2 py-2">
-                  <span className="text-xl">
-                    <IoSettingsSharp />
-                  </span>
-                  <Link to="/dashboard/settings" className="block">
-                    Налаштування
-                  </Link>
-                </li>
-                <li className="flex justify-start items-center gap-2 py-2">
-                  <span className="text-xl">
-                    <RiLockPasswordFill />
-                  </span>
-                  <Link to="/dashboard/change-password" className="block">
-                    Змінити пароль
-                  </Link>
-                </li>
-                <li
-                  onClick={logout}
-                  className="flex justify-start items-center gap-2 py-2 cursor-pointer"
+  const isIndex = pathname === "/dashboard" || pathname === "/dashboard/";
+  const nested = NESTED.some((r) => r.test(pathname));
+  const showChips = !isIndex && !nested;
+
+  return (
+    <div className="min-h-dvh flex flex-col bg-(--page)">
+      <Header />
+
+      {/* Мобільні вкладки (нижче lg): горизонтальні чіпси зі snap */}
+      {showChips && (
+        <nav aria-label="Розділи кабінету" className="lg:hidden bg-(--surface) border-b border-(--line)">
+          <ul className="container-x snap-row no-scrollbar gap-2 py-2">
+            {nav.map(({ to, end, short, icon }) => {
+              const Icon = icon;
+              return (
+              <li key={to}>
+                <NavLink
+                  to={to}
+                  end={end}
+                  className={({ isActive }) =>
+                    `inline-flex items-center gap-2 min-h-11 px-4 rounded-full border text-sm font-medium whitespace-nowrap ${
+                      isActive
+                        ? "bg-(--brand-soft) border-(--brand) text-(--brand-ink)"
+                        : "bg-(--surface) border-(--line) text-(--ink-2)"
+                    }`
+                  }
                 >
-                  <span className="text-xl">
-                    <RiLogoutBoxFill />
-                  </span>
-                  <div className="block">Вийти</div>
+                  <Icon aria-hidden="true" className="text-lg" />
+                  {short}
+                </NavLink>
+              </li>
+              );
+            })}
+            <li>
+              <button
+                type="button"
+                onClick={logout}
+                className="inline-flex items-center gap-2 min-h-11 px-4 rounded-full border border-(--line) bg-(--surface) text-sm font-medium text-(--danger) whitespace-nowrap"
+              >
+                <LuLogOut aria-hidden="true" className="text-lg" />
+                Вийти
+              </button>
+            </li>
+          </ul>
+        </nav>
+      )}
+
+      <main id="main" className="flex-1 container-x py-4 md:py-6 lg:py-8">
+        <div className="lg:grid lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-6 xl:gap-8 items-start">
+          {/* Бічне меню від lg */}
+          <aside className="hidden lg:block sticky top-[calc(var(--header-h)+16px)]">
+            <nav aria-label="Розділи кабінету" className="bg-(--surface) border border-(--line) rounded-(--r-lg) p-2">
+              <ul className="flex flex-col gap-1">
+                {nav.map(({ to, end, label, icon }) => {
+                  const Icon = icon;
+                  return (
+                  <li key={to}>
+                    <NavLink
+                      to={to}
+                      end={end}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 min-h-11 px-3 rounded-(--r-md) text-[0.9375rem] transition-colors ${
+                          isActive
+                            ? "bg-(--brand-soft) text-(--brand-ink) font-semibold"
+                            : "text-(--ink-2) hover:bg-(--surface-2) hover:text-(--ink)"
+                        }`
+                      }
+                    >
+                      <Icon aria-hidden="true" className="text-xl shrink-0" />
+                      {label}
+                    </NavLink>
+                  </li>
+                  );
+                })}
+                <li className="mt-1 pt-1 border-t border-(--line)">
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="w-full flex items-center gap-3 min-h-11 px-3 rounded-(--r-md) text-[0.9375rem] text-(--danger) hover:bg-(--danger-soft)"
+                  >
+                    <LuLogOut aria-hidden="true" className="text-xl shrink-0" />
+                    Вийти
+                  </button>
                 </li>
               </ul>
-            </div>
+            </nav>
+          </aside>
 
-            <div className="w-[calc(100%-270px)] max-mdlg:w-full">
-              <div className="mx-4 max-mdlg:mx-0">
-                <Outlet />
-              </div>
-            </div>
+          <div className="min-w-0">
+            <Outlet context={{ nav, logout }} />
           </div>
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );

@@ -1,197 +1,168 @@
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { AiFillTikTok } from "react-icons/ai";
 import { IoLogoFacebook } from "react-icons/io";
-import { FaSquareInstagram } from "react-icons/fa6";
-import { FaSquareYoutube } from "react-icons/fa6";
-import { useSelector } from "react-redux";
-import { IoHeart } from "react-icons/io5";
-import { FaShoppingCart } from "react-icons/fa";
-import { getFrontendUrl } from "../api/api";
+import { FaSquareInstagram, FaSquareYoutube } from "react-icons/fa6";
+import { LuChevronDown, LuPhone, LuMail, LuMapPin } from "react-icons/lu";
 import useLegalStatus from "../hooks/useLegalStatus";
+import useStorefront from "../hooks/useStorefront";
 import { openCookieSettings } from "../utils/consent";
+import SubscribeForm from "./SubscribeForm";
+
+const PHONE = "044 999 88 77";
+const PHONE_HREF = "tel:+380449998877";
+const EMAIL = "support@techscout.com";
+const ADDRESS = "проспект Берестейський, буд. 50, оф. 10, м. Київ, 01001";
+
+const socials = [
+  { href: "#", label: "YouTube", Icon: FaSquareYoutube },
+  { href: "#", label: "Facebook", Icon: IoLogoFacebook },
+  { href: "#", label: "TikTok", Icon: AiFillTikTok },
+  { href: "#", label: "Instagram", Icon: FaSquareInstagram },
+];
+
+const linkCls =
+  "inline-flex items-center min-h-11 md:min-h-8 py-1 text-[15px] md:text-sm text-(--on-footer) hover:text-(--brand-ink) hover:underline text-left";
+
+// Колонка: нижче md — акордеон, від md — завжди відкрита
+const Section = ({ id, title, children }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <section aria-labelledby={`${id}-h`} className="border-b border-(--line) md:border-0">
+      <h2 id={`${id}-h`} className="text-base font-semibold text-(--ink)">
+        <button
+          type="button"
+          className="md:hidden w-full min-h-12 flex items-center justify-between text-left"
+          aria-expanded={open}
+          aria-controls={id}
+          onClick={() => setOpen((v) => !v)}
+        >
+          {title}
+          <LuChevronDown
+            size={20}
+            aria-hidden="true"
+            className={`motion-safe:transition-transform ${open ? "rotate-180" : ""}`}
+          />
+        </button>
+        <span className="hidden md:block mb-3">{title}</span>
+      </h2>
+      <div id={id} className={`${open ? "block" : "hidden"} md:block pb-3 md:pb-0`}>
+        {children}
+      </div>
+    </section>
+  );
+};
 
 const Footer = () => {
-  const navigate = useNavigate();
   const legal = useLegalStatus();
-
+  const { showStoresLink } = useStorefront();
   const { userInfo } = useSelector((state) => state.auth);
-  const { card_product_count, wishlist_count } = useSelector(
-    (state) => state.card
-  );
+  const isAuthed = !!userInfo && !(userInfo.guest && !userInfo.email);
 
   return (
-    <footer className="bg-[var(--bg-footer)]">
-      <div className="w-[85%] flex flex-wrap mx-auto border-b border-[var(--border-copyright)] py-16 max-mdlg:pb-10 max-sm:pb-6">
-        <div className="w-3/12 max-lg:w-4/12 max-sm:w-full">
-          <div className="flex flex-col gap-3">
-            <img
-              className="w-[210px] h-[70px]"
-              src="/images/logoTS.png"
-              alt="Логотип TechScout"
-            />
-            <ul className="flex flex-col gap-2 text-[var(--text-footer)]">
-              <li>
-                Адреса: проспект Берестейський, буд. 50, оф. 10, м. Київ, 01001
-              </li>
-              <li>Номер телефону: 044 999 88 77</li>
-              <li>Email: support@techscout.com</li>
-            </ul>
+    <footer className="bg-(--footer-bg) text-(--on-footer)">
+      <div className="container-x pt-8 md:pt-12 pb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-[1.2fr_1fr_1fr_1.4fr] gap-0 md:gap-8">
+          {/* Лого + коротко */}
+          <div className="pb-4 md:pb-0 md:col-span-3 lg:col-span-1">
+            <Link to="/" className="inline-flex min-h-11 items-center" aria-label="TechScout — на головну">
+              <img className="h-12 w-auto" src="/images/logoTS.png" alt="Логотип TechScout" width="144" height="48" loading="lazy" />
+            </Link>
+            <p className="mt-2 text-sm max-w-[40ch]">
+              Інтернет-магазин техніки та електроніки з доставкою по всій Україні.
+            </p>
           </div>
-        </div>
-        <div className="w-5/12 max-lg:w-8/12 max-sm:w-full">
-          <div className="flex justify-center max-sm:justify-start max-sm:mt-6 w-full">
-            <div>
-              <h2 className="font-bold text-lg mb-2">Клієнтам</h2>
-              <div className="flex justify-between gap-[80px] max-lg:gap-[40px]">
-                <ul className="flex flex-col gap-2 text-[var(--text-footer)] text-sm font-semibold">
-                  <li>
-                    <Link>Вхід до кабінету</Link>
-                  </li>
-                  <li>
-                    <Link>Про нас</Link>
-                  </li>
-                  <li>
-                    {legal.delivery?.published ? <Link to="/delivery">Доставка й оплата</Link> : <Link>Оплата і доставка</Link>}
-                  </li>
-                  <li>
-                    <Link to={legal.returns?.published ? "/returns" : "/returns-policy"}>Обмін та повернення</Link>
-                  </li>
-                  {legal.warranty?.published && (
-                    <li>
-                      <Link to="/warranty">Гарантія</Link>
-                    </li>
-                  )}
-                  <li>
-                    <Link>Контактна інформація</Link>
-                  </li>
-                </ul>
-                <ul className="flex flex-col gap-2 text-[var(--text-footer)] text-sm font-semibold">
-                  <li>
-                    <Link>Сервіс</Link>
-                  </li>
-                  <li>
-                    <Link>Акції</Link>
-                  </li>
-                  <li>
-                    <Link>Блог</Link>
-                  </li>
-                  <li>
-                    <Link>Наші партнери</Link>
-                  </li>
-                  {legal.oferta?.published && (
-                    <li>
-                      <Link to="/oferta">Публічна оферта</Link>
-                    </li>
-                  )}
-                  {legal.privacy?.published && (
-                    <li>
-                      <Link to="/privacy">Політика конфіденційності</Link>
-                    </li>
-                  )}
-                  {legal.cookies?.published && (
-                    <li>
-                      <Link to="/cookies">Політика cookies</Link>
-                    </li>
-                  )}
-                  <li>
-                    <button type="button" onClick={openCookieSettings} className="text-left">
-                      Налаштування cookies
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <div className="w-4/12 max-lg:w-full max-lg:mt-6">
-          <div className="w-full flex flex-col justify-start gap-5">
-            <h2 className="font-bold text-lg mb-2">Підписуйтесь!</h2>
-            <span>Дізнавайтесь про нові акції першими</span>
-            <div className="h-[50px] w-full bg-[var(--bg-subscribe)] border border-[var(--border-subscribe)] relative">
-              <input
-                className="h-full bg-transparent w-full px-3 outline-0"
-                type="text"
-                placeholder="Введіть Ваш Email"
-              />
-              <button className="h-full absolute right-0 bg-[var(--bg-subscribeBtn)] text-[var(--text-subscribe)] uppercase px-4 font-bold text-sm">
-                Підписатися
-              </button>
-            </div>
-            <ul className="flex justify-start items-center gap-3">
+          <Section id="ft-shop" title="Магазин">
+            <ul className="flex flex-col">
+              <li><Link to="/" className={linkCls}>Головна</Link></li>
+              <li><Link to="/shops" className={linkCls}>Каталог товарів</Link></li>
+              {showStoresLink && (
+                <li><Link to="/stores" className={linkCls}>Магазини</Link></li>
+              )}
               <li>
-                <a
-                  className="w-[38px] h-[38px] hover:bg-[var(--bg-icon-hov)] hover:text-[var(--text-icon)] flex justify-center items-center bg-[var(--bg-icon)] rounded-full"
-                  href="#"
-                >
-                  <FaSquareYoutube />
+                <Link to={isAuthed ? "/dashboard" : "/login"} className={linkCls}>
+                  {isAuthed ? "Мій кабінет" : "Вхід до кабінету"}
+                </Link>
+              </li>
+            </ul>
+          </Section>
+
+          <Section id="ft-buyers" title="Покупцям">
+            <ul className="flex flex-col">
+              {legal.delivery?.published && (
+                <li><Link to="/delivery" className={linkCls}>Доставка й оплата</Link></li>
+              )}
+              <li>
+                <Link to={legal.returns?.published ? "/returns" : "/returns-policy"} className={linkCls}>
+                  Обмін та повернення
+                </Link>
+              </li>
+              {legal.warranty?.published && (
+                <li><Link to="/warranty" className={linkCls}>Гарантія</Link></li>
+              )}
+              {legal.oferta?.published && (
+                <li><Link to="/oferta" className={linkCls}>Публічна оферта</Link></li>
+              )}
+              {legal.privacy?.published && (
+                <li><Link to="/privacy" className={linkCls}>Політика конфіденційності</Link></li>
+              )}
+              {legal.cookies?.published && (
+                <li><Link to="/cookies" className={linkCls}>Політика cookies</Link></li>
+              )}
+              <li>
+                <button type="button" onClick={openCookieSettings} className={linkCls}>
+                  Налаштування cookies
+                </button>
+              </li>
+            </ul>
+          </Section>
+
+          <Section id="ft-contacts" title="Контакти">
+            <ul className="flex flex-col gap-1 text-[15px] md:text-sm">
+              <li>
+                <a href={PHONE_HREF} className="inline-flex items-center gap-2 min-h-11 md:min-h-8 hover:text-(--brand-ink)">
+                  <LuPhone size={18} aria-hidden="true" /> {PHONE}
                 </a>
               </li>
               <li>
-                <a
-                  className="w-[38px] h-[38px] hover:bg-[var(--bg-icon-hov)] hover:text-[var(--text-icon)] flex justify-center items-center bg-[var(--bg-icon)] rounded-full"
-                  href="#"
-                >
-                  <IoLogoFacebook />
+                <a href={`mailto:${EMAIL}`} className="inline-flex items-center gap-2 min-h-11 md:min-h-8 hover:text-(--brand-ink) break-all">
+                  <LuMail size={18} aria-hidden="true" /> {EMAIL}
                 </a>
               </li>
-              <li>
-                <a
-                  className="w-[38px] h-[38px] hover:bg-[var(--bg-icon-hov)] hover:text-[var(--text-icon)] flex justify-center items-center bg-[var(--bg-icon)] rounded-full"
-                  href="#"
-                >
-                  <AiFillTikTok />
-                </a>
+              <li className="flex items-start gap-2 py-2">
+                <LuMapPin size={18} aria-hidden="true" className="shrink-0 mt-0.5" />
+                <span>{ADDRESS}</span>
               </li>
-              <li>
-                <a
-                  className="w-[38px] h-[38px] hover:bg-[var(--bg-icon-hov)] hover:text-[var(--text-icon)] flex justify-center items-center bg-[var(--bg-icon)] rounded-full"
-                  href="#"
-                >
-                  <FaSquareInstagram />
-                </a>
-              </li>
+            </ul>
+          </Section>
+
+          {/* Підписка + соцмережі */}
+          <div className="w-full min-w-0 pt-6 md:pt-0 md:col-span-3 lg:col-span-1">
+            <h2 className="text-base font-semibold text-(--on-footer) mb-1">Підписуйтесь!</h2>
+            <p className="text-sm mb-3">Акції, новинки й корисні поради — без спаму</p>
+            <SubscribeForm source="footer" />
+            <ul className="flex items-center gap-2 mt-4">
+              {socials.map((s) => (
+                <li key={s.label}>
+                  <a
+                    href={s.href}
+                    aria-label={s.label}
+                    className="w-11 h-11 inline-flex items-center justify-center rounded-full bg-(--surface) text-(--ink) border border-(--line) hover:bg-(--brand) hover:text-(--on-brand)"
+                  >
+                    <s.Icon size={20} aria-hidden="true" />
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
       </div>
 
-      <div className="w-[90%] flex flex-wrap justify-center items-center text-[var(--text-footer)] mx-auto py-5 text-center">
-        <span>© Всі права захищені 2025</span>
-      </div>
-
-      <div className="hidden fixed max-mdlg:block w-[50px] h-[110px] bottom-3 right-2 bg-[var(--bg-footer-sidebar-main)] rounded-full p-2">
-        <div className="w-full h-full flex gap-3 flex-col justify-center items-center">
-          <div
-            onClick={() => navigate(userInfo ? "/card" : "/login")}
-            className="relative flex justify-center items-center cursor-pointer w-[35px] h-[35px] rounded-full bg-[var(--bg-footer-sidebar)] "
-          >
-            <span className="text-xl text-[var(--text-footer-sidebar)]">
-              <FaShoppingCart />
-            </span>
-            {card_product_count !== 0 && (
-              <div className="w-[20px] h-[20px] absolute bg-[var(--bg-footer-sidebar-ring)] rounded-full text-[var(--text-footer-sidebar-ring)] flex justify-center items-center -top-[3px] -right-[5px]">
-                {card_product_count}
-              </div>
-            )}
-          </div>
-
-          <div
-            onClick={() =>
-              navigate(userInfo ? "/dashboard/my-wishlist" : "/login")
-            }
-            className="relative flex justify-center items-center cursor-pointer w-[35px] h-[35px] rounded-full bg-[var(--bg-footer-sidebar)] "
-          >
-            <span className="text-xl text-[var(--text-footer-sidebar)]">
-              <IoHeart />
-            </span>
-            {wishlist_count !== 0 && (
-              <div className="w-[20px] h-[20px] absolute bg-[var(--bg-footer-sidebar-ring)] rounded-full text-[var(--text-footer-sidebar-ring)] flex justify-center items-center -top-[3px] -right-[5px]">
-                {wishlist_count}
-              </div>
-            )}
-          </div>
+      <div className="border-t border-(--line)">
+        <div className="container-x py-4 text-center text-sm">
+          © TechScout, {new Date().getFullYear()}. Всі права захищені
         </div>
       </div>
     </footer>

@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
-import { IoIosCart } from "react-icons/io";
-import { MdRemoveShoppingCart } from "react-icons/md";
-import { FaCartArrowDown } from "react-icons/fa6";
-import { Link, useNavigate } from "react-router-dom";
+import { LuChevronRight, LuCircleX, LuClock, LuLogOut, LuShoppingBag } from "react-icons/lu";
+import { Link, NavLink, useNavigate, useOutletContext } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { get_dashboard_index_data } from "../../store/reducers/dashboardSlice";
-import { payLabel, deliveryLabel, orderNo } from "../../utils/statusLabels";
+import { PageHeader, Section } from "./Kit";
+import OrderCard from "./OrderCard";
+import { canPayOrder, cardCls } from "./ui";
 
 const getOrderWord = (count) => {
   const lastDigit = count % 10;
@@ -21,9 +21,28 @@ const getOrderWord = (count) => {
   return "Замовлень";
 };
 
+const Stat = ({ icon, value, label, tone, className = "" }) => {
+  const Icon = icon;
+  return (
+  <div className={`${cardCls} p-4 flex items-center gap-3 min-w-0 ${className}`}>
+    <span
+      aria-hidden="true"
+      className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-xl ${tone}`}
+    >
+      <Icon />
+    </span>
+    <div className="min-w-0">
+      <p className="text-2xl md:text-3xl font-bold leading-tight text-(--ink) tabular-nums">{value}</p>
+      <p className="text-sm text-(--ink-2) leading-5">{label}</p>
+    </div>
+  </div>
+  );
+};
+
 const Index = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { nav = [], logout } = useOutletContext() || {};
 
   const { userInfo } = useSelector((state) => state.auth);
   const { recentOrders, totalOrders, pendingOrders, cancelledOrders } =
@@ -31,6 +50,7 @@ const Index = () => {
 
   useEffect(() => {
     dispatch(get_dashboard_index_data(userInfo.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const redirect = (customerOrder) => {
@@ -46,128 +66,83 @@ const Index = () => {
   };
 
   return (
-    <div>
-      <div className="grid grid-cols-3 max-md:grid-cols-1 gap-5">
-        <div className="flex justify-center items-center p-5 bg-[var(--bg-index)] rounded-md gap-5">
-          <div className="bg-[var(--bg-indexSec)] w-[47px] h-[47px] rounded-full flex justify-center items-center text-xl">
-            <span className="text-xl text-[var(--text-index)]">
-              <IoIosCart />
-            </span>
-          </div>
-          <div className="flex flex-col justify-start items-start text-[var(--text-indexSec)]">
-            <h2 className="text-3xl font-bold">{totalOrders}</h2>
-            <span>{getOrderWord(totalOrders)}</span>
-          </div>
-        </div>
+    <div className="flex flex-col gap-4 md:gap-6">
+      <PageHeader title="Особистий кабінет" subtitle={userInfo?.name ? `Вітаємо, ${userInfo.name}` : undefined} />
 
-        <div className="flex justify-center items-center p-5 bg-[var(--bg-index)] rounded-md gap-5">
-          <div className="bg-[var(--bg-indexSec)] w-[47px] h-[47px] rounded-full flex justify-center items-center text-xl">
-            <span className="text-xl text-[var(--text-index)]">
-              <FaCartArrowDown />
-            </span>
-          </div>
-          <div className="flex flex-col justify-start items-start text-[var(--text-indexSec)]">
-            <h2 className="text-3xl font-bold">{pendingOrders}</h2>
-            <span>Замовлення в обробці</span>
-          </div>
-        </div>
-
-        <div className="flex justify-center items-center p-5 bg-[var(--bg-index)] rounded-md gap-5">
-          <div className="bg-[var(--bg-indexSec)] w-[47px] h-[47px] rounded-full flex justify-center items-center text-xl">
-            <span className="text-xl text-[var(--text-index)]">
-              <MdRemoveShoppingCart />
-            </span>
-          </div>
-          <div className="flex flex-col justify-start items-start text-[var(--text-indexSec)]">
-            <h2 className="text-3xl font-bold">{cancelledOrders}</h2>
-            <span>Скасовані замовлення</span>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+        <Stat
+          icon={LuShoppingBag}
+          value={totalOrders}
+          label={getOrderWord(totalOrders)}
+          tone="bg-(--brand-soft) text-(--brand-ink)"
+        />
+        <Stat
+          icon={LuClock}
+          value={pendingOrders}
+          label="Замовлення в обробці"
+          tone="bg-(--success-soft) text-(--success)"
+        />
+        <Stat
+          icon={LuCircleX}
+          value={cancelledOrders}
+          label="Скасовані замовлення"
+          tone="bg-(--danger-soft) text-(--danger)"
+          className="col-span-2 md:col-span-1"
+        />
       </div>
 
-      <div className="bg-[var(--bg-index)] p-5 mt-5 rounded-md ">
-        <h2>Останні замовлення</h2>
-        <div className="pt-4">
-          <div className="relative overflow-x-auto rounded-md">
-            <table className="w-full text-sm text-left text-[var(--text-indexTable)] ">
-              <thead className="text-чі text-[var(--text-indexTableSec)] uppercase bg-[var(--bg-indexTable)] rounded-md">
-                <tr>
-                  <th scope="col" className="px-6 py-3">
-                    Id замовлення
-                  </th>
-                  <th scope="col" className="px-6 py-3">
-                    Ціна
-                  </th>
-                  <th scope="col" className="px-6 py-3">
-                    Статус платежу
-                  </th>
-                  <th scope="col" className="px-6 py-3">
-                    Статус замовлення
-                  </th>
-                  <th scope="col" className="px-6 py-3">
-                    Дія
-                  </th>
-                </tr>
-              </thead>
+      {/* Хаб розділів на мобільних (нижче lg бічного меню немає) */}
+      <nav aria-label="Розділи кабінету" className="lg:hidden">
+        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {nav
+            .filter((n) => !n.end)
+            .map(({ to, label, icon }) => {
+              const Icon = icon;
+              return (
+              <li key={to}>
+                <NavLink
+                  to={to}
+                  className={`${cardCls} h-full min-h-[88px] p-4 flex flex-col justify-between gap-2 text-(--ink) hover:bg-(--surface-2)`}
+                >
+                  <Icon aria-hidden="true" className="text-2xl text-(--brand-ink)" />
+                  <span className="font-semibold text-[0.9375rem] leading-5">{label}</span>
+                </NavLink>
+              </li>
+              );
+            })}
+          {logout && (
+            <li>
+              <button
+                type="button"
+                onClick={logout}
+                className={`${cardCls} w-full h-full min-h-[88px] p-4 flex flex-col justify-between items-start gap-2 text-(--danger) hover:bg-(--danger-soft)`}
+              >
+                <LuLogOut aria-hidden="true" className="text-2xl" />
+                <span className="font-semibold text-[0.9375rem] leading-5">Вийти</span>
+              </button>
+            </li>
+          )}
+        </ul>
+      </nav>
 
-              <tbody>
-                {recentOrders.map((o, i) => (
-                  <tr
-                    key={o._id}
-                    className="bg-[var(--bg-indexTableSec)] border-b border-[var(--border-indexTable)]"
-                  >
-                    <td
-                      scope="row"
-                      className="px-6 py-4 font-medium whitespace-nowrap"
-                    >
-                      {orderNo(o)}
-                    </td>
-                    <td
-                      scope="row"
-                      className="px-6 py-4 font-medium whitespace-nowrap"
-                    >
-                      ₴{o.price}
-                    </td>
-                    <td
-                      scope="row"
-                      className="px-6 py-4 font-medium whitespace-nowrap"
-                    >
-                      {payLabel(o.payment_status)}
-                    </td>
-                    <td
-                      scope="row"
-                      className="px-6 py-4 font-medium whitespace-nowrap"
-                    >
-                      {deliveryLabel(o.delivery_status)}
-                    </td>
-                    <td
-                      scope="row"
-                      className="px-6 py-4 font-medium whitespace-nowrap"
-                    >
-                      <Link to={`/dashboard/order/details/${o._id}`}>
-                        <span className="bg-[var(--bg-indexViewBtn)] text-[var(--text-index)] text-md font-semibold mr-2 px-3 py-[2px] rounded">
-                          Переглянути
-                        </span>
-                      </Link>
-
-                      {o.payment_status !== "paid" &&
-                        o.payment_method !== "cod" &&
-                        o.delivery_status !== "cancelled" && (
-                        <span
-                          onClick={() => redirect(o)}
-                          className="bg-[var(--bg-indexViewBtn)] text-[var(--text-index)] text-md font-semibold mr-2 px-3 py-[2px] rounded cursor-pointer"
-                        >
-                          Оплатити
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <Section title="Останні замовлення">
+        {recentOrders.length === 0 ? (
+          <p className="text-(--ink-2)">У вас ще немає замовлень.</p>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {recentOrders.map((o) => (
+              <OrderCard key={o._id} o={o} canPay={canPayOrder(o, { allowInvoice: true })} onPay={redirect} />
+            ))}
           </div>
-        </div>
-      </div>
+        )}
+        <Link
+          to="/dashboard/my-orders"
+          className="tap self-start -ml-3 gap-1 px-3 text-sm font-semibold text-(--brand-ink) hover:underline"
+        >
+          Усі замовлення
+          <LuChevronRight aria-hidden="true" />
+        </Link>
+      </Section>
     </div>
   );
 };

@@ -5,7 +5,9 @@ import toast from "react-hot-toast";
 import api from "../../api/api";
 import { get_my_returns, get_return_policy } from "../../store/reducers/returnSlice";
 import { orderNo } from "../../utils/statusLabels";
-import { RETURN_STATUS, RETURN_REASON, RETURN_STATUS_COLOR, fmtDate } from "../../utils/returnLabels";
+import { RETURN_STATUS, RETURN_REASON, fmtDate } from "../../utils/returnLabels";
+import { Badge, Field, PageHeader } from "./Kit";
+import { btnDanger, btnPrimary, cardCls, fullMobile, inputCls, returnTone } from "./ui";
 
 const Card = ({ r, onChanged, returnAddress, contactInfo }) => {
   const [ttn, setTtn] = useState(r.shipment?.ttn || "");
@@ -29,39 +31,43 @@ const Card = ({ r, onChanged, returnAddress, contactInfo }) => {
   const canCancel = ["requested", "approved"].includes(r.status);
 
   return (
-    <div className="border border-slate-300 rounded-md p-4 text-[var(--text-myOrders)] flex flex-col gap-2">
-      <div className="flex justify-between flex-wrap gap-2">
-        <div>
-          <span className="font-semibold">{r.number}</span>{" "}
-          <span className="text-sm opacity-70">від {fmtDate(r.createdAt)}</span>
-          <div className="text-sm">
+    <article className={`${cardCls} p-4 md:p-5 text-(--ink) flex flex-col gap-3`}>
+      <div className="flex justify-between items-start gap-2">
+        <div className="min-w-0">
+          <h2 className="font-semibold">
+            Заявка {r.number} <span className="text-sm font-normal text-(--ink-2)">від {fmtDate(r.createdAt)}</span>
+          </h2>
+          <div className="text-sm text-(--ink-2)">
             {r.kind === "cancellation" ? "Скасування замовлення" : "Повернення товару"} ·{" "}
             {RETURN_REASON[r.reason] || r.reason}
           </div>
         </div>
-        <span className={`h-fit px-3 py-1 text-xs rounded-md ${RETURN_STATUS_COLOR[r.status] || "bg-gray-200"}`}>
+        <Badge wrap tone={returnTone(r.status)} className="shrink-0 max-w-[45%] text-right">
           {r.kind === "cancellation" && r.status === "refunded" && !(r.refund?.amount > 0)
             ? "Замовлення скасовано"
             : RETURN_STATUS[r.status] || r.status}
-        </span>
+        </Badge>
       </div>
 
-      <ul className="text-sm list-disc pl-5">
+      <ul className="text-sm divide-y divide-(--line) border-y border-(--line)">
         {r.items.map((i, k) => (
-          <li key={k}>
-            {i.name} × {i.quantity} — ₴{i.value}
+          <li key={k} className="flex justify-between gap-3 py-2">
+            <span className="min-w-0 break-words">
+              {i.name} <span className="text-(--ink-2)">× {i.quantity}</span>
+            </span>
+            <span className="price font-semibold whitespace-nowrap">₴{i.value}</span>
           </li>
         ))}
       </ul>
       <div className="text-sm">
         Замовлення:{" "}
-        <Link className="underline" to={`/dashboard/order/details/${r.orderId}`}>
+        <Link className="font-semibold text-(--brand-ink) underline" to={`/dashboard/order/details/${r.orderId}`}>
           {orderNo({ orderNumber: r.orderNumber, _id: r.orderId })}
         </Link>
       </div>
 
       {r.decision?.rejectReason && (
-        <p className="text-sm text-red-700">Причина відмови: {r.decision.rejectReason}</p>
+        <p className="text-sm text-(--danger)">Причина відмови: {r.decision.rejectReason}</p>
       )}
       {r.decision?.note && <p className="text-sm">Коментар магазину: {r.decision.note}</p>}
 
@@ -71,7 +77,7 @@ const Card = ({ r, onChanged, returnAddress, contactInfo }) => {
         </p>
       )}
       {r.status === "approved" && r.kind === "return" && (
-        <div className="text-sm bg-blue-50 p-3 rounded">
+        <div className="text-sm bg-(--brand-soft) p-3 rounded-(--r-md)">
           <p className="font-semibold">Надішліть товар за адресою:</p>
           <p className="whitespace-pre-line">{returnAddress || "Адресу уточніть у підтримки"}</p>
           <p className="mt-1">
@@ -81,26 +87,33 @@ const Card = ({ r, onChanged, returnAddress, contactInfo }) => {
       )}
 
       {canShip && (
-        <div className="flex gap-2 flex-wrap items-center">
-          <select
-            value={carrier}
-            onChange={(e) => setCarrier(e.target.value)}
-            className="px-2 py-1 border border-slate-300 rounded text-sm"
-          >
-            <option>Нова пошта</option>
-            <option>Укрпошта</option>
-            <option>Інший перевізник</option>
-          </select>
-          <input
-            value={ttn}
-            onChange={(e) => setTtn(e.target.value)}
-            placeholder="Номер накладної (ТТН)"
-            className="px-2 py-1 border border-slate-300 rounded text-sm"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-[200px_minmax(0,1fr)_auto] gap-3 md:items-end">
+          <Field label="Перевізник">
+            {(a) => (
+              <select {...a} value={carrier} onChange={(e) => setCarrier(e.target.value)} className={inputCls}>
+                <option>Нова пошта</option>
+                <option>Укрпошта</option>
+                <option>Інший перевізник</option>
+              </select>
+            )}
+          </Field>
+          <Field label="Номер накладної (ТТН)">
+            {(a) => (
+              <input
+                {...a}
+                value={ttn}
+                inputMode="numeric"
+                autoComplete="off"
+                onChange={(e) => setTtn(e.target.value)}
+                className={inputCls}
+              />
+            )}
+          </Field>
           <button
+            type="button"
             disabled={busy || ttn.trim().length < 5}
             onClick={() => act(() => api.put(`/home/returns/${r._id}/shipment`, { carrier, ttn: ttn.trim() }))}
-            className="px-3 py-1 bg-[var(--bg-card-processBtn)] text-[var(--text-card)] text-sm rounded disabled:opacity-50"
+            className={`${btnPrimary} ${fullMobile} min-h-12`}
           >
             Зберегти ТТН
           </button>
@@ -118,20 +131,20 @@ const Card = ({ r, onChanged, returnAddress, contactInfo }) => {
         </div>
       )}
       {r.refundDueAt && r.status === "refund_pending" && (
-        <p className="text-xs opacity-70">Кошти будуть повернені не пізніше {fmtDate(r.refundDueAt)}.</p>
+        <p className="text-sm text-(--ink-2)">Кошти будуть повернені не пізніше {fmtDate(r.refundDueAt)}.</p>
       )}
-      {contactInfo && <p className="text-xs opacity-70">Питання: {contactInfo}</p>}
+      {contactInfo && <p className="text-sm text-(--ink-2)">Питання: {contactInfo}</p>}
 
       {canCancel && (
         <button
           disabled={busy}
           onClick={() => window.confirm("Відкликати заявку?") && act(() => api.put(`/home/returns/${r._id}/cancel`))}
-          className="self-start px-3 py-1 border text-sm rounded"
+          className={`${btnDanger} ${fullMobile} self-start`}
         >
           Відкликати заявку
         </button>
       )}
-    </div>
+    </article>
   );
 };
 
@@ -143,17 +156,18 @@ const Returns = () => {
   useEffect(() => {
     load();
     dispatch(get_return_policy());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className="bg-[var(--bg-myOrders)] p-4 rounded-md flex flex-col gap-3">
-      <h2 className="text-xl font-semibold text-[var(--text-myOrders)]">Мої повернення</h2>
+    <div className="flex flex-col gap-4">
+      <PageHeader title="Мої повернення" />
       {!cabinetVisible ? (
-        <p className="text-[var(--text-myOrders)]">
+        <p className={`${cardCls} p-5 text-(--ink-2)`}>
           Перегляд заявок у кабінеті наразі недоступний. З питань повернення зверніться до підтримки магазину.
         </p>
       ) : !loaded ? null : requests.length === 0 ? (
-        <p className="text-[var(--text-myOrders)]">
+        <p className={`${cardCls} p-5 text-(--ink-2)`}>
           У вас ще немає заявок. Подати заявку можна на сторінці замовлення («Мої замовлення» → замовлення).
         </p>
       ) : (

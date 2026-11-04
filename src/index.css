@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 @theme {
+  /* Існуючі брейкпоінти (використовуються в max-* варіантах) */
+  --breakpoint-3xl: 120rem; /* 1920px */
+  --breakpoint-2xl: 96rem; /* 1536px */
   --breakpoint-xl: 75rem; /* 1200px */
   --breakpoint-lg: 67.5rem; /* 1080px */
   --breakpoint-mdlg: 61.9375rem; /* 991px */
@@ -8,263 +11,345 @@
   --breakpoint-sm: 36rem; /* 576px */
   --breakpoint-xs: 30rem; /* 480px */
   --breakpoint-2xs: 21.25rem; /* 340px */
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+
+/* ============================================================
+   СЕМАНТИЧНІ ТОКЕНИ ТЕМИ (пресет «Tech Blue»).
+   Адмін може перевизначити brand/cta/sale/header-bg/footer-bg
+   через <style id="ts-theme"> (див. utils/theme.js).
+   Всі пари «текст/фон» перевірені на контраст ≥ WCAG AA.
+   ============================================================ */
 :root {
-  /* ======== TOASTER ======== */
-  --bg-toaster: #283046;
-  --color-toaster: #ffffff;
+  --page: #f3f5f9;
+  --surface: #ffffff;
+  --surface-2: #eef2f7;
+  --line: #dde3ec;
+  --line-strong: #8b95a7;
+  --ink: #0f172a;
+  --ink-2: #4a5568;
+  --brand: #1f5fd6;
+  --brand-hover: #194db0;
+  --brand-soft: #e7effc;
+  --brand-ink: #1f5fd6;
+  --on-brand: #ffffff;
+  --cta: #ff7a1a;
+  --cta-hover: #f06a00;
+  --on-cta: #111827;
+  --cta-disabled: #f6cfae;
+  --price: #0f172a;
+  --sale: #e0234e;
+  --on-sale: #ffffff;
+  --success: #05794a;
+  --success-soft: #e3f3ec;
+  --danger: #c62828;
+  --danger-soft: #fbeaea;
+  --on-danger: #ffffff;
+  --warning: #c97800;
+  --star: #c47f00;
+  --header-bg: #0d1b36;
+  --header-bg-2: #14264a;
+  --header-hover: rgba(255, 255, 255, 0.12);
+  --on-header: #e8edf6;
+  --on-header-2: #a9b6cc;
+  --on-header-3: #5d6b85;
+  --footer-bg: #eef2f7;
+  --on-footer: #4a5568;
+  --overlay: rgba(10, 14, 22, 0.55);
+  --social-facebook: #1877f2;
 
-  --bg-header-primary: #ffffff;
-  --bg-header: #caddff;
-  --bg-header-li: #afafaf;
-  --bg-header-leng-hover: #000000;
-  --text-header: #62748e;
-  --text-header-list: #000000;
-  --text-header-leng: #1d293d;
-  --text-header-leng-hover: #ffffff;
-  --text-header-menu: #45556c;
-  --border-header-menu: #45556c;
-  --text-active-menuItem: #059473;
-  --bg-header-wish: #e2e2e2;
-  --wishHeart-active: oklch(72.3% 0.219 149.579);
-  --bg-countCircle: #fb2c36;
-  --text-countCircle: #ffffff;
+  /* Радіуси / тіні / розміри */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 1px rgba(15, 23, 42, 0.04);
+  --shadow-2: 0 4px 12px rgba(15, 23, 42, 0.1);
+  --shadow-3: 0 12px 32px rgba(15, 23, 42, 0.18);
+  --header-h: 56px; /* висота липкої шапки (мобільна), оновлюється Header */
+  --bottomnav-h: 0px; /* висота нижньої панелі; на мобільних = 60px */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --container: 1760px;
+}
+@media (max-width: 1023.98px) {
+  :root { --bottomnav-h: calc(60px + var(--sab)); }
+}
 
-  /* Sidebar */
-  --bg-sidebar-primary: rgba(0, 0, 0, 0.5);
-  --bg-sidebar-secondary: #ffffff;
-  --bg-sidebar-phone: #f5f5f5;
-  --text-sidebar-phoneNum: #314158;
-  --text-sidebar-mail: #1c1c1c;
-
-  /* Header All Category Line */
-  --bg-btn-allCat: #059473;
-  --text-allCat: #ffffff;
-  --bg-allCat: #dbf3ed;
-  --bg-allCat-bord: #dbf3ed;
-  --text-menu-allCat: #45556c;
-  --bg-search-sep: #afafaf;
-  --border-search: #e5e7eb;
-  --text-search: #62748e;
-
-  /* Carousel - Categories*/
+/* ======== Сумісність: старі назви змінних → семантичні токени ======== */
+:root {
+  --bg-toaster: var(--ink);
+  --color-toaster: var(--surface);
+  --bg-header-primary: var(--header-bg);
+  --bg-header: var(--header-bg-2);
+  --bg-header-li: var(--on-header-3);
+  --bg-header-leng-hover: var(--header-hover);
+  --text-header: var(--on-header-2);
+  --text-header-list: var(--on-header);
+  --text-header-leng: var(--on-header);
+  --text-header-leng-hover: var(--on-header);
+  --text-header-menu: var(--on-header-2);
+  --border-header-menu: var(--on-header-3);
+  --text-active-menuItem: var(--brand-ink);
+  --bg-header-wish: var(--header-hover);
+  --wishHeart-active: var(--sale);
+  --bg-countCircle: var(--sale);
+  --text-countCircle: var(--on-sale);
+  --bg-sidebar-primary: var(--overlay);
+  --bg-sidebar-secondary: var(--surface);
+  --bg-sidebar-phone: var(--surface-2);
+  --text-sidebar-phoneNum: var(--ink-2);
+  --text-sidebar-mail: var(--ink);
+  --bg-btn-allCat: var(--brand);
+  --text-allCat: var(--on-brand);
+  --bg-allCat: var(--brand-soft);
+  --bg-allCat-bord: var(--brand-soft);
+  --text-menu-allCat: var(--ink-2);
+  --bg-search-sep: var(--line-strong);
+  --border-search: var(--line-strong);
+  --text-search: var(--ink-2);
   --bg-category: #3330305d;
-  --text-category: #ffffff;
-  --border-category: #d6dee6;
-
-  /* Featured Products */
-  --text-title-featured: #45556c;
-  --bg-line-featured: #059473;
-  --text-featured-disc: #ffffff;
-  --bg-featured-disc: #fb2c36;
-  --bg-featured-heart: #ffffff;
-  --bg-featured-heart-hov: #059473;
-  --text-featured-heart-hov: #ffffff;
-  --text-featured-pr_name: #45556c;
-  --text-featured-rating: #edbb0e;
-  --text-featured-rating_sec: #45556c;
-
-  /* Latest Products */
-  --text-latest: #45556c;
-  --bg-latest-leftArrow: #cad5e2;
-  --border-latest-leftArrow: #e5e7eb;
-
-  /* Footer */
-  --bg-footer: #f3f6fa;
-  --text-footer: #45556c;
-  --bg-subscribe: #ffffff;
-  --border-subscribe: #e5e7eb;
-  --bg-subscribeBtn: #059473;
-  --text-subscribe: #ffffff;
-  --bg-icon-hov: #059473;
-  --bg-icon: #ffffff;
-  --text-icon: #ffffff;
-  --border-copyright: #e5e7eb;
-  --bg-footer-sidebar-main: #ffffff;
-  --bg-footer-sidebar: #e2e2e2;
-  --bg-footer-sidebar-ring: #fb2c36; /* red-500 */
-  --text-footer-sidebar: oklch(72.3% 0.219 149.579); /* green-500 */
-  --text-footer-sidebar-ring: #ffffff;
-
-  /* ======== SHOPS PAGE ======== */
-
-  /* Section */
+  --text-category: var(--on-brand);
+  --border-category: var(--line);
+  --text-title-featured: var(--ink-2);
+  --bg-line-featured: var(--brand);
+  --text-featured-disc: var(--on-sale);
+  --bg-featured-disc: var(--sale);
+  --bg-featured-heart: var(--surface);
+  --bg-featured-heart-hov: var(--brand);
+  --text-featured-heart-hov: var(--on-brand);
+  --text-featured-pr_name: var(--ink-2);
+  --text-featured-rating: var(--star);
+  --text-featured-rating_sec: var(--ink-2);
+  --text-latest: var(--ink-2);
+  --bg-latest-leftArrow: var(--line);
+  --border-latest-leftArrow: var(--line);
+  --bg-footer: var(--footer-bg);
+  --text-footer: var(--ink-2);
+  --bg-subscribe: var(--surface);
+  --border-subscribe: var(--line);
+  --bg-subscribeBtn: var(--brand);
+  --text-subscribe: var(--on-brand);
+  --bg-icon-hov: var(--brand);
+  --bg-icon: var(--surface);
+  --text-icon: var(--on-brand);
+  --border-copyright: var(--line);
+  --bg-footer-sidebar-main: var(--surface);
+  --bg-footer-sidebar: var(--surface-2);
+  --bg-footer-sidebar-ring: var(--sale);
+  --text-footer-sidebar: var(--success);
+  --text-footer-sidebar-ring: var(--on-sale);
   --bg-section: #2422228a;
-  --text-section: #ffffff;
-
-  /* Filter */
-  --bg-filter: oklch(58.5% 0.233 277.117);
-  --text-filter: #ffffff;
-  --text-filterCat: #45556c;
-  --bg-range: #e2e8f0;
-  --bg-rangeCircle: #059473;
-  --text-range: #1d293d;
-  --text-rating: oklch(70.5% 0.213 47.604);
-
-  /* Upper Menu */
-  --bg-uMenu: #ffffff;
-  --text-uMenu: #45556c;
-  --border-uMenu: #e5e7eb;
-  --bg-uMenu-styles: #cad5e2;
-
-  /* Products */
-  --bg-products: #ffffff;
-
-  /* Pagination */
-  --bg-pagi-hov: #05df72;
-  --bg-pagi: oklch(52.7% 0.154 150.069);
-
-  /* ======== CARD PAGE ======== */
-
-  --bg-card: #eeeeee;
-  --bg-cardSec: oklch(58.5% 0.233 277.117);
-  --text-card: #ffffff;
-  --bg-cardStock: #ffffff;
-  --text-cardStock: oklch(72.3% 0.219 149.579);
-  --text-card-shopTitle: #45556c;
-  --text-card-price: oklch(70.5% 0.213 47.604);
-  --text-card-priceOrdinary: #45556c;
-  --bg-card-btn: #e2e8f0;
-  --bg-card-delete: #fb2c36;
-  --text-card-outOfStock: oklch(63.7% 0.237 25.331);
-  --bg-card-coupon: #e2e8f0;
-  --border-card-coupon: oklch(72.3% 0.219 149.579);
-  --bg-card-couponApplyBtn: #059473;
-  --text-card-sum: #059473;
-  --bg-card-processBtn: #fb2c36;
-
-  /* ======== SHIPPING PAGE ======== */
-
-  --bg-ship: #eeeeee;
-  --bg-shipSec: #ffffff;
-  --text-ship: #45556c;
-  --border-ship: #e5e7eb;
-  --border-ship-foc: oklch(72.3% 0.219 149.579);
-  --bg-ship-saveBtn: oklch(72.3% 0.219 149.579);
-  --text-ship-saveBtn: #ffffff;
-  --bg-shipTo: oklch(88.2% 0.059 254.128);
-  --text-shipTo: #193cb8;
-  --text-shipChange: oklch(58.5% 0.233 277.117);
-  --bg-placeOrder-notActive: oklch(80.8% 0.114 19.571);
-
-  /* ======== PRODUCT DETAILS PAGE ======== */
-
-  --bg-deatails-road: #f1f5f9;
-  --text-deatails: #45556c;
-  --border-deatails: #e5e7eb;
-  --text-deatailsRaiting: oklch(72.3% 0.219 149.579);
-  --text-deatailsPrice: #fb2c36;
-  --bg-detailsDescr: oklch(92.9% 0.013 255.508); /* slate-200 */
-  --bg-detailsAddBtn: #059473;
-  --text-detailsAddBtn: #ffffff;
-  --bg-detailsHeart: oklch(71.5% 0.143 215.221);
-  --text-detailsAvail: #000000;
-  --text-detailsOnStock: oklch(72.3% 0.219 149.579);
-  --text-detailsOutOfStock: #fb2c36;
-  --bg-fb: oklch(58.5% 0.233 277.117);
-  --bg-tw: #1da1f2; /* Twitter */
-  --bg-li: #0077b5; /* LinkedIn */
-  --bg-in: #c13584; /* Instagram */
-  --bg-tt: #25f4ee; /* TikTok (бірюзовий акцент) */
-  --bg-detailsBuyBtn: #058164;
-  --bg-detailsChatBtn: oklch(63.7% 0.237 25.331);
-  --bg-detailsNonActBtn: #314158;
+  --text-section: var(--on-brand);
+  --bg-filter: var(--brand);
+  --text-filter: var(--on-brand);
+  --text-filterCat: var(--ink-2);
+  --bg-range: var(--line);
+  --bg-rangeCircle: var(--brand);
+  --text-range: var(--ink);
+  --text-rating: var(--star);
+  --bg-uMenu: var(--surface);
+  --text-uMenu: var(--ink-2);
+  --border-uMenu: var(--line);
+  --bg-uMenu-styles: var(--surface-2);
+  --bg-products: var(--surface);
+  --bg-pagi-hov: var(--brand-hover);
+  --bg-pagi: var(--brand);
+  --bg-card: var(--page);
+  --bg-cardSec: var(--brand);
+  --text-card: var(--on-brand);
+  --bg-cardStock: var(--surface);
+  --text-cardStock: var(--success);
+  --text-card-shopTitle: var(--ink-2);
+  --text-card-price: var(--price);
+  --text-card-priceOrdinary: var(--ink-2);
+  --bg-card-btn: var(--surface-2);
+  --bg-card-delete: var(--danger);
+  --text-card-outOfStock: var(--danger);
+  --bg-card-coupon: var(--surface-2);
+  --border-card-coupon: var(--brand);
+  --bg-card-couponApplyBtn: var(--brand);
+  --text-card-sum: var(--brand-ink);
+  --bg-card-processBtn: var(--cta);
+  --bg-ship: var(--page);
+  --bg-shipSec: var(--surface);
+  --text-ship: var(--ink-2);
+  --border-ship: var(--line);
+  --border-ship-foc: var(--brand);
+  --bg-ship-saveBtn: var(--brand);
+  --text-ship-saveBtn: var(--on-brand);
+  --bg-shipTo: var(--brand-soft);
+  --text-shipTo: var(--brand-ink);
+  --text-shipChange: var(--brand-ink);
+  --bg-placeOrder-notActive: var(--cta-disabled);
+  --bg-deatails-road: var(--surface-2);
+  --text-deatails: var(--ink-2);
+  --border-deatails: var(--line);
+  --text-deatailsRaiting: var(--star);
+  --text-deatailsPrice: var(--price);
+  --bg-detailsDescr: var(--surface-2);
+  --bg-detailsAddBtn: var(--cta);
+  --text-detailsAddBtn: var(--on-cta);
+  --bg-detailsHeart: var(--brand);
+  --text-detailsAvail: var(--ink);
+  --text-detailsOnStock: var(--success);
+  --text-detailsOutOfStock: var(--danger);
+  --bg-fb: var(--social-facebook);
+  --bg-tw: #1da1f2;
+  --bg-li: #0077b5;
+  --bg-in: #c13584;
+  --bg-tt: #25f4ee;
+  --bg-detailsBuyBtn: var(--cta);
+  --bg-detailsChatBtn: var(--brand);
+  --bg-detailsNonActBtn: var(--ink-2);
   --bg-swipper: #000000;
-
-  /* Reviews */
-  --text-reviews: #45556c;
-
-  /* Rating temp */
-  --text-ratingTemp: #edbb0e;
-  --bg-details-rating: oklch(92.9% 0.013 255.508); /* slate-200 */
-  --bg-details-login: #fb2c36; /* red-500 */
-  --text-details-login: #ffffff;
-  --border-details-review: #e5e7eb;
-  --bg-details-submitBtn: oklch(58.5% 0.233 277.117); /* indigo-500 */
-  --text-details-submitBtn: #ffffff;
-
-  /* ======== REGISTER PAGE ======== */
-  --bg-reg: oklch(92.9% 0.013 255.508); /* slate-200 */
-  --bg-regIn: #ffffff;
-  --text-reg: #45556c; /* slate-600 */
-  --border-reg: oklch(92.9% 0.013 255.508); /* slate-200 */
-  --border-regFoc: oklch(72.3% 0.219 149.579); /* green-500 */
-  --bg-regBtn: #059473;
-  --text-regBtn: #ffffff;
-  --bg-regOrLine: oklch(86.9% 0.022 252.894); /* slate-300 */
-  --bg-regFb: oklch(58.5% 0.233 277.117); /* indigo-500 */
-  --text-regFb: #ffffff;
-  --bg-regG: #fb2c36; /* red-500 */
-  --text-regLog: oklch(62.3% 0.214 259.815); /* blue-500 */
+  --text-reviews: var(--ink-2);
+  --text-ratingTemp: var(--star);
+  --bg-details-rating: var(--surface-2);
+  --bg-details-login: var(--danger);
+  --text-details-login: var(--on-danger);
+  --border-details-review: var(--line);
+  --bg-details-submitBtn: var(--brand);
+  --text-details-submitBtn: var(--on-brand);
+  --bg-reg: var(--page);
+  --bg-regIn: var(--surface);
+  --text-reg: var(--ink-2);
+  --border-reg: var(--line-strong);
+  --border-regFoc: var(--brand);
+  --bg-regBtn: var(--brand);
+  --text-regBtn: var(--on-brand);
+  --bg-regOrLine: var(--line);
+  --bg-regFb: var(--social-facebook);
+  --text-regFb: var(--on-brand);
+  --bg-regG: var(--danger);
+  --text-regLog: var(--brand-ink);
   --bg--regLoader: #38303033;
   --bg-sellerLoginBtn: #02e3e0;
   --bg-sellerRegisterBtn: #ad2cc4;
-
-  /* ======== PAYMENT PAGE ======== */
-  --bg-pay: #eeeeee;
-  --text-pay: #45556c;
-  --bg-stripe: #ffffff;
+  --bg-pay: var(--page);
+  --text-pay: var(--ink-2);
+  --bg-stripe: var(--surface);
   --bg-notStripe: #d4e9fe;
-  --border-payStripe: #e5e7eb;
-  --bg-payBtn: #059473;
-  --text-payBtn: #ffffff;
-  --bg-pay-rightSection: #ffffff;
-  --text-payPrice: oklch(62.7% 0.194 149.214); /* green-600 */
-
-  /* ======== USER DASHBOARD PAGE ======== */
-  --bg-dash: #e2e8f0; /* slate-200 */
-  --bg-dashListBtn: #059473;
-  --text-dashListBtn: #ffffff;
-  --bg-dashSec: #ffffff;
-  --text-dash: #45556c;
-
-  /* Index */
-  --bg-index: #ffffff;
-  --bg-indexSec: #dcfce7; /* green-100 */
-  --text-index: #016630; /* green-800 */
-  --text-indexSec: #45556c; /* slate-600 */
-  --text-indexTable: #6a7282; /* gray-500 */
-  --text-indexTableSec: #364153; /* gray-700 */
-  --bg-indexTable: #e5e7eb; /* gray-200 */
-  --bg-indexTableSec: #ffffff;
-  --border-indexTable: #e5e7eb;
-  --bg-indexViewBtn: #b9f8cf; /* green-200 */
-
-  /* My Orders */
-  --bg-myOrders: #ffffff;
-  --text-myOrders: #45556c;
-  --border-myOrders: #e5e7eb;
-
-  /* Change Password */
-  --bg-changePas: #ffffff;
-  --text-changePas: #45556c;
-  --border-changePas: #e5e7eb;
-  --bg-changePasBtn: #059473;
-  --text-changePasBtn: #ffffff;
-
-  /* Wishlist */
-  --bg-wish: #ffffff;
-
-  /* Order Details */
-  --bg-ordDet: #ffffff;
-  --text-ordDet: #45556c;
-  --bg-ordDet-home: #dbeafe; /* blue-100 */
-  --text-ordDet-home: #193cb8; /* blue-800 */
-  --text-ordDet-paid: #016630; /* green-800 */
-  --bg-ordDet-paid: #7bf1a8; /* green-300 */
-  --text-ordDet-NotPaid: #9f0712; /* red-800 */
-  --bg-ordDet-NotPaid: oklch(80.8% 0.114 19.571); /* red-300 */
+  --border-payStripe: var(--line);
+  --bg-payBtn: var(--cta);
+  --text-payBtn: var(--on-cta);
+  --bg-pay-rightSection: var(--surface);
+  --text-payPrice: var(--price);
+  --bg-dash: var(--page);
+  --bg-dashListBtn: var(--brand);
+  --text-dashListBtn: var(--on-brand);
+  --bg-dashSec: var(--surface);
+  --text-dash: var(--ink-2);
+  --bg-index: var(--surface);
+  --bg-indexSec: var(--success-soft);
+  --text-index: var(--success);
+  --text-indexSec: var(--ink-2);
+  --text-indexTable: var(--ink-2);
+  --text-indexTableSec: var(--ink);
+  --bg-indexTable: var(--surface-2);
+  --bg-indexTableSec: var(--surface);
+  --border-indexTable: var(--line);
+  --bg-indexViewBtn: var(--success-soft);
+  --bg-myOrders: var(--surface);
+  --text-myOrders: var(--ink-2);
+  --border-myOrders: var(--line);
+  --bg-changePas: var(--surface);
+  --text-changePas: var(--ink-2);
+  --border-changePas: var(--line);
+  --bg-changePasBtn: var(--brand);
+  --text-changePasBtn: var(--on-brand);
+  --bg-wish: var(--surface);
+  --bg-ordDet: var(--surface);
+  --text-ordDet: var(--ink-2);
+  --bg-ordDet-home: var(--brand-soft);
+  --text-ordDet-home: var(--brand-ink);
+  --text-ordDet-paid: var(--success);
+  --bg-ordDet-paid: var(--success-soft);
+  --text-ordDet-NotPaid: var(--danger);
+  --bg-ordDet-NotPaid: var(--danger-soft);
 }
 
-.dark {
-  --color-bg: #111827;
-  --color-text: #f3f4f6;
-  --color-primary: #6366f1;
+@layer base {
+/* ============================================================
+   БАЗА: адаптивність, доступність, big screens
+   ============================================================ */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 12px);
+  scroll-padding-bottom: calc(var(--bottomnav-h) + 12px);
+  scroll-behavior: smooth;
+}
+body {
+  font-family: var(--font-sans);
+  background: var(--page);
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.5;
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
+  padding-bottom: var(--bottomnav-h);
+}
+button, [role="button"], a, input, select, textarea { touch-action: manipulation; }
+.price, [data-price] { font-variant-numeric: tabular-nums; }
+
+/* Поля форм ≥16px — iOS не робить автозум */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea { font-size: max(16px, 1rem); }
+@media (min-width: 1024px) and (hover: hover) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea { font-size: inherit; }
 }
 
-.swiper-button-prev::after,
-.swiper-button-next::after {
-  color: #059473; /* колір самих стрілок */
-  font-weight: bold; /* зробити товстіші */
+/* Видиме кільце фокуса (клавіатура) */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+.on-dark :focus-visible,
+header :focus-visible { outline-color: var(--on-header); }
+
+/* Рух лише якщо користувач не вимкнув анімації */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Контейнер: центрується на великих моніторах, фон — на всю ширину */
+}
+
+@layer components {
+.container-x {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px));
+}
+@media (min-width: 1024px) { .container-x { padding-inline: 24px; } }
+@media (min-width: 1536px) { .container-x { padding-inline: 32px; } }
+}
+
+@layer components {
+/* Допоміжні утиліти */
+.tap { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.snap-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; overscroll-behavior-x: contain; }
+.snap-row > * { scroll-snap-align: start; flex: none; }
+.safe-b { padding-bottom: max(12px, var(--sab)); }
+.ts-sheet-open { overflow: hidden; }
+.skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; background: var(--brand); color: var(--on-brand); padding: 8px 16px; }
+.skip-link:focus { left: 8px; top: 8px; }
+}
+.swiper { --swiper-navigation-color: var(--brand); --swiper-theme-color: var(--brand); }
+@media (hover: none) {
+  .swiper-button-prev, .swiper-button-next { display: none; }
 }

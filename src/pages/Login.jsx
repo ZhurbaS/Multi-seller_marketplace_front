@@ -1,16 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Link, useNavigate } from 'react-router-dom';
 import { customer_login, messageClear } from '../store/reducers/authSlice';
 import toast from 'react-hot-toast';
-import { FadeLoader } from 'react-spinners';
 import { useDispatch, useSelector } from 'react-redux';
+import { LuChevronDown } from 'react-icons/lu';
 import { getFrontendUrl } from '../api/api'; // eslint-disable-line no-unused-vars
-import OtpLogin from '../components/OtpLogin';
+import OtpLogin, {
+  AuthButton,
+  AuthCard,
+  AuthField,
+  ConsentBox,
+  FieldError,
+  OrDivider,
+  PasswordField,
+  SellerLinks,
+} from '../components/OtpLogin';
 import GoogleButton from '../components/GoogleButton';
 import ConsentCheckboxes from '../components/ConsentCheckboxes';
 import useAuthConfig from '../hooks/useAuthConfig';
+
+const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v).trim());
 
 const Login = () => {
   const navigate = useNavigate();
@@ -28,16 +39,34 @@ const Login = () => {
     phone: '',
     password: '',
   });
+  const [errors, setErrors] = useState({});
+  const [formError, setFormError] = useState('');
+  // Вхід з паролем: розгорнутий, якщо вхід за кодом вимкнено
+  const [pwdOpen, setPwdOpen] = useState(false);
+  const showPwd = pwdOpen || (authCfg.loaded && !authCfg.otp);
+  const refs = { email: useRef(null), password: useRef(null) };
 
   const inputHandle = (e) => {
     setState({
       ...state,
       [e.target.name]: e.target.value,
     });
+    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: '' });
+    if (formError) setFormError('');
   };
 
   const login = (e) => {
     e.preventDefault();
+    const next = {};
+    if (!state.email.trim()) next.email = 'Вкажіть e-mail';
+    else if (!isEmail(state.email)) next.email = 'Перевірте формат e-mail, наприклад name@gmail.com';
+    if (!state.password) next.password = 'Вкажіть пароль';
+    setErrors(next);
+    const first = Object.keys(next)[0];
+    if (first) {
+      refs[first]?.current?.focus();
+      return;
+    }
     // console.log(state);
     dispatch(customer_login(state));
   };
@@ -49,132 +78,114 @@ const Login = () => {
     }
     if (errorMessage) {
       toast.error(errorMessage);
+      setFormError(errorMessage);
       dispatch(messageClear());
     }
     // Гостьова сесія (кошик без реєстрації) — не вхід: сторінку входу не закриваємо
     if (userInfo && !userInfo.guest) {
       navigate('/');
     }
-  }, [successMessage, errorMessage, userInfo]);
+  }, [successMessage, errorMessage, userInfo, dispatch, navigate]);
+
+  const hasQuick = !!authCfg.google || !!authCfg.otp;
 
   return (
-    <div>
-      {loader && (
-        <div className="w-screen h-screen flex justify-center items-center fixed left-0 top-0 bg-[var(--bg--regLoader)] z-[999]">
-          <FadeLoader />
-        </div>
-      )}
+    <div className="flex min-h-dvh flex-col">
       <Header />
-      <div className="bg-[var(--bg-reg)] mt-4">
-        <div className="w-full justify-center items-center p-10">
-          <div className="grid grid-cols-2 w-[60%] mx-auto bg-[var(--bg-regIn)] rounded-md">
-            <div className="px-8 py-8">
-              <h2 className="text-center w-full text-xl text-[var(--text-reg)] font-bold">
-                Війти
-              </h2>
-
-              <div className="">
-                <form onSubmit={login} className="text-[var(--text-reg)]">
-                  <div className="flex flex-col gap-1 mb-2">
-                    <label htmlFor="email" className="">
-                      Email
-                    </label>
-                    <input
-                      onChange={inputHandle}
-                      value={state.email}
-                      type="email"
-                      id="email"
-                      name="email"
-                      placeholder="Email"
-                      required
-                      className="w-full px-3 py-2 border border-[var(--border-reg)] outline-none focus:border-[var(--border-regFoc)] rounded-md"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1 mb-2">
-                    <label htmlFor="phone" className="">
-                      Номер телефону
-                    </label>
-                    <input
-                      onChange={inputHandle}
-                      value={state.phone}
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      placeholder="Номер телефону"
-                      required
-                      className="w-full px-3 py-2 border border-[var(--border-reg)] outline-none focus:border-[var(--border-regFoc)] rounded-md"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1 mb-2">
-                    <label htmlFor="password" className="">
-                      Пароль
-                    </label>
-                    <input
-                      onChange={inputHandle}
-                      value={state.password}
-                      type="password"
-                      id="password"
-                      name="password"
-                      placeholder="Пароль"
-                      required
-                      className="w-full px-3 py-2 border border-[var(--border-reg)] outline-none focus:border-[var(--border-regFoc)] rounded-md"
-                    />
-                  </div>
-                  <button className="px-8 w-full py-2 bg-[var(--bg-regBtn)] shadow-lg hover:shadow-green-500/40 text-[var(--text-regBtn)] rounded-md">
-                    Війти
-                  </button>
-                </form>
-
-                <div className="flex justify-center items-center py-2">
-                  <div className="h-[1px] bg-[var(--bg-regOrLine)] w-[95%]"></div>
-                  <span className="px-3 text-[var(--text-reg)] ">Чи</span>
-                  <div className="h-[1px] bg-[var(--bg-regOrLine)] w-[95%]"></div>
-                </div>
-                {authCfg.google && (
-                  <div className="flex flex-col gap-2 mb-3 text-[var(--text-reg)]">
-                    <GoogleButton clientId={authCfg.google.clientId} acceptLegal={accept} onDone={() => navigate('/')} />
-                    <ConsentCheckboxes accept={accept} setAccept={setAccept} showMarketing={false} />
-                  </div>
-                )}
-                {authCfg.otp && (
-                  <div className="mb-3">
-                    <OtpLogin onDone={() => navigate('/')} />
-                  </div>
-                )}
-              </div>
-
-              <div className="text-center text-[var(--text-reg)] pt-1">
-                <p>
-                  Не маєте акаунту?{' '}
-                  <Link to="/register" className="text-[var(--text-regLog)]">
-                    Зареєструватися
-                  </Link>
-                </p>
-              </div>
-              <a
-                target="_blank"
-                href={`${import.meta.env.VITE_DASHBOARD_PRODUCTION}/login`}
-              >
-                <div className="mt-3 px-8 w-full py-2 bg-[var(--bg-sellerLoginBtn)] shadow hover:shadow-red-500/50 text-[var(--text-regFb)] rounded-md flex justify-center items-center gap-2 mb-3">
-                  Ввійти як продавець
-                </div>
-              </a>
-              <a
-                target="_blank"
-                href={`${import.meta.env.VITE_DASHBOARD_PRODUCTION}/register`}
-              >
-                <div className="px-8 w-full py-2 bg-[var(--bg-sellerRegisterBtn)] shadow hover:shadow-red-500/50 text-[var(--text-regFb)] rounded-md flex justify-center items-center gap-2 mb-3">
-                  Зареєструватися як продавець
-                </div>
-              </a>
-            </div>
-
-            <div className="w-full h-full py-4 pr-4">
-              <img src="/images/login.jpg" alt="" />
-            </div>
+      <AuthCard title="Увійти" subtitle="Увійдіть, щоб бачити замовлення, обране та бонуси.">
+        {authCfg.google && (
+          <div className="flex flex-col gap-3">
+            <GoogleButton clientId={authCfg.google.clientId} acceptLegal={accept} onDone={() => navigate('/')} />
+            <ConsentBox>
+              <ConsentCheckboxes accept={accept} setAccept={setAccept} showMarketing={false} />
+            </ConsentBox>
           </div>
-        </div>
-      </div>
+        )}
+
+        {authCfg.google && authCfg.otp && <OrDivider />}
+
+        {authCfg.otp && <OtpLogin onDone={() => navigate('/')} />}
+
+        {hasQuick && <OrDivider>або з паролем</OrDivider>}
+
+        {hasQuick && (
+          <button
+            type="button"
+            onClick={() => setPwdOpen((v) => !v)}
+            aria-expanded={showPwd}
+            aria-controls="login-password-form"
+            className="-mt-2 inline-flex min-h-11 items-center justify-center gap-2 self-center rounded-(--r-md) px-3 text-base font-medium text-(--brand-ink) hover:bg-(--brand-soft)"
+          >
+            Увійти з паролем
+            <LuChevronDown
+              aria-hidden="true"
+              className={`size-5 motion-safe:transition-transform ${showPwd ? 'rotate-180' : ''}`}
+            />
+          </button>
+        )}
+
+        <form
+          id="login-password-form"
+          onSubmit={login}
+          noValidate
+          hidden={hasQuick && !showPwd}
+          className={hasQuick && !showPwd ? 'hidden' : 'flex flex-col gap-4'}
+        >
+          <AuthField
+            ref={refs.email}
+            id="email"
+            name="email"
+            label="E-mail"
+            type="email"
+            inputMode="email"
+            autoComplete="username"
+            placeholder="name@gmail.com"
+            value={state.email}
+            onChange={inputHandle}
+            error={errors.email}
+            required
+          />
+          <AuthField
+            id="phone"
+            name="phone"
+            label="Номер телефону"
+            optional
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="+380 XX XXX XX XX"
+            value={state.phone}
+            onChange={inputHandle}
+          />
+          <PasswordField
+            ref={refs.password}
+            id="password"
+            name="password"
+            label="Пароль"
+            autoComplete="current-password"
+            placeholder="Ваш пароль"
+            value={state.password}
+            onChange={inputHandle}
+            error={errors.password}
+            required
+          />
+          <div role="alert">
+            <FieldError id="login-form-error">{formError}</FieldError>
+          </div>
+          <AuthButton type="submit" loading={loader} loadingText="Входимо…" aria-describedby={formError ? 'login-form-error' : undefined}>
+            Увійти
+          </AuthButton>
+        </form>
+
+        <p className="text-center text-base text-(--ink-2)">
+          Не маєте акаунту?{' '}
+          <Link to="/register" className="inline-flex min-h-11 items-center font-semibold text-(--brand-ink) hover:underline">
+            Зареєструватися
+          </Link>
+        </p>
+
+        <SellerLinks />
+      </AuthCard>
       <Footer />
     </div>
   );

@@ -6,30 +6,55 @@ import { set_token } from "../../store/reducers/authSlice";
 import DeliveryFields from "../DeliveryFields";
 import { emptyDelivery, deliveryError, toPayload, savedAddressTitle } from "../../utils/delivery";
 import { isValidPhone, maskPhone, nextPhone } from "../../utils/phone";
+import { LuChevronDown, LuTrash2 } from "react-icons/lu";
+import { Field, FieldError, PageHeader } from "./Kit";
+import { btnPrimary, btnSecondary, cardCls, fullMobile, inputCls } from "./ui";
+import Subscriptions from "./Subscriptions";
 
-const inputCls =
-  "w-full px-3 py-2 border border-[var(--border-myOrders)] outline-none rounded-md bg-transparent";
-
-const Box = ({ title, hint, children }) => (
-  <section className="border border-[var(--border-myOrders)] rounded-md p-4 flex flex-col gap-3">
-    <div>
-      <h3 className="font-semibold text-lg">{title}</h3>
-      {hint && <p className="text-sm opacity-70">{hint}</p>}
+// Секція-картка; `accordion` — згортається (<details>), `count` — кількість у заголовку
+const Box = ({ title, hint, children, accordion, count }) => {
+  const head = (
+    <div className="min-w-0">
+      <h2 className="font-semibold text-lg leading-6 text-(--ink)">
+        {title}
+        {count > 0 && <span className="ml-2 text-sm font-medium text-(--ink-2)">({count})</span>}
+      </h2>
+      {hint && <p className="text-sm text-(--ink-2)">{hint}</p>}
     </div>
-    {children}
-  </section>
-);
+  );
+  if (!accordion)
+    return (
+      <section className={`${cardCls} p-4 md:p-5 flex flex-col gap-3`}>
+        {head}
+        {children}
+      </section>
+    );
+  return (
+    <details className={`${cardCls} group`}>
+      <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer flex items-center justify-between gap-3 min-h-14 p-4 md:px-5">
+        {head}
+        <LuChevronDown aria-hidden="true" className="shrink-0 text-xl text-(--ink-2) transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="px-4 pb-4 md:px-5 md:pb-5 flex flex-col gap-3">{children}</div>
+    </details>
+  );
+};
 
-const Chip = ({ head, sub, onDelete }) => (
-  <span className="inline-flex items-center gap-2 pl-3 pr-2 py-2 rounded-md border border-[var(--border-myOrders)] text-sm">
-    <span>
-      {head}
-      {sub && <span className="block text-xs opacity-70">{sub}</span>}
+const Chip = ({ head, sub, onDelete, what }) => (
+  <li className="flex items-center justify-between gap-2 pl-3 pr-1 py-1 rounded-(--r-md) border border-(--line) text-sm min-w-0">
+    <span className="min-w-0 py-1">
+      <span className="block break-words">{head}</span>
+      {sub && <span className="block text-xs text-(--ink-2) break-words">{sub}</span>}
     </span>
-    <button type="button" aria-label="Видалити" onClick={onDelete} className="opacity-50 hover:opacity-100 px-1">
-      ✕
+    <button
+      type="button"
+      aria-label={`Видалити ${what}: ${head}`}
+      onClick={onDelete}
+      className="tap shrink-0 rounded-full text-(--ink-2) hover:text-(--danger) hover:bg-(--danger-soft)"
+    >
+      <LuTrash2 aria-hidden="true" className="text-lg" />
     </button>
-  </span>
+  </li>
 );
 
 // Налаштування кабінету: контактні дані, адреси доставки, збережені отримувачі й організації.
@@ -47,6 +72,17 @@ const Settings = () => {
   const [co, setCo] = useState({ companyName: "", edrpou: "", ipn: "" });
   const [adding, setAdding] = useState(false);
   const [del, setDel] = useState(emptyDelivery());
+  // Інлайн-помилки за формами: { поле: текст }
+  const [pErr, setPErr] = useState({});
+  const [recErr, setRecErr] = useState({});
+  const [coErr, setCoErr] = useState({});
+  const [addrErr, setAddrErr] = useState("");
+
+  // Помилка: під полем + тост (як і раніше)
+  const fail = (setter, field, msg) => {
+    setter({ [field]: msg });
+    toast.error(msg);
+  };
 
   const load = () =>
     api
@@ -62,11 +98,13 @@ const Settings = () => {
       .catch(() => toast.error("Не вдалося завантажити налаштування"));
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const saveProfile = async () => {
-    if (profile.name.trim().length < 2) return toast.error("Вкажіть ім'я");
-    if (!isValidPhone(profile.phone)) return toast.error("Вкажіть коректний номер телефону");
+    if (profile.name.trim().length < 2) return fail(setPErr, "name", "Вкажіть ім'я");
+    if (!isValidPhone(profile.phone)) return fail(setPErr, "phone", "Вкажіть коректний номер телефону");
+    setPErr({});
     try {
       const { data: r } = await api.put("/home/customer/profile", profile);
       toast.success(r.message || "Збережено");
@@ -103,9 +141,10 @@ const Settings = () => {
   };
 
   const addRecipient = async () => {
-    if (!rec.lastName.trim()) return toast.error("Вкажіть прізвище отримувача");
-    if (!rec.firstName.trim()) return toast.error("Вкажіть ім'я отримувача");
-    if (!isValidPhone(rec.phone)) return toast.error("Вкажіть коректний телефон отримувача");
+    if (!rec.lastName.trim()) return fail(setRecErr, "lastName", "Вкажіть прізвище отримувача");
+    if (!rec.firstName.trim()) return fail(setRecErr, "firstName", "Вкажіть ім'я отримувача");
+    if (!isValidPhone(rec.phone)) return fail(setRecErr, "phone", "Вкажіть коректний телефон отримувача");
+    setRecErr({});
     try {
       await api.post("/home/customer/saved-recipient", rec);
       toast.success("Отримувача збережено");
@@ -118,8 +157,10 @@ const Settings = () => {
   };
 
   const addCompany = async () => {
-    if (co.companyName.trim().length < 2) return toast.error("Вкажіть назву організації");
-    if (!/^\d{8}$|^\d{10}$/.test(co.edrpou.replace(/\s/g, ""))) return toast.error("Код ЄДРПОУ — 8 цифр (для ФОП — 10 цифр РНОКПП)");
+    if (co.companyName.trim().length < 2) return fail(setCoErr, "companyName", "Вкажіть назву організації");
+    if (!/^\d{8}$|^\d{10}$/.test(co.edrpou.replace(/\s/g, "")))
+      return fail(setCoErr, "edrpou", "Код ЄДРПОУ — 8 цифр (для ФОП — 10 цифр РНОКПП)");
+    setCoErr({});
     try {
       await api.post("/home/customer/saved-company", co);
       toast.success("Організацію збережено");
@@ -133,7 +174,11 @@ const Settings = () => {
 
   const addAddress = async () => {
     const err = deliveryError(del, npOn);
-    if (err) return toast.error(err);
+    if (err) {
+      setAddrErr(err);
+      return toast.error(err);
+    }
+    setAddrErr("");
     try {
       await api.post("/home/customer/saved-address", toPayload(del));
       toast.success("Адресу збережено");
@@ -154,199 +199,324 @@ const Settings = () => {
     }
   };
 
-  return (
-    <div className="bg-[var(--bg-myOrders)] p-4 rounded-md text-[var(--text-myOrders)] flex flex-col gap-4">
-      <h2 className="text-xl font-semibold">Налаштування</h2>
+  const actions = "flex flex-col-reverse sm:flex-row gap-2";
 
-      <Box title="Електронна пошта" hint="Змінюється окремо від імені й телефону — вони залишаються як є.">
-        <div className="text-sm flex flex-col gap-2">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="opacity-70">Email: {userInfo?.email}</span>
+  return (
+    <div className="flex flex-col gap-4 text-(--ink)">
+      <PageHeader title="Налаштування" />
+
+      <Box title="Електронна пошта">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <span className="text-(--ink-2) break-all">{userInfo?.email}</span>
             {em.step === "closed" && (
-              <button type="button" onClick={() => setEm({ ...em, step: "request" })} className="underline">
-                Змінити
+              <button type="button" onClick={() => setEm({ ...em, step: "request" })} className={`${btnSecondary} ${fullMobile}`}>
+                Змінити email
               </button>
             )}
           </div>
           {em.step === "request" && (
-            <div className="flex flex-col gap-2 border border-[var(--border-myOrders)] rounded-md p-3">
-              <p className="opacity-70">Ми надішлемо код підтвердження на нову адресу. Для безпеки введіть ваш поточний пароль.</p>
-              <input
-                className={inputCls}
-                type="email"
-                autoComplete="off"
-                placeholder="Нова електронна адреса"
-                value={em.email}
-                onChange={(e) => setEm({ ...em, email: e.target.value })}
-              />
-              <input
-                className={inputCls}
-                type="password"
-                autoComplete="current-password"
-                placeholder="Поточний пароль"
-                value={em.password}
-                onChange={(e) => setEm({ ...em, password: e.target.value })}
-              />
-              <div className="flex gap-2">
-                <button type="button" disabled={em.busy} onClick={requestEmail} className="px-4 py-2 rounded-md bg-[var(--bg-card-processBtn)] text-[var(--text-card)] disabled:opacity-60">
-                  Надіслати код
-                </button>
-                <button type="button" onClick={() => setEm({ step: "closed", email: "", password: "", code: "", busy: false })} className="px-4 py-2 rounded-md border border-[var(--border-myOrders)]">
+            <form
+              className="flex flex-col gap-3 border-t border-(--line) pt-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                requestEmail();
+              }}
+            >
+              <p className="text-sm text-(--ink-2)">Ми надішлемо код підтвердження на нову адресу. Для безпеки введіть ваш поточний пароль.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Field label="Нова електронна адреса" required>
+                  {(a) => (
+                    <input
+                      {...a}
+                      className={inputCls}
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      value={em.email}
+                      onChange={(e) => setEm({ ...em, email: e.target.value })}
+                    />
+                  )}
+                </Field>
+                <Field label="Поточний пароль" required>
+                  {(a) => (
+                    <input
+                      {...a}
+                      className={inputCls}
+                      type="password"
+                      autoComplete="current-password"
+                      value={em.password}
+                      onChange={(e) => setEm({ ...em, password: e.target.value })}
+                    />
+                  )}
+                </Field>
+              </div>
+              <div className={actions}>
+                <button type="button" onClick={() => setEm({ step: "closed", email: "", password: "", code: "", busy: false })} className={`${btnSecondary} ${fullMobile}`}>
                   Скасувати
                 </button>
+                <button type="submit" disabled={em.busy} className={`${btnPrimary} ${fullMobile} min-h-12`}>
+                  Надіслати код
+                </button>
               </div>
-            </div>
+            </form>
           )}
           {em.step === "code" && (
-            <div className="flex flex-col gap-2 border border-[var(--border-myOrders)] rounded-md p-3">
-              <p className="opacity-70">Код надіслано на {em.email}. Він діє 15 хвилин.</p>
-              <input
-                className={inputCls}
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                placeholder="6-значний код"
-                value={em.code}
-                onChange={(e) => setEm({ ...em, code: e.target.value.replace(/\D/g, "").slice(0, 6) })}
-              />
-              <div className="flex gap-2 flex-wrap">
-                <button type="button" disabled={em.busy || em.code.length !== 6} onClick={confirmEmail} className="px-4 py-2 rounded-md bg-[var(--bg-card-processBtn)] text-[var(--text-card)] disabled:opacity-60">
-                  Підтвердити
-                </button>
-                <button type="button" onClick={() => setEm({ ...em, step: "request", code: "" })} className="px-4 py-2 rounded-md border border-[var(--border-myOrders)]">
+            <form
+              className="flex flex-col gap-3 border-t border-(--line) pt-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (em.code.length === 6) confirmEmail();
+              }}
+            >
+              <Field label="Код підтвердження" hint={`Код надіслано на ${em.email}. Він діє 15 хвилин.`} className="md:max-w-[320px]">
+                {(a) => (
+                  <input
+                    {...a}
+                    className={`${inputCls} tracking-[0.3em] tabular-nums`}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    placeholder="6-значний код"
+                    value={em.code}
+                    onChange={(e) => setEm({ ...em, code: e.target.value.replace(/\D/g, "").slice(0, 6) })}
+                  />
+                )}
+              </Field>
+              <div className={actions}>
+                <button type="button" onClick={() => setEm({ ...em, step: "request", code: "" })} className={`${btnSecondary} ${fullMobile}`}>
                   Інша адреса / надіслати ще раз
                 </button>
+                <button type="submit" disabled={em.busy || em.code.length !== 6} className={`${btnPrimary} ${fullMobile} min-h-12`}>
+                  Підтвердити
+                </button>
               </div>
-            </div>
+            </form>
           )}
         </div>
       </Box>
 
       <Box title="Контактні дані">
-        <div className="flex max-md:flex-col gap-3">
-          <div className="flex flex-col gap-1 w-full">
-            <label className="text-sm">Ім'я</label>
-            <input className={inputCls} value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveProfile();
+          }}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Field label="Ім'я" error={pErr.name}>
+              {(a) => (
+                <input
+                  {...a}
+                  className={inputCls}
+                  autoComplete="name"
+                  value={profile.name}
+                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                />
+              )}
+            </Field>
+            <Field label="Телефон" error={pErr.phone}>
+              {(a) => (
+                <input
+                  {...a}
+                  className={inputCls}
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={profile.phone}
+                  placeholder="+38(067)-323-57-85"
+                  onChange={(e) => setProfile({ ...profile, phone: nextPhone(profile.phone, e.target.value) })}
+                />
+              )}
+            </Field>
           </div>
-          <div className="flex flex-col gap-1 w-full">
-            <label className="text-sm">Телефон</label>
-            <input
-              className={inputCls}
-              type="tel"
-              value={profile.phone}
-              placeholder="+38(067)-323-57-85"
-              onChange={(e) => setProfile({ ...profile, phone: nextPhone(profile.phone, e.target.value) })}
-            />
-          </div>
-        </div>
-        <button onClick={saveProfile} className="self-start px-5 py-2 rounded-md bg-[var(--bg-card-processBtn)] text-[var(--text-card)]">
-          Зберегти
-        </button>
+          <button type="submit" className={`${btnPrimary} ${fullMobile} min-h-12 self-start`}>
+            Зберегти
+          </button>
+        </form>
       </Box>
 
-      <Box title="Адреси доставки" hint="Підставляються під час оформлення замовлення. Нова адреса зберігається автоматично після замовлення.">
-        <div className="flex flex-wrap gap-2">
-          {data.addresses.map((a) => {
-            const t = savedAddressTitle(a);
-            return <Chip key={a._id} head={t.head} sub={t.sub} onDelete={() => forget("address", a._id)} />;
-          })}
-          {data.addresses.length === 0 && !adding && <span className="text-sm opacity-70">Збережених адрес ще немає.</span>}
-        </div>
+      {/* Підписки на розсилки (окремий компонент зі своїм завантаженням) */}
+      <Subscriptions />
+
+      <Box
+        accordion
+        count={data.addresses.length}
+        title="Адреси доставки"
+        hint="Підставляються під час оформлення замовлення. Нова адреса зберігається автоматично після замовлення."
+      >
+        {data.addresses.length > 0 ? (
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {data.addresses.map((a) => {
+              const t = savedAddressTitle(a);
+              return <Chip key={a._id} what="адресу" head={t.head} sub={t.sub} onDelete={() => forget("address", a._id)} />;
+            })}
+          </ul>
+        ) : (
+          !adding && <p className="text-sm text-(--ink-2)">Збережених адрес ще немає.</p>
+        )}
         {adding ? (
-          <div className="border-t border-[var(--border-myOrders)] pt-3">
-            <DeliveryFields form={del} setForm={setDel} npOn={npOn} onNpOff={() => setNpOn(false)} />
-            <div className="flex gap-2 mt-3">
-              <button onClick={addAddress} className="px-5 py-2 rounded-md bg-[var(--bg-card-processBtn)] text-[var(--text-card)]">
-                Зберегти адресу
-              </button>
-              <button onClick={() => setAdding(false)} className="px-4 py-2 rounded-md border border-[var(--border-myOrders)]">
+          <div className="border-t border-(--line) pt-3 flex flex-col gap-3">
+            <DeliveryFields
+              form={del}
+              setForm={(v) => {
+                setDel(v);
+                if (addrErr) setAddrErr("");
+              }}
+              npOn={npOn}
+              onNpOff={() => setNpOn(false)}
+            />
+            {addrErr && <FieldError>{addrErr}</FieldError>}
+            <div className={actions}>
+              <button type="button" onClick={() => setAdding(false)} className={`${btnSecondary} ${fullMobile}`}>
                 Скасувати
+              </button>
+              <button type="button" onClick={addAddress} className={`${btnPrimary} ${fullMobile} min-h-12`}>
+                Зберегти адресу
               </button>
             </div>
           </div>
         ) : (
-          <button onClick={() => setAdding(true)} className="self-start px-4 py-2 rounded-md border border-[var(--border-myOrders)]">
+          <button type="button" onClick={() => setAdding(true)} className={`${btnSecondary} ${fullMobile} self-start`}>
             + Додати адресу
           </button>
         )}
       </Box>
 
-      <Box title="Інші отримувачі" hint="Люди, на яких ви оформлюєте замовлення.">
-        <div className="flex flex-wrap gap-2">
-          {data.recipients.map((r) => (
-            <Chip key={r._id} head={`${r.lastName} ${r.firstName}`} sub={r.phone} onDelete={() => forget("recipient", r._id)} />
-          ))}
-          {data.recipients.length === 0 && !addingRec && <span className="text-sm opacity-70">Немає збережених отримувачів.</span>}
-        </div>
+      <Box accordion count={data.recipients.length} title="Інші отримувачі" hint="Люди, на яких ви оформлюєте замовлення.">
+        {data.recipients.length > 0 ? (
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {data.recipients.map((r) => (
+              <Chip key={r._id} what="отримувача" head={`${r.lastName} ${r.firstName}`} sub={r.phone} onDelete={() => forget("recipient", r._id)} />
+            ))}
+          </ul>
+        ) : (
+          !addingRec && <p className="text-sm text-(--ink-2)">Немає збережених отримувачів.</p>
+        )}
         {addingRec ? (
-          <div className="border-t border-[var(--border-myOrders)] pt-3 flex flex-col gap-3">
-            <div className="grid grid-cols-2 max-md:grid-cols-1 gap-3">
-              <input className={inputCls} placeholder="Прізвище *" value={rec.lastName} onChange={(e) => setRec({ ...rec, lastName: e.target.value })} />
-              <input className={inputCls} placeholder="Ім'я *" value={rec.firstName} onChange={(e) => setRec({ ...rec, firstName: e.target.value })} />
-              <input className={inputCls} placeholder="По батькові" value={rec.middleName} onChange={(e) => setRec({ ...rec, middleName: e.target.value })} />
-              <input
-                className={inputCls}
-                type="tel"
-                placeholder="+38(067)-323-57-85 *"
-                value={rec.phone}
-                onChange={(e) => setRec({ ...rec, phone: nextPhone(rec.phone, e.target.value) })}
-              />
+          <form
+            className="border-t border-(--line) pt-3 flex flex-col gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              addRecipient();
+            }}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Field label="Прізвище" required error={recErr.lastName}>
+                {(a) => (
+                  <input {...a} className={inputCls} autoComplete="family-name" value={rec.lastName} onChange={(e) => setRec({ ...rec, lastName: e.target.value })} />
+                )}
+              </Field>
+              <Field label="Ім'я" required error={recErr.firstName}>
+                {(a) => (
+                  <input {...a} className={inputCls} autoComplete="given-name" value={rec.firstName} onChange={(e) => setRec({ ...rec, firstName: e.target.value })} />
+                )}
+              </Field>
+              <Field label="По батькові">
+                {(a) => (
+                  <input {...a} className={inputCls} autoComplete="additional-name" value={rec.middleName} onChange={(e) => setRec({ ...rec, middleName: e.target.value })} />
+                )}
+              </Field>
+              <Field label="Телефон" required error={recErr.phone}>
+                {(a) => (
+                  <input
+                    {...a}
+                    className={inputCls}
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="+38(067)-323-57-85"
+                    value={rec.phone}
+                    onChange={(e) => setRec({ ...rec, phone: nextPhone(rec.phone, e.target.value) })}
+                  />
+                )}
+              </Field>
             </div>
-            <div className="flex gap-2">
-              <button onClick={addRecipient} className="px-5 py-2 rounded-md bg-[var(--bg-card-processBtn)] text-[var(--text-card)]">
-                Зберегти отримувача
-              </button>
-              <button onClick={() => setAddingRec(false)} className="px-4 py-2 rounded-md border border-[var(--border-myOrders)]">
+            <div className={actions}>
+              <button type="button" onClick={() => setAddingRec(false)} className={`${btnSecondary} ${fullMobile}`}>
                 Скасувати
               </button>
+              <button type="submit" className={`${btnPrimary} ${fullMobile} min-h-12`}>
+                Зберегти отримувача
+              </button>
             </div>
-          </div>
+          </form>
         ) : (
-          <button onClick={() => setAddingRec(true)} className="self-start px-4 py-2 rounded-md border border-[var(--border-myOrders)]">
+          <button type="button" onClick={() => setAddingRec(true)} className={`${btnSecondary} ${fullMobile} self-start`}>
             + Додати отримувача
           </button>
         )}
       </Box>
 
-      <Box title="Організації" hint="Реквізити юросіб та ФОП для замовлень за рахунком.">
-        <div className="flex flex-wrap gap-2">
-          {data.companies.map((c) => (
-            <Chip key={c._id} head={c.companyName} sub={`ЄДРПОУ ${c.edrpou}`} onDelete={() => forget("company", c._id)} />
-          ))}
-          {data.companies.length === 0 && !addingCo && <span className="text-sm opacity-70">Немає збережених організацій.</span>}
-        </div>
+      <Box accordion count={data.companies.length} title="Організації" hint="Реквізити юросіб та ФОП для замовлень за рахунком.">
+        {data.companies.length > 0 ? (
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {data.companies.map((c) => (
+              <Chip key={c._id} what="організацію" head={c.companyName} sub={`ЄДРПОУ ${c.edrpou}`} onDelete={() => forget("company", c._id)} />
+            ))}
+          </ul>
+        ) : (
+          !addingCo && <p className="text-sm text-(--ink-2)">Немає збережених організацій.</p>
+        )}
         {addingCo ? (
-          <div className="border-t border-[var(--border-myOrders)] pt-3 flex flex-col gap-3">
-            <input className={inputCls} placeholder="Повна назва організації / ФОП *" value={co.companyName} onChange={(e) => setCo({ ...co, companyName: e.target.value.replace(/^\s+/, "") })} />
-            <div className="grid grid-cols-2 max-md:grid-cols-1 gap-3">
-              <input
-                className={inputCls}
-                inputMode="numeric"
-                maxLength={10}
-                placeholder="ЄДРПОУ * (ФОП — РНОКПП, 10 цифр)"
-                value={co.edrpou}
-                onChange={(e) => setCo({ ...co, edrpou: e.target.value.replace(/\D/g, "") })}
-              />
-              <input
-                className={inputCls}
-                inputMode="numeric"
-                maxLength={12}
-                placeholder="ІПН (якщо платник ПДВ)"
-                value={co.ipn}
-                onChange={(e) => setCo({ ...co, ipn: e.target.value.replace(/\D/g, "") })}
-              />
+          <form
+            className="border-t border-(--line) pt-3 flex flex-col gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              addCompany();
+            }}
+          >
+            <Field label="Повна назва організації / ФОП" required error={coErr.companyName}>
+              {(a) => (
+                <input
+                  {...a}
+                  className={inputCls}
+                  autoComplete="organization"
+                  value={co.companyName}
+                  onChange={(e) => setCo({ ...co, companyName: e.target.value.replace(/^\s+/, "") })}
+                />
+              )}
+            </Field>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Field label="ЄДРПОУ" required hint="ФОП — РНОКПП, 10 цифр" error={coErr.edrpou}>
+                {(a) => (
+                  <input
+                    {...a}
+                    className={inputCls}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={10}
+                    value={co.edrpou}
+                    onChange={(e) => setCo({ ...co, edrpou: e.target.value.replace(/\D/g, "") })}
+                  />
+                )}
+              </Field>
+              <Field label="ІПН" hint="Якщо платник ПДВ">
+                {(a) => (
+                  <input
+                    {...a}
+                    className={inputCls}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={12}
+                    value={co.ipn}
+                    onChange={(e) => setCo({ ...co, ipn: e.target.value.replace(/\D/g, "") })}
+                  />
+                )}
+              </Field>
             </div>
-            <div className="flex gap-2">
-              <button onClick={addCompany} className="px-5 py-2 rounded-md bg-[var(--bg-card-processBtn)] text-[var(--text-card)]">
-                Зберегти організацію
-              </button>
-              <button onClick={() => setAddingCo(false)} className="px-4 py-2 rounded-md border border-[var(--border-myOrders)]">
+            <div className={actions}>
+              <button type="button" onClick={() => setAddingCo(false)} className={`${btnSecondary} ${fullMobile}`}>
                 Скасувати
               </button>
+              <button type="submit" className={`${btnPrimary} ${fullMobile} min-h-12`}>
+                Зберегти організацію
+              </button>
             </div>
-          </div>
+          </form>
         ) : (
-          <button onClick={() => setAddingCo(true)} className="self-start px-4 py-2 rounded-md border border-[var(--border-myOrders)]">
+          <button type="button" onClick={() => setAddingCo(true)} className={`${btnSecondary} ${fullMobile} self-start`}>
             + Додати організацію
           </button>
         )}

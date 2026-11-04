@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { LuChevronDown, LuLoaderCircle, LuLock } from "react-icons/lu";
 import api from "../api/api";
 import InvoiceChannelPick from "../components/InvoiceChannelPick";
 
@@ -34,6 +35,9 @@ const submitForm = (url, fields) => {
   form.submit();
 };
 
+const pluralItems = (n) =>
+  n === 1 ? "товар" : n >= 2 && n <= 4 ? "товари" : "товарів";
+
 const Payment = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -43,6 +47,8 @@ const Payment = () => {
   const [loadingMethods, setLoadingMethods] = useState(true);
   const [loading, setLoading] = useState(false);
   const [invoiceChannel, setInvoiceChannel] = useState("email");
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [payError, setPayError] = useState("");
 
   useEffect(() => {
     api
@@ -63,6 +69,7 @@ const Payment = () => {
   const pay = async () => {
     if (!paymentMethod || loading) return;
     setLoading(true);
+    setPayError("");
     try {
       const { data } = await api.post("/pay/start", {
         orderId,
@@ -85,105 +92,175 @@ const Payment = () => {
         }
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.error || "Не вдалося почати оплату. Спробуйте ще раз"
-      );
+      const msg = error.response?.data?.error || "Не вдалося почати оплату. Спробуйте ще раз";
+      toast.error(msg);
+      setPayError(msg);
       setLoading(false);
     }
   };
 
+  const payLabel =
+    paymentMethod === "cod"
+      ? "Підтвердити замовлення"
+      : paymentMethod === "invoice"
+      ? "Виставити рахунок"
+      : `Сплатити ₴${price}`;
+
+  const payButton = (className = "") => (
+    <button
+      type="button"
+      onClick={pay}
+      disabled={loading || !paymentMethod}
+      aria-busy={loading}
+      className={`inline-flex items-center justify-center gap-2 h-12 px-6 rounded-(--r-md) bg-(--cta) hover:bg-(--cta-hover) text-(--on-cta) text-base font-semibold disabled:bg-(--cta-disabled) disabled:cursor-not-allowed ${className}`}
+    >
+      {loading ? (
+        <>
+          <LuLoaderCircle size={20} className="motion-safe:animate-spin" aria-hidden="true" />
+          Зачекайте...
+        </>
+      ) : (
+        <>
+          {paymentMethod !== "cod" && paymentMethod !== "invoice" && <LuLock size={18} aria-hidden="true" />}
+          {payLabel}
+        </>
+      )}
+    </button>
+  );
+
+  const showPay = !loadingMethods && methods.length > 0 && paymentMethod;
+
   return (
-    <div>
+    <div className={showPay ? "pb-[calc(76px+var(--sab))] lg:pb-0" : ""}>
       <Header />
-      <section className="bg-[var(--bg-pay)] ">
-        <div className="w-[85%] max-lg:w-[90%] max-md:w-[90%] max-sm:w-[90%] mx-auto py-16 mt-4">
-          <div className="flex flex-wrap max-md:flex-col-reverse">
-            <div className="w-7/12 max-md:w-full">
-              <div className="pr-2 max-md:pr-0">
-                <h2 className="font-bold text-lg mb-3 text-[var(--text-pay)]">
-                  Спосіб оплати
-                </h2>
+      <section className="bg-(--page)">
+        <div className="container-x pt-4 pb-8 lg:pt-6 lg:pb-12">
+          <h1 className="text-[1.375rem] leading-7 md:text-[1.75rem] md:leading-9 font-bold text-(--ink) mb-4">
+            Оплата замовлення
+          </h1>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+            {/* Зведення: на мобільних — згорнутий акордеон, від lg — праворуч, липке */}
+            <aside
+              aria-label="Зведення замовлення"
+              className="lg:order-2 lg:sticky lg:top-[calc(var(--header-h)+16px)] self-start w-full"
+            >
+              <div className="bg-(--surface) border border-(--line) rounded-(--r-lg) text-(--ink)">
+                <button
+                  type="button"
+                  onClick={() => setSummaryOpen((v) => !v)}
+                  aria-expanded={summaryOpen}
+                  aria-controls="pay-summary"
+                  className="lg:hidden w-full min-h-14 px-4 flex items-center justify-between gap-3 text-left"
+                >
+                  <span className="font-semibold">
+                    Замовлення · {items} {pluralItems(items)}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="price font-bold">₴{price}</span>
+                    <LuChevronDown
+                      size={20}
+                      aria-hidden="true"
+                      className={`motion-safe:transition-transform ${summaryOpen ? "rotate-180" : ""}`}
+                    />
+                  </span>
+                </button>
+                <h2 className="hidden lg:block px-4 pt-4 text-lg md:text-[1.375rem] font-bold">Замовлення</h2>
+                <div
+                  id="pay-summary"
+                  className={`${summaryOpen ? "flex" : "hidden"} lg:flex flex-col gap-2 px-4 pb-4 pt-1 lg:pt-3 border-t border-(--line) lg:border-t-0`}
+                >
+                  <dl className="flex flex-col gap-2 text-[0.9375rem] pt-2 lg:pt-0">
+                    <div className="flex justify-between gap-3">
+                      <dt>Товарів: {items}</dt>
+                      <dd className="price">₴{price}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt>Доставка</dt>
+                      <dd className="text-right text-(--ink-2)">окремо, при отриманні</dd>
+                    </div>
+                  </dl>
+                  <div className="flex justify-between items-baseline gap-3 pt-3 border-t border-(--line)">
+                    <span className="font-semibold">Всього</span>
+                    <span className="price text-[1.375rem] font-bold text-(--price)">₴{price}</span>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            <div className="lg:order-1 min-w-0 flex flex-col gap-3">
+              <fieldset className="flex flex-col gap-2">
+                <legend className="font-bold text-lg text-(--ink) mb-2">Спосіб оплати</legend>
 
                 {loadingMethods ? (
-                  <div className="px-4 py-8 bg-[var(--bg-stripe)]">
+                  <div className="px-4 py-8 rounded-(--r-lg) bg-(--surface) border border-(--line) text-(--ink-2) flex items-center gap-2" role="status">
+                    <LuLoaderCircle size={20} className="motion-safe:animate-spin" aria-hidden="true" />
                     Завантаження...
                   </div>
                 ) : methods.length === 0 ? (
-                  <div className="px-4 py-8 bg-[var(--bg-stripe)]">
+                  <div className="px-4 py-8 rounded-(--r-lg) bg-(--surface) border border-(--line) text-(--ink-2)" role="status">
                     Наразі способи оплати недоступні. Зверніться до адміністратора.
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
-                    {methods.map((m) => (
+                  methods.map((m) => {
+                    const active = paymentMethod === m.id;
+                    return (
                       <label
                         key={m.id}
-                        className={`flex items-center gap-3 border border-[var(--border-payStripe)] cursor-pointer p-4 ${
-                          paymentMethod === m.id
-                            ? "bg-[var(--bg-stripe)]"
-                            : "bg-[var(--bg-notStripe)]"
+                        className={`flex items-start gap-3 min-h-14 p-4 rounded-(--r-lg) border cursor-pointer bg-(--surface) ${
+                          active ? "border-(--brand) ring-1 ring-(--brand)" : "border-(--line) hover:border-(--line-strong)"
                         }`}
                       >
                         <input
                           type="radio"
                           name="paymentMethod"
-                          checked={paymentMethod === m.id}
-                          onChange={() => setPaymentMethod(m.id)}
+                          className="mt-1 w-5 h-5 shrink-0 accent-(--brand)"
+                          checked={active}
+                          onChange={() => {
+                            setPaymentMethod(m.id);
+                            setPayError("");
+                          }}
                         />
-                        <span className="text-[var(--text-pay)]">{m.title}</span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block font-semibold text-(--ink)">{m.title}</span>
+                          {active && DESCRIPTIONS[m.id] && (
+                            <span className="block mt-1 text-sm text-(--ink-2)">{DESCRIPTIONS[m.id]}</span>
+                          )}
+                        </span>
                       </label>
-                    ))}
-                  </div>
+                    );
+                  })
                 )}
+              </fieldset>
 
-                {paymentMethod && (
-                  <div className="w-full px-4 py-6 bg-[var(--bg-stripe)] mt-2">
-                    <p className="text-sm text-[var(--text-pay)] mb-4">
-                      {DESCRIPTIONS[paymentMethod]}
-                    </p>
-                    {paymentMethod === "invoice" && (
-                      <div className="text-sm text-[var(--text-pay)] mb-4">
-                        <InvoiceChannelPick value={invoiceChannel} onChange={setInvoiceChannel} />
-                      </div>
-                    )}
-                    <button
-                      onClick={pay}
-                      disabled={loading}
-                      className="px-10 py-[6px] rounded-sm hover:shadow-green-500/20 hover:shadow-lg bg-[var(--bg-payBtn)] text-[var(--text-payBtn)] disabled:opacity-60"
-                    >
-                      {loading
-                        ? "Зачекайте..."
-                        : paymentMethod === "cod"
-                        ? "Підтвердити замовлення"
-                        : paymentMethod === "invoice"
-                        ? "Виставити рахунок"
-                        : "Оплатити"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="w-5/12 max-md:w-full">
-              <div className="pl-2 max-md:pl-0 max-md:mb-0">
-                <div className="bg-[var(--bg-pay-rightSection)] shadow p-5 text-[var(--text-pay)] flex flex-col gap-3">
-                  <h2 className="font-bold text-lg">Замовлення</h2>
-                  <div className="flex justify-between items-center ">
-                    <span>Товарів: {items} (доставка — окремо, при отриманні)</span>
-                    <span>₴{price} </span>
-                  </div>
-                  <div className="flex justify-between items-center font-semibold">
-                    <span>Всього</span>
-                    <span className="text-lg text-[var(--text-payPrice)]">
-                      ₴{price}
-                    </span>
-                  </div>
+              {paymentMethod === "invoice" && (
+                <div className="px-4 py-3 rounded-(--r-lg) bg-(--surface) border border-(--line) text-sm text-(--ink)">
+                  <InvoiceChannelPick value={invoiceChannel} onChange={setInvoiceChannel} />
                 </div>
-              </div>
+              )}
+
+              <p aria-live="polite" className="text-sm text-(--danger) min-h-0 empty:hidden">
+                {payError}
+              </p>
+
+              {showPay && payButton("hidden lg:inline-flex self-start min-w-[260px]")}
             </div>
           </div>
         </div>
       </section>
       <Footer />
+
+      {/* Липка кнопка оплати (мобільні/планшети) */}
+      {showPay && (
+        <div
+          className="lg:hidden fixed inset-x-0 bottom-0 z-40 bg-(--surface) border-t border-(--line) shadow-(--shadow-3)"
+          style={{ paddingBottom: "max(12px, var(--sab))" }}
+        >
+          <div className="container-x pt-3 min-h-16 flex">
+            {payButton("w-full")}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

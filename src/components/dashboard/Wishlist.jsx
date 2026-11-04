@@ -1,15 +1,18 @@
 import React, { useEffect } from "react";
-import { FaEye, FaRegHeart } from "react-icons/fa";
-import { RiShoppingCartLine } from "react-icons/ri";
+import { LuHeart, LuShoppingCart } from "react-icons/lu";
 import Rating from "../Rating";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  add_to_card,
   get_wishlist_products,
   messageClear,
   remove_wishlist,
 } from "../../store/reducers/cardSlice";
 import toast from "react-hot-toast";
+import { baseUnitPrice } from "../../utils/pricing";
+import { PageHeader } from "./Kit";
+import { btnCta, cardCls } from "./ui";
 
 const Wishlist = () => {
   const dispatch = useDispatch();
@@ -20,6 +23,7 @@ const Wishlist = () => {
 
   useEffect(() => {
     dispatch(get_wishlist_products(userInfo.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -27,57 +31,84 @@ const Wishlist = () => {
       toast.success(successMessage);
       dispatch(messageClear());
     }
-  }, [successMessage]);
+    if (errorMessage) {
+      toast.error(errorMessage);
+      dispatch(messageClear());
+    }
+  }, [successMessage, errorMessage, dispatch]);
+
+  const addToCart = (p) =>
+    dispatch(add_to_card({ userId: userInfo.id, quantity: 1, productId: p.productId }));
 
   return (
-    <div className="w-full grid grid-cols-4 max-mdlg:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1 gap-6">
-      {wishlist.map((p, i) => (
-        <div
-          key={i}
-          className="border border-[var(--border-category)] group transition-all duration-500 hover:shadow-md hover:-mt-3 bg-[var(--bg-wish)]"
-        >
-          <div className="relative overflow-hidden aspect-square">
-            {p.discount !== 0 && (
-              <div className="flex justify-center items-center absolute text-[var(--text-featured-disc)] w-[38px] h-[38px] rounded-full bg-[var(--bg-featured-disc)] font-semibold text-xs left-2 top-2">
-                {p.discount}%
-              </div>
-            )}
+    <div className="flex flex-col gap-4">
+      <PageHeader title="Список бажань" subtitle={wishlist.length ? `Товарів: ${wishlist.length}` : undefined} />
 
-            <img
-              className="w-full h-full object-cover"
-              src={p.image}
-              alt=""
-            />
-            <ul className="flex transition-all duration-700 -bottom-10 justify-center items-center gap-2 absolute w-full group-hover:bottom-3">
-              <li
-                onClick={() => dispatch(remove_wishlist(p._id))}
-                className="w-[38px] h-[38px] cursor-pointer bg-[var(--bg-featured-heart)] flex justify-center items-center rounded-full hover:bg-[var(--bg-featured-heart-hov)] hover:text-[var(--text-featured-heart-hov)] hover:rotate-[720deg] transition-all"
-              >
-                <FaRegHeart />
-              </li>
-              <Link
-                to={`/product/details/${p.slug}`}
-                className="w-[38px] h-[38px] cursor-pointer bg-[var(--bg-featured-heart)] flex justify-center items-center rounded-full hover:bg-[var(--bg-featured-heart-hov)] hover:text-[var(--text-featured-heart-hov)] hover:rotate-[720deg] transition-all"
-              >
-                <FaEye />
-              </Link>
-              <li className="w-[38px] h-[38px] cursor-pointer bg-[var(--bg-featured-heart)] flex justify-center items-center rounded-full hover:bg-[var(--bg-featured-heart-hov)] hover:text-[var(--text-featured-heart-hov)] hover:rotate-[720deg] transition-all">
-                <RiShoppingCartLine />
-              </li>
-            </ul>
-          </div>
-
-          <div className="py-3 text-[var(--text-featured-pr_name)] px-2">
-            <h2 className="font-bold">{p.name}</h2>
-            <div className="flex justify-start items-center gap-3">
-              <span className="text-md font-semibold">₴{p.price}</span>
-              <div className="flex">
-                <Rating ratings={p.rating} />
-              </div>
-            </div>
-          </div>
+      {wishlist.length === 0 ? (
+        <div className={`${cardCls} p-6 text-center text-(--ink-2) flex flex-col items-center gap-3`}>
+          <LuHeart aria-hidden="true" className="text-3xl" />
+          <p>У списку бажань поки немає товарів. Натисніть «♡» на картці товару, щоб додати його сюди.</p>
+          <Link to="/shops" className="tap px-4 font-semibold text-(--brand-ink) underline">
+            До каталогу
+          </Link>
         </div>
-      ))}
+      ) : (
+        <ul className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-4">
+          {wishlist.map((p, i) => {
+            const price = baseUnitPrice(p);
+            return (
+              <li key={p._id || i} className={`${cardCls} overflow-hidden flex flex-col`}>
+                <div className="relative aspect-square bg-(--surface)">
+                  {p.discount > 0 && (
+                    <span className="absolute left-2 top-2 z-10 px-2 py-0.5 rounded-full bg-(--sale) text-(--on-sale) text-xs font-semibold">
+                      −{p.discount}%
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => dispatch(remove_wishlist(p._id))}
+                    aria-label={`Видалити зі списку бажань: ${p.name}`}
+                    title="Видалити зі списку бажань"
+                    className="tap absolute right-1 top-1 z-10 rounded-full bg-(--surface) text-(--sale) shadow-(--shadow-1) hover:bg-(--surface-2)"
+                  >
+                    <LuHeart aria-hidden="true" className="text-xl fill-current" />
+                  </button>
+                  <Link to={`/product/details/${p.slug}`} tabIndex={-1} aria-hidden="true" className="block w-full h-full p-2">
+                    <img
+                      className="w-full h-full object-contain"
+                      src={p.image}
+                      alt=""
+                      width={300}
+                      height={300}
+                      loading="lazy"
+                    />
+                  </Link>
+                </div>
+
+                <div className="p-3 flex flex-col gap-2 flex-1">
+                  <Link
+                    to={`/product/details/${p.slug}`}
+                    className="text-sm md:text-[0.9375rem] leading-5 font-medium text-(--ink) line-clamp-2 hover:underline"
+                  >
+                    {p.name}
+                  </Link>
+                  <Rating ratings={p.rating} />
+                  <div className="mt-auto flex flex-wrap items-baseline gap-x-2">
+                    <span className={`price text-lg font-bold ${p.discount > 0 ? "text-(--sale)" : "text-(--price)"}`}>₴{price}</span>
+                    {p.discount > 0 && (
+                      <span className="price text-sm text-(--ink-2) line-through">₴{p.price}</span>
+                    )}
+                  </div>
+                  <button type="button" onClick={() => addToCart(p)} className={`${btnCta} w-full px-3`}>
+                    <LuShoppingCart aria-hidden="true" className="text-lg shrink-0" />
+                    <span className="truncate">У кошик</span>
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 };
