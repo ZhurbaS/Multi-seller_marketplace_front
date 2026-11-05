@@ -46,6 +46,7 @@ import {
 } from "../store/reducers/cardSlice";
 import api from "../api/api";
 import { baseUnitPrice, unitPrice, restockText } from "../utils/pricing";
+import { trackProductView } from "../utils/track";
 
 // Кнопки «поділитись»: фірмові кольори — як є (fb — токен, інші — літерали-аліаси)
 const SHARE = [
@@ -101,6 +102,11 @@ const Details = () => {
     if (product._id) setQuantity(product.minOrderQty || 1);
     setWished(false);
   }, [product._id, product.minOrderQty]);
+
+  // Трекінг перегляду товару (один раз на відкриття, privacy-first)
+  useEffect(() => {
+    if (product._id) trackProductView(product._id);
+  }, [product._id]);
 
   // Чи підписаний покупець на повідомлення про наявність
   useEffect(() => {
